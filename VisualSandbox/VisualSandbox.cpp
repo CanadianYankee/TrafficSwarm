@@ -175,7 +175,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
     case WM_DESTROY:
-		delete g_pSandbox;
         PostQuitMessage(0);
         break;
     default:
