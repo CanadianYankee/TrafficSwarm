@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "framework.h"
 #include "VisualSandbox.h"
+#include "DXSandbox.h"
 
 #define MAX_LOADSTRING 100
 
@@ -11,6 +12,7 @@
 HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
+CDXSandbox* g_pSandbox = NULL;					// The sandbox where all the graphics happens
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -44,14 +46,32 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     MSG msg;
 
     // Main message loop:
-    while (GetMessage(&msg, nullptr, 0, 0))
-    {
-        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-    }
+	do
+	{
+		// If there are Window messages then process them.
+		if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+		{
+			if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+			{
+				if (msg.message == WM_CLOSE)
+				{
+					g_pSandbox->CleanUp();
+				}
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
+		}
+		// Otherwise, let the sandbox do its thing
+		else
+		{
+			g_pSandbox->Tick();
+			Sleep(0); // Give other threads a chance to preempt.
+		}
+	} while (msg.message != WM_QUIT);
+
+	g_pSandbox->CleanUp();
+	delete g_pSandbox;
+	g_pSandbox = NULL;
 
     return (int) msg.wParam;
 }
@@ -109,7 +129,10 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
 
-   return TRUE;
+   g_pSandbox = new CDXSandbox();
+   BOOL bSuccess = g_pSandbox->Initialize(hWnd);
+
+   return bSuccess;
 }
 
 //
@@ -152,6 +175,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
     case WM_DESTROY:
+		delete g_pSandbox;
         PostQuitMessage(0);
         break;
     default:
