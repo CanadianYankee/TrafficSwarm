@@ -16,6 +16,8 @@ public:
 	BOOL Initialize(HWND hWnd);
 	void CleanUp();
 	void Tick();
+	void Pause() {};
+	void Resume() {};
 
 protected:
 	HRESULT InitDirect3D();
