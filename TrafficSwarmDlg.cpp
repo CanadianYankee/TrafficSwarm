@@ -68,6 +68,7 @@ BEGIN_MESSAGE_MAP(CTrafficSwarmDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON_RUNSANDBOX, &CTrafficSwarmDlg::OnBnClickedButtonRunsandbox)
+	ON_MESSAGE(WM_CHILD_CLOSING, OnChildClosing)
 END_MESSAGE_MAP()
 
 
@@ -165,3 +166,12 @@ void CTrafficSwarmDlg::OnBnClickedButtonRunsandbox()
 	m_pSandboxWnd->ShowWindow(SW_SHOW);
 }
 
+LRESULT CTrafficSwarmDlg::OnChildClosing(WPARAM wParam, LPARAM lParam)
+{
+	if (wParam == (WPARAM)m_pSandboxWnd)
+	{
+		delete m_pSandboxWnd;
+		m_pSandboxWnd = NULL;
+	}
+	return TRUE;
+}

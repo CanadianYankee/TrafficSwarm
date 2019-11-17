@@ -17,18 +17,6 @@ BOOL CSandboxWnd::Create()
 		g_szWndClass = AfxRegisterWndClass(NULL);
 	}
 
-	// Default rect will allow a margin of 1/8 of the screen on all four sides.
-//	int w = ::GetSystemMetrics(SM_CXFULLSCREEN);
-//	int h = ::GetSystemMetrics(SM_CYFULLSCREEN);
-//	int cx = w >> 1;
-//	int cy = h >> 1;
-//	w = (w >> 2) * 3; h = (h >> 2) * 3;
-//	RECT rcCreate;
-//	rcCreate.left = cx - (w >> 1);
-//	rcCreate.right = cx + (w >> 1);
-//	rcCreate.top = cy - (h >> 1);
-//	rcCreate.bottom = cy + (h >> 1);
-
 	BOOL bSuccess = CWnd::CreateEx(WS_EX_OVERLAPPEDWINDOW, g_szWndClass, _T("Traffic Sandbox"), 
 		WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL,
 		0, 0);
@@ -40,6 +28,7 @@ BOOL CSandboxWnd::Create()
 BEGIN_MESSAGE_MAP(CSandboxWnd, CWnd)
 	ON_WM_SHOWWINDOW()
 	ON_WM_PAINT()
+	ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
 
@@ -48,7 +37,7 @@ void CSandboxWnd::OnShowWindow(BOOL bShow, UINT nStatus)
 	CWnd::OnShowWindow(bShow, nStatus);
 	BOOL bSuccess = TRUE;
 
-/*	if (bShow)
+	if (bShow)
 	{
 		if (!m_pSandbox)
 		{
@@ -68,10 +57,9 @@ void CSandboxWnd::OnShowWindow(BOOL bShow, UINT nStatus)
 	else
 	{
 		if (m_pSandbox) m_pSandbox->Pause();
-	}*/
+	}
 }
 
-/*
 void CSandboxWnd::OnPaint()
 {
 	CPaintDC dc(this); 
@@ -81,4 +69,11 @@ void CSandboxWnd::OnPaint()
 	m_pSandbox->Tick();
 	this->Invalidate(FALSE);
 }
-*/
+
+
+void CSandboxWnd::OnClose()
+{
+	CWnd::OnClose();
+	if (m_pOwner)
+		m_pOwner->PostMessage(WM_CHILD_CLOSING, (WPARAM)this);
+}

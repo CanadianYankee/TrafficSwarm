@@ -15,6 +15,7 @@ protected:
 public:
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
-//	afx_msg void OnPaint();
+	afx_msg void OnPaint();
+	afx_msg void OnClose();
 };
 

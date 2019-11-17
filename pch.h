@@ -14,4 +14,6 @@
 #include <DirectXMath.h>
 #include <wrl/client.h>
 
+#define WM_CHILD_CLOSING WM_USER+10
+
 #endif //PCH_H
