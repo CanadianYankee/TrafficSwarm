@@ -95,6 +95,34 @@ HRESULT CDXSandbox::InitDirect3D()
 	return hr;
 }
 
+void CDXSandbox::Pause()
+{
+	m_Timer.Stop();
+	m_bRunning = false;
+}
+
+void CDXSandbox::Resume(LPRECT pNewSize /* = NULL*/)
+{
+	// Check for a change in size that requires a new viewport
+	if (pNewSize)
+	{
+		int cx = pNewSize->right - pNewSize->left;
+		int cy = pNewSize->bottom - pNewSize->top;
+
+		ASSERT(cx > 0 && cy > 0);
+
+		if (cx > 0 && cy > 0 && (cx != m_iClientWidth || cy != m_iClientHeight))
+		{
+			m_iClientWidth = cx;
+			m_iClientHeight = cy;
+			OnResize();
+		}
+	}
+	
+	m_Timer.Start();
+	m_bRunning = true;
+}
+
 // Create/recreate the depth/stencil view and render target based on new size
 BOOL CDXSandbox::OnResize()
 {
@@ -174,10 +202,10 @@ void CDXSandbox::Tick()
 	{
 		m_Timer.Tick();
 
-		float dT = m_Timer.DeltaTime();
+		float dt = m_Timer.DeltaTime();
 		float T = m_Timer.TotalTime();
 
-		BOOL bResult = TRUE; // UpdateScene(dt, T);
+		BOOL bResult = UpdateScene(dt, T);
 
 		if (bResult)
 		{
@@ -191,13 +219,19 @@ void CDXSandbox::Tick()
 	}
 }
 
+BOOL CDXSandbox::UpdateScene(float dt, float T)
+{
+	return TRUE;
+}
+
 BOOL CDXSandbox::RenderScene()
 {
 	assert(m_pD3DContext && m_pSwapChain);
 
 	float colorBlack[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	float colorRandom[4] = { rand() / (float)RAND_MAX, rand() / (float)RAND_MAX, rand() / (float)RAND_MAX, 1.0f };
 
-	m_pD3DContext->ClearRenderTargetView(m_pRenderTargetView.Get(), colorBlack);
+	m_pD3DContext->ClearRenderTargetView(m_pRenderTargetView.Get(), colorRandom);
 	m_pD3DContext->ClearDepthStencilView(m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	// Cache initial state of drawing context

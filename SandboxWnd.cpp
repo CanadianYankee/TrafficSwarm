@@ -4,8 +4,9 @@
 CString g_szWndClass;
 
 CSandboxWnd::CSandboxWnd(CWnd* pOwner) :
-	m_pOwner(pOwner), 
-	m_pSandbox(nullptr)
+	m_pOwner(pOwner),
+	m_pSandbox(nullptr),
+	m_bSizing(false)
 {
 	ASSERT(m_pOwner);
 }
@@ -29,6 +30,10 @@ BEGIN_MESSAGE_MAP(CSandboxWnd, CWnd)
 	ON_WM_SHOWWINDOW()
 	ON_WM_PAINT()
 	ON_WM_CLOSE()
+ON_WM_ENTERSIZEMOVE()
+ON_WM_EXITSIZEMOVE()
+ON_WM_ERASEBKGND()
+ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 
@@ -70,10 +75,59 @@ void CSandboxWnd::OnPaint()
 	this->Invalidate(FALSE);
 }
 
+BOOL CSandboxWnd::OnEraseBkgnd(CDC* pDC)
+{
+	// Swallow this event since we're letting DirectX do all the drawing. 
+	return TRUE;
+}
 
 void CSandboxWnd::OnClose()
 {
+	m_pSandbox->CleanUp();
+	delete m_pSandbox;
+
 	CWnd::OnClose();
 	if (m_pOwner)
 		m_pOwner->PostMessage(WM_CHILD_CLOSING, (WPARAM)this);
+}
+
+void CSandboxWnd::OnEnterSizeMove()
+{
+	// Pause the action while the user is adjusting the window
+	m_pSandbox->Pause();
+	m_bSizing = true;
+
+	CWnd::OnEnterSizeMove();
+}
+
+void CSandboxWnd::OnExitSizeMove()
+{
+	// Resume the action and pass the new size on to the sandbox
+	m_bSizing = false;
+	RECT rcClient;
+	GetClientRect(&rcClient);
+	m_pSandbox->Resume(&rcClient);
+
+	CWnd::OnExitSizeMove();
+}
+
+void CSandboxWnd::OnSize(UINT nType, int cx, int cy)
+{
+	CWnd::OnSize(nType, cx, cy);
+
+	switch (nType)
+	{
+	case SIZE_MINIMIZED:
+		m_pSandbox->Pause();
+		break;
+
+	default:
+		if (!m_bSizing)
+		{
+			RECT rcClient;
+			GetClientRect(&rcClient);
+			m_pSandbox->Resume(&rcClient);
+		}
+		break;
+	}
 }

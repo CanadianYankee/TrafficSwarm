@@ -16,12 +16,13 @@ public:
 	BOOL Initialize(HWND hWnd);
 	void CleanUp();
 	void Tick();
-	void Pause() {};
-	void Resume() {};
+	void Pause();
+	void Resume(LPRECT pNewSize = NULL);
 
 protected:
 	HRESULT InitDirect3D();
 	BOOL OnResize();
+	BOOL UpdateScene(float dt, float T);
 	BOOL RenderScene();
 
 protected:

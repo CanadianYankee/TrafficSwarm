@@ -171,7 +171,7 @@ LRESULT CTrafficSwarmDlg::OnChildClosing(WPARAM wParam, LPARAM lParam)
 	if (wParam == (WPARAM)m_pSandboxWnd)
 	{
 		delete m_pSandboxWnd;
-		m_pSandboxWnd = NULL;
+		m_pSandboxWnd = nullptr;
 	}
 	return TRUE;
 }
