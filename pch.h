@@ -9,10 +9,12 @@
 
 // add headers that you want to pre-compile here
 #include "framework.h"
-#include "assert.h"
 
 #include <d3d11.h>
 #include <DirectXMath.h>
 #include <wrl/client.h>
+#include <unordered_set>
+
+#define WM_CHILD_CLOSING WM_USER+10
 
 #endif //PCH_H
