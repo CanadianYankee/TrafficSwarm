@@ -52,8 +52,7 @@ END_MESSAGE_MAP()
 
 
 CTrafficSwarmDlg::CTrafficSwarmDlg(CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_TRAFFICSWARM_DIALOG, pParent),
-	m_pSandboxWnd(nullptr)
+	: CDialogEx(IDD_TRAFFICSWARM_DIALOG, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -159,19 +158,22 @@ HCURSOR CTrafficSwarmDlg::OnQueryDragIcon()
 
 void CTrafficSwarmDlg::OnBnClickedButtonRunsandbox()
 {
-	m_pSandboxWnd = new CSandboxWnd(this);
+	CSandboxWnd *pSandboxWnd = new CSandboxWnd(this);
 
-	BOOL bSuccess = m_pSandboxWnd->Create();
+	BOOL bSuccess = pSandboxWnd->Create();
 	ASSERT(bSuccess);
-	m_pSandboxWnd->ShowWindow(SW_SHOW);
+	pSandboxWnd->ShowWindow(SW_SHOW);
+
+	m_setChildren.insert((CWnd*)pSandboxWnd);
 }
 
 LRESULT CTrafficSwarmDlg::OnChildClosing(WPARAM wParam, LPARAM lParam)
 {
-	if (wParam == (WPARAM)m_pSandboxWnd)
+	auto iter = m_setChildren.find(reinterpret_cast<CWnd*>(wParam));
+	if (iter != m_setChildren.end())
 	{
-		delete m_pSandboxWnd;
-		m_pSandboxWnd = nullptr;
+		delete *iter;
+		m_setChildren.erase(iter);
 	}
 	return TRUE;
 }

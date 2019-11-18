@@ -24,7 +24,7 @@ public:
 // Implementation
 protected:
 	HICON m_hIcon;
-	CSandboxWnd* m_pSandboxWnd;
+	std::unordered_set<CWnd *> m_setChildren;
 
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
