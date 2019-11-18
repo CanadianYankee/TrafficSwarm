@@ -1,8 +1,9 @@
 #include "pch.h"
 #include "DXSandbox.h"
+#include "DXUtils.h"
 
 CDXSandbox::CDXSandbox() :
-	m_hMyWindow(NULL),
+	m_pMyWindow(nullptr),
 	m_iClientWidth(0),
 	m_iClientHeight(0),
 	m_fAspectRatio(1.0),
@@ -11,23 +12,23 @@ CDXSandbox::CDXSandbox() :
 	
 }
 
-BOOL CDXSandbox::Initialize(HWND hWnd)
+BOOL CDXSandbox::Initialize(CWnd *pWnd)
 {
 	HRESULT hr = S_OK;
 	BOOL bSuccess = TRUE;
 
-	if (!hWnd)
+	if (!pWnd)
 	{
 		assert(false);
 		return FALSE;
 	}
 
 	RECT rcClientArea;
-	bSuccess = ::GetClientRect(hWnd, &rcClientArea);
-	if (!bSuccess || !rcClientArea.right || !rcClientArea.bottom)
+	pWnd->GetClientRect(&rcClientArea);
+	if (!rcClientArea.right || !rcClientArea.bottom)
 		return FALSE;
 
-	m_hMyWindow = hWnd;
+	m_pMyWindow = pWnd;
 	m_iClientWidth = rcClientArea.right;
 	m_iClientHeight = rcClientArea.bottom;
 	m_fAspectRatio = (float)m_iClientWidth / (float)m_iClientHeight;
@@ -70,7 +71,7 @@ HRESULT CDXSandbox::InitDirect3D()
 	sd.SampleDesc.Quality = 0;
 	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	sd.BufferCount = 1;
-	sd.OutputWindow = m_hMyWindow;
+	sd.OutputWindow = m_pMyWindow->GetSafeHwnd();
 	sd.Windowed = TRUE;
 	sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	sd.Flags = 0;
@@ -190,6 +191,10 @@ BOOL CDXSandbox::OnResize()
 		}
 	}
 
+	float fZoom = 1.0f / 100.0f;
+	XMMATRIX mat = XMMatrixScaling(fZoom, fZoom * m_fAspectRatio, fZoom);
+	XMStoreFloat4x4(&(m_sFrameVariables.fv_ViewTransform), XMMatrixTranspose(mat));
+
 	assert(SUCCEEDED(hr));
 
 	return SUCCEEDED(hr);
@@ -221,6 +226,9 @@ void CDXSandbox::Tick()
 
 BOOL CDXSandbox::UpdateScene(float dt, float T)
 {
+	m_sFrameVariables.g_fElapsedTime = dt;
+	m_sFrameVariables.g_fGlobalTime = T;
+
 	return TRUE;
 }
 

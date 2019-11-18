@@ -47,7 +47,7 @@ void CSandboxWnd::OnShowWindow(BOOL bShow, UINT nStatus)
 		if (!m_pSandbox)
 		{
 			m_pSandbox = new CDXSandbox();
-			bSuccess = m_pSandbox->Initialize(GetSafeHwnd());
+			bSuccess = m_pSandbox->Initialize((CWnd *)this);
 			if (!bSuccess)
 			{
 				ASSERT(FALSE);

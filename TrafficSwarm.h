@@ -27,6 +27,9 @@ public:
 // Implementation
 
 	DECLARE_MESSAGE_MAP()
+
+private:
+	void FindPaths();
 };
 
 extern CTrafficSwarmApp theApp;
