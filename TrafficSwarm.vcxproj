@@ -227,6 +227,8 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AgentCourse.h" />
+    <ClInclude Include="AgentEnsemble.h" />
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="DXUtils.h" />
     <ClInclude Include="SandboxWnd.h" />
@@ -240,6 +242,8 @@
     <ClInclude Include="TrafficSwarmDlg.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AgentCourse.cpp" />
+    <ClCompile Include="AgentEnsemble.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="DXUtils.cpp" />
     <ClCompile Include="SandboxWnd.cpp" />
