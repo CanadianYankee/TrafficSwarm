@@ -5,6 +5,8 @@
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 
+class CAgentCourse;
+
 //
 // CDXSandbox does all of the DirectX initialization and rendering. 
 //
@@ -21,18 +23,11 @@ public:
 
 protected:
 	HRESULT InitDirect3D();
+	HRESULT LoadShaders();
+	HRESULT PrepareShaderConstants();
 	BOOL OnResize();
 	BOOL UpdateScene(float dt, float T);
 	BOOL RenderScene();
-
-	struct WORLD_PHYSICS
-	{
-		WORLD_PHYSICS() : g_fParticleRadius(1.0f), wpfDummy0(0.0f), wpfDummy1(0.0f), wpfDummy2(0.0f) {}
-		float g_fParticleRadius;
-		float wpfDummy0;
-		float wpfDummy1;
-		float wpfDummy2;
-	};
 
 	struct FRAME_VARIABLES
 	{
@@ -53,7 +48,8 @@ protected:
 	bool m_bRunning;
 	CDrawTimer m_Timer;
 
-	WORLD_PHYSICS m_sWorldPhysics;
+	CAgentCourse* m_pAgentCourse;
+
 	FRAME_VARIABLES m_sFrameVariables;
 
 	ComPtr<ID3D11Device> m_pD3DDevice;
@@ -63,4 +59,14 @@ protected:
 	ComPtr<ID3D11RenderTargetView> m_pRenderTargetView;
 	ComPtr<ID3D11DepthStencilView> m_pDepthStencilView;
 	D3D11_VIEWPORT m_ScreenViewport;
+
+	ComPtr<ID3D11VertexShader> m_pAgentVS;
+	ComPtr<ID3D11InputLayout> m_pAgentIL;
+	ComPtr<ID3D11GeometryShader> m_pAgentGS;
+	ComPtr<ID3D11PixelShader> m_pAgentPS;
+
+	ComPtr<ID3D11Buffer> m_pCBFrameVariables;
+
+	ComPtr<ID3D11ShaderResourceView> m_pSRVParticleDraw;
+	ComPtr<ID3D11SamplerState> m_pTextureSampler;
 };

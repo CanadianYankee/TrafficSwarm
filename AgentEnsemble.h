@@ -1,6 +1,6 @@
 #pragma once
 
-extern class CAgentCourse;
+class CAgentCourse;
 
 // This class defines the genome of the agents and keeps 
 // track of spawning, scoring, and destroying them.  It 

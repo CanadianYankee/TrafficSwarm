@@ -1,13 +1,15 @@
 #include "pch.h"
 #include "DXSandbox.h"
 #include "DXUtils.h"
+#include "AgentCourse.h"
 
 CDXSandbox::CDXSandbox() :
 	m_pMyWindow(nullptr),
 	m_iClientWidth(0),
 	m_iClientHeight(0),
 	m_fAspectRatio(1.0),
-	m_bRunning(false)
+	m_bRunning(false),
+	m_pAgentCourse(nullptr)
 {
 	
 }
@@ -36,14 +38,34 @@ BOOL CDXSandbox::Initialize(CWnd *pWnd)
 	m_Timer.Reset();
 
 	hr = InitDirect3D();
-
 	bSuccess = SUCCEEDED(hr);
-	if (bSuccess)
+	if (!bSuccess) return bSuccess;
+
+	hr = LoadShaders();
+	if (FAILED(hr))
 	{
-		bSuccess = TRUE; // InitSaverData();  
-		if (bSuccess)
-			m_bRunning = true;
+		CleanUp();
+		return FALSE;
 	}
+
+	m_pAgentCourse = new CAgentCourse(true);
+	hr = m_pAgentCourse->Initialize(m_pD3DDevice, _T(""));
+	if (FAILED(hr))
+	{
+		CleanUp();
+		return FALSE;
+	}
+
+	hr = PrepareShaderConstants();
+	if (FAILED(hr))
+	{
+		CleanUp();
+		return FALSE;
+	}
+
+	bSuccess = OnResize();
+	if(bSuccess)
+		m_bRunning = true;
 
 	return bSuccess;
 }
@@ -88,10 +110,123 @@ HRESULT CDXSandbox::InitDirect3D()
 	}
 	assert(SUCCEEDED(hr));
 
+	return hr;
+}
+
+HRESULT CDXSandbox::LoadShaders()
+{
+	HRESULT hr = S_OK;
+
+	// Shaders for rendering
+
+	ComPtr<ID3D11DeviceChild> pShader;
+
+	const D3D11_INPUT_ELEMENT_DESC vertexDesc[] =
+	{
+		{ "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	};
+	CDXUtils::VS_INPUTLAYOUTSETUP ILS;
+	ILS.pInputDesc = vertexDesc;
+	ILS.NumElements = ARRAYSIZE(vertexDesc);
+	ILS.pInputLayout = NULL;
+	hr = CDXUtils::LoadShader(m_pD3DDevice, CDXUtils::VertexShader, _T("AgentVS.cso"), nullptr, &pShader, &ILS);
 	if (SUCCEEDED(hr))
 	{
-		hr = OnResize() ? S_OK : E_FAIL;
+		hr = pShader.As<ID3D11VertexShader>(&m_pAgentVS);
+		m_pAgentIL = ILS.pInputLayout;
+		ILS.pInputLayout->Release();
+		D3DDEBUGNAME(m_pAgentVS, "Agent VS");
+		D3DDEBUGNAME(m_pAgentIL, "Agent IL");
 	}
+	if (FAILED(hr)) return hr;
+
+	hr = CDXUtils::LoadShader(m_pD3DDevice, CDXUtils::GeometryShader, _T("AgentGS.cso"), nullptr, &pShader);
+	if (SUCCEEDED(hr))
+	{
+		hr = pShader.As<ID3D11GeometryShader>(&m_pAgentGS);
+		D3DDEBUGNAME(m_pAgentGS, "Agent GS");
+	}
+	if (FAILED(hr)) return hr;
+
+	hr = CDXUtils::LoadShader(m_pD3DDevice, CDXUtils::PixelShader, L"AgentPS.cso", nullptr, &pShader);
+	if (SUCCEEDED(hr))
+	{
+		hr = pShader.As<ID3D11PixelShader>(&m_pAgentPS);
+		D3DDEBUGNAME(m_pAgentPS, "Agent PS");
+	}
+	if (FAILED(hr)) return hr;
+
+//	hr = LoadShader(ComputeShader, L"ConfigSpringsCS.cso", nullptr, &pShader);
+//	if (SUCCEEDED(hr))
+//	{
+//		hr = pShader.As<ID3D11ComputeShader>(&m_pConfigSpringsCS);
+//		D3DDEBUGNAME(m_pConfigSpringsCS, "Config Springs CS");
+//	}
+//	if (FAILED(hr)) return hr;
+
+//	hr = LoadShader(ComputeShader, L"PhysicsCS.cso", nullptr, &pShader);
+//	if (SUCCEEDED(hr))
+//	{
+//		hr = pShader.As<ID3D11ComputeShader>(&m_pPhysicsCS);
+//		D3DDEBUGNAME(m_pPhysicsCS, "Physics CS");
+//	}
+//	if (FAILED(hr)) return hr;
+
+	return hr;
+}
+
+HRESULT CDXSandbox::PrepareShaderConstants()
+{
+	HRESULT hr = S_OK;
+
+	// Frame variables will be set for each render frame
+	D3D11_BUFFER_DESC Desc;
+	Desc.Usage = D3D11_USAGE_DYNAMIC;
+	Desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	Desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	Desc.MiscFlags = 0;
+	Desc.ByteWidth = sizeof(FRAME_VARIABLES);
+	hr = m_pD3DDevice->CreateBuffer(&Desc, NULL, &m_pCBFrameVariables);
+	if (FAILED(hr)) return hr;
+	D3DDEBUGNAME(m_pCBFrameVariables, "FrameVariables CB");
+
+	// Load the particle drawing texture
+	hr = CDXUtils::LoadTexture(m_pD3DDevice, _T("RoundAgent.dds"), nullptr, &m_pSRVParticleDraw);
+	if (FAILED(hr)) return hr;
+	D3DDEBUGNAME(m_pSRVParticleDraw, "ParticleDraw SRV");
+
+	// Set up the texture sampler, blend state, and depth/stencil state
+	D3D11_SAMPLER_DESC SamplerDesc;
+	ZeroMemory(&SamplerDesc, sizeof(SamplerDesc));
+	SamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	SamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	SamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	SamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	hr = m_pD3DDevice->CreateSamplerState(&SamplerDesc, &m_pTextureSampler);
+	if (FAILED(hr)) return hr;
+	D3DDEBUGNAME(m_pTextureSampler, "Texture Sampler");
+
+//	D3D11_BLEND_DESC BlendStateDesc;
+//	ZeroMemory(&BlendStateDesc, sizeof(BlendStateDesc));
+//	BlendStateDesc.RenderTarget[0].BlendEnable = TRUE;
+//	BlendStateDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+//	BlendStateDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+//	BlendStateDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+//	BlendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+//	BlendStateDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ZERO;
+//	BlendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+//	BlendStateDesc.RenderTarget[0].RenderTargetWriteMask = 0x0F;
+//	hr = m_pD3DDevice->CreateBlendState(&BlendStateDesc, &m_pRenderBlendState);
+//	if (FAILED(hr)) return hr;
+//	D3DDEBUGNAME(m_pTextureSampler, "Render Blend State");
+
+//	D3D11_DEPTH_STENCIL_DESC DepthStencilDesc;
+//	ZeroMemory(&DepthStencilDesc, sizeof(DepthStencilDesc));
+//	DepthStencilDesc.DepthEnable = FALSE;
+//	DepthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+//	hr = m_pD3DDevice->CreateDepthStencilState(&DepthStencilDesc, &m_pRenderDepthState);
+//	if (FAILED(hr)) return hr;
+//	D3DDEBUGNAME(m_pTextureSampler, "Render Depth State");
 
 	return hr;
 }
@@ -191,7 +326,7 @@ BOOL CDXSandbox::OnResize()
 		}
 	}
 
-	float fZoom = 1.0f / 100.0f;
+	float fZoom = 1.0f / m_pAgentCourse->GetCourseLength();
 	XMMATRIX mat = XMMatrixScaling(fZoom, fZoom * m_fAspectRatio, fZoom);
 	XMStoreFloat4x4(&(m_sFrameVariables.fv_ViewTransform), XMMatrixTranspose(mat));
 
@@ -229,6 +364,14 @@ BOOL CDXSandbox::UpdateScene(float dt, float T)
 	m_sFrameVariables.g_fElapsedTime = dt;
 	m_sFrameVariables.g_fGlobalTime = T;
 
+	HRESULT hr = CDXUtils::MapDataIntoBuffer(m_pD3DContext, &m_sFrameVariables, sizeof(m_sFrameVariables), m_pCBFrameVariables);
+	if (FAILED(hr))
+	{
+		assert(false);
+		return FALSE;
+	}
+
+
 	return TRUE;
 }
 
@@ -237,9 +380,8 @@ BOOL CDXSandbox::RenderScene()
 	assert(m_pD3DContext && m_pSwapChain);
 
 	float colorBlack[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	float colorRandom[4] = { rand() / (float)RAND_MAX, rand() / (float)RAND_MAX, rand() / (float)RAND_MAX, 1.0f };
 
-	m_pD3DContext->ClearRenderTargetView(m_pRenderTargetView.Get(), colorRandom);
+	m_pD3DContext->ClearRenderTargetView(m_pRenderTargetView.Get(), colorBlack);
 	m_pD3DContext->ClearDepthStencilView(m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	// Cache initial state of drawing context
@@ -250,43 +392,37 @@ BOOL CDXSandbox::RenderScene()
 //	m_pD3DContext->OMGetBlendState(&oldBlendState, &oldBlendFactor.x, &oldSampleMask);
 //	m_pD3DContext->OMGetDepthStencilState(&oldDepthStencilState, &oldStencilRef);
 
-	// Set the render shaders
-//	m_pD3DContext->VSSetShader(m_pRenderVS.Get(), NULL, 0);
-//	m_pD3DContext->GSSetShader(m_pRenderGS.Get(), NULL, 0);
-//	m_pD3DContext->PSSetShader(m_pRenderPS.Get(), NULL, 0);
+	// Set the render shaders for the agents
+	m_pD3DContext->VSSetShader(m_pAgentVS.Get(), NULL, 0);
+	m_pD3DContext->GSSetShader(m_pAgentGS.Get(), NULL, 0);
+	m_pD3DContext->PSSetShader(m_pAgentPS.Get(), NULL, 0);
 
 	// Set IA parameters
-//	m_pD3DContext->IASetInputLayout(m_pRenderIL.Get());
+	m_pD3DContext->IASetInputLayout(m_pAgentIL.Get());
 
-//	UINT stride = sizeof(COLOR_VERTEX);
-//	UINT offset = 0;
-//	m_pD3DContext->IASetVertexBuffers(0, 1, m_pVBParticleColors.GetAddressOf(), &stride, &offset);
-//	m_pD3DContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
-
-	// Set vertex shader resources
-//	m_pD3DContext->VSSetShaderResources(0, 1, m_pSRVPosVel.GetAddressOf());
+	m_pAgentCourse->PrepareAgentRender(m_pD3DContext);
 
 	// Set geometry shader resources (note that frame variables should have been updated in the compute function)
-//	ID3D11Buffer* GSbuffers[2] = { m_pCBWorldPhysics.Get(), m_pCBFrameVariables.Get() };
-//	m_pD3DContext->GSSetConstantBuffers(0, 2, GSbuffers);
+	ID3D11Buffer* GSbuffers[2] = { m_pAgentCourse->GetCBWorldPhysicsPtr(), m_pCBFrameVariables.Get() };
+	m_pD3DContext->GSSetConstantBuffers(0, 2, GSbuffers);
 
 	// Set pixel shader resources
-//	m_pD3DContext->PSSetShaderResources(0, 1, m_pSRVParticleDraw.GetAddressOf());
-//	m_pD3DContext->PSSetSamplers(0, 1, m_pTextureSampler.GetAddressOf());
-//	m_pD3DContext->PSSetConstantBuffers(0, 1, m_pCBWorldPhysics.GetAddressOf());
+	m_pD3DContext->PSSetShaderResources(0, 1, m_pSRVParticleDraw.GetAddressOf());
+	m_pD3DContext->PSSetSamplers(0, 1, m_pTextureSampler.GetAddressOf());
+	m_pD3DContext->PSSetConstantBuffers(0, 1, m_pAgentCourse->GetCBWorldPhysicsAddress());
 
 	// Set OM parameters
 //	m_pD3DContext->OMSetBlendState(m_pRenderBlendState.Get(), colorBlack, 0xFFFFFFFF);
 //	m_pD3DContext->OMSetDepthStencilState(m_pRenderDepthState.Get(), 0);
 
 	// Draw the particles
-//	m_pD3DContext->Draw(m_ConfigData.m_iParticleCount, 0);
+	m_pD3DContext->Draw(m_pAgentCourse->GetAgentCount(), 0);
 
 	// Restore the initial state
-//	ID3D11ShaderResourceView* pSRVNULL[1] = { nullptr };
-//	m_pD3DContext->VSSetShaderResources(0, 1, pSRVNULL);
-//	m_pD3DContext->PSSetShaderResources(0, 1, pSRVNULL);
-//	m_pD3DContext->GSSetShader(NULL, NULL, 0);
+	ID3D11ShaderResourceView* pSRVNULL[1] = { nullptr };
+	m_pD3DContext->VSSetShaderResources(0, 1, pSRVNULL);
+	m_pD3DContext->PSSetShaderResources(0, 1, pSRVNULL);
+	m_pD3DContext->GSSetShader(NULL, NULL, 0);
 //	m_pD3DContext->OMSetBlendState(oldBlendState.Get(), &oldBlendFactor.x, oldSampleMask);
 //	m_pD3DContext->OMSetDepthStencilState(oldDepthStencilState.Get(), oldStencilRef);
 
@@ -297,4 +433,9 @@ BOOL CDXSandbox::RenderScene()
 
 void CDXSandbox::CleanUp()
 {
+	if (m_pAgentCourse)
+	{
+		delete m_pAgentCourse;
+		m_pAgentCourse = nullptr;
+	}
 }
