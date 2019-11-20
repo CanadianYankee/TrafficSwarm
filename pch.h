@@ -13,7 +13,10 @@
 #include <d3d11.h>
 #include <DirectXMath.h>
 #include <wrl/client.h>
+
 #include <unordered_set>
+#include <vector>
+#include <fstream>
 
 #define WM_CHILD_CLOSING WM_USER+10
 

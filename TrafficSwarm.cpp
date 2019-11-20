@@ -11,6 +11,8 @@
 #define new DEBUG_NEW
 #endif
 
+// Path to our app so we can locate resources
+CString g_strBasePath;
 
 // CTrafficSwarmApp
 
@@ -60,14 +62,8 @@ BOOL CTrafficSwarmApp::InitInstance()
 	// Activate "Windows Native" visual manager for enabling themes in MFC controls
 	CMFCVisualManager::SetDefaultManager(RUNTIME_CLASS(CMFCVisualManagerWindows));
 
-	// Standard initialization
-	// If you are not using these features and wish to reduce the size
-	// of your final executable, you should remove from the following
-	// the specific initialization routines you do not need
-	// Change the registry key under which our settings are stored
-	// TODO: You should modify this string to be something appropriate
-	// such as the name of your company or organization
-	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
+	// Find our path for loading resources
+	FindPaths();
 
 	CTrafficSwarmDlg dlg;
 	m_pMainWnd = &dlg;
@@ -103,3 +99,15 @@ BOOL CTrafficSwarmApp::InitInstance()
 	return FALSE;
 }
 
+void CTrafficSwarmApp::FindPaths()
+{
+	TCHAR path[_MAX_PATH];
+	TCHAR drive[_MAX_DRIVE];
+	TCHAR dir[_MAX_DIR];
+	TCHAR fname[_MAX_FNAME];
+	TCHAR ext[_MAX_EXT];
+	GetModuleFileName(NULL, path, _MAX_PATH);
+	_tsplitpath_s(path, drive, _MAX_DRIVE, dir, _MAX_DIR, fname, _MAX_FNAME, ext, _MAX_EXT);
+	_tmakepath_s(path, _MAX_PATH, drive, dir, NULL, NULL);
+	g_strBasePath = path;
+}
