@@ -206,27 +206,27 @@ HRESULT CDXSandbox::PrepareShaderConstants()
 	if (FAILED(hr)) return hr;
 	D3DDEBUGNAME(m_pTextureSampler, "Texture Sampler");
 
-//	D3D11_BLEND_DESC BlendStateDesc;
-//	ZeroMemory(&BlendStateDesc, sizeof(BlendStateDesc));
-//	BlendStateDesc.RenderTarget[0].BlendEnable = TRUE;
-//	BlendStateDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-//	BlendStateDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-//	BlendStateDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
-//	BlendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-//	BlendStateDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ZERO;
-//	BlendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
-//	BlendStateDesc.RenderTarget[0].RenderTargetWriteMask = 0x0F;
-//	hr = m_pD3DDevice->CreateBlendState(&BlendStateDesc, &m_pRenderBlendState);
-//	if (FAILED(hr)) return hr;
-//	D3DDEBUGNAME(m_pTextureSampler, "Render Blend State");
+	D3D11_BLEND_DESC BlendStateDesc;
+	ZeroMemory(&BlendStateDesc, sizeof(BlendStateDesc));
+	BlendStateDesc.RenderTarget[0].BlendEnable = TRUE;
+	BlendStateDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	BlendStateDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	BlendStateDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+	BlendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	BlendStateDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ZERO;
+	BlendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+	BlendStateDesc.RenderTarget[0].RenderTargetWriteMask = 0x0F;
+	hr = m_pD3DDevice->CreateBlendState(&BlendStateDesc, &m_pRenderBlendState);
+	if (FAILED(hr)) return hr;
+	D3DDEBUGNAME(m_pTextureSampler, "Render Blend State");
 
-//	D3D11_DEPTH_STENCIL_DESC DepthStencilDesc;
-//	ZeroMemory(&DepthStencilDesc, sizeof(DepthStencilDesc));
-//	DepthStencilDesc.DepthEnable = FALSE;
-//	DepthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-//	hr = m_pD3DDevice->CreateDepthStencilState(&DepthStencilDesc, &m_pRenderDepthState);
-//	if (FAILED(hr)) return hr;
-//	D3DDEBUGNAME(m_pTextureSampler, "Render Depth State");
+	D3D11_DEPTH_STENCIL_DESC DepthStencilDesc;
+	ZeroMemory(&DepthStencilDesc, sizeof(DepthStencilDesc));
+	DepthStencilDesc.DepthEnable = FALSE;
+	DepthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	hr = m_pD3DDevice->CreateDepthStencilState(&DepthStencilDesc, &m_pRenderDepthState);
+	if (FAILED(hr)) return hr;
+	D3DDEBUGNAME(m_pTextureSampler, "Render Depth State");
 
 	return hr;
 }
@@ -263,6 +263,12 @@ void CDXSandbox::Resume(LPRECT pNewSize /* = NULL*/)
 BOOL CDXSandbox::OnResize()
 {
 	HRESULT hr = S_OK;
+
+	RECT rcClientArea;
+	m_pMyWindow->GetClientRect(&rcClientArea);
+	m_iClientWidth = rcClientArea.right;
+	m_iClientHeight = rcClientArea.bottom;
+	m_fAspectRatio = (float)m_iClientWidth / (float)m_iClientHeight;
 
 	if(m_pSwapChain)
 	{
@@ -326,8 +332,12 @@ BOOL CDXSandbox::OnResize()
 		}
 	}
 
-	float fZoom = 1.0f / m_pAgentCourse->GetCourseLength();
-	XMMATRIX mat = XMMatrixScaling(fZoom, fZoom * m_fAspectRatio, fZoom);
+	float fLen = m_pAgentCourse->GetCourseLength() * 0.25;
+	XMFLOAT2 f2Center = XMFLOAT2(fLen, 0.0f);
+	XMFLOAT2 f2Scale = XMFLOAT2(1.0f / fLen, 1.0f * m_fAspectRatio / fLen);
+	XMVECTOR vCenter = XMLoadFloat2(&f2Center);
+	XMVECTOR vScale = XMLoadFloat2(&f2Scale);
+	XMMATRIX mat = XMMatrixTransformation2D(vCenter, 0.0f, vScale, vCenter, 0.0f, -vCenter);
 	XMStoreFloat4x4(&(m_sFrameVariables.fv_ViewTransform), XMMatrixTranspose(mat));
 
 	assert(SUCCEEDED(hr));
@@ -385,12 +395,12 @@ BOOL CDXSandbox::RenderScene()
 	m_pD3DContext->ClearDepthStencilView(m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	// Cache initial state of drawing context
-//	ComPtr<ID3D11BlendState> oldBlendState;
-//	ComPtr<ID3D11DepthStencilState> oldDepthStencilState;
-//	UINT oldSampleMask, oldStencilRef;
-//	XMFLOAT4 oldBlendFactor;
-//	m_pD3DContext->OMGetBlendState(&oldBlendState, &oldBlendFactor.x, &oldSampleMask);
-//	m_pD3DContext->OMGetDepthStencilState(&oldDepthStencilState, &oldStencilRef);
+	ComPtr<ID3D11BlendState> oldBlendState;
+	ComPtr<ID3D11DepthStencilState> oldDepthStencilState;
+	UINT oldSampleMask, oldStencilRef;
+	XMFLOAT4 oldBlendFactor;
+	m_pD3DContext->OMGetBlendState(&oldBlendState, &oldBlendFactor.x, &oldSampleMask);
+	m_pD3DContext->OMGetDepthStencilState(&oldDepthStencilState, &oldStencilRef);
 
 	// Set the render shaders for the agents
 	m_pD3DContext->VSSetShader(m_pAgentVS.Get(), NULL, 0);
@@ -412,8 +422,8 @@ BOOL CDXSandbox::RenderScene()
 	m_pD3DContext->PSSetConstantBuffers(0, 1, m_pAgentCourse->GetCBWorldPhysicsAddress());
 
 	// Set OM parameters
-//	m_pD3DContext->OMSetBlendState(m_pRenderBlendState.Get(), colorBlack, 0xFFFFFFFF);
-//	m_pD3DContext->OMSetDepthStencilState(m_pRenderDepthState.Get(), 0);
+	m_pD3DContext->OMSetBlendState(m_pRenderBlendState.Get(), colorBlack, 0xFFFFFFFF);
+	m_pD3DContext->OMSetDepthStencilState(m_pRenderDepthState.Get(), 0);
 
 	// Draw the particles
 	m_pD3DContext->Draw(m_pAgentCourse->GetAgentCount(), 0);
@@ -423,8 +433,8 @@ BOOL CDXSandbox::RenderScene()
 	m_pD3DContext->VSSetShaderResources(0, 1, pSRVNULL);
 	m_pD3DContext->PSSetShaderResources(0, 1, pSRVNULL);
 	m_pD3DContext->GSSetShader(NULL, NULL, 0);
-//	m_pD3DContext->OMSetBlendState(oldBlendState.Get(), &oldBlendFactor.x, oldSampleMask);
-//	m_pD3DContext->OMSetDepthStencilState(oldDepthStencilState.Get(), oldStencilRef);
+	m_pD3DContext->OMSetBlendState(oldBlendState.Get(), &oldBlendFactor.x, oldSampleMask);
+	m_pD3DContext->OMSetDepthStencilState(oldDepthStencilState.Get(), oldStencilRef);
 
 	HRESULT hr = m_pSwapChain->Present(1, 0);
 

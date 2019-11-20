@@ -69,4 +69,6 @@ protected:
 
 	ComPtr<ID3D11ShaderResourceView> m_pSRVParticleDraw;
 	ComPtr<ID3D11SamplerState> m_pTextureSampler;
+	ComPtr<ID3D11BlendState> m_pRenderBlendState;
+	ComPtr<ID3D11DepthStencilState> m_pRenderDepthState;
 };

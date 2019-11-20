@@ -51,10 +51,10 @@ HRESULT CAgentCourse::InitializeAgentBuffers()
 	// Initial position/velocity data
 	std::vector<AGENT_POSVEL> vecPosVel;
 	vecPosVel.resize(MAX_AGENTS);
-	vecPosVel[0].Position = XMFLOAT4(25.0f, 25.0f, 0.0f, 0.0f);
-	vecPosVel[1].Position = XMFLOAT4(25.0f, -25.0f, 0.0f, 0.0f);
-	vecPosVel[2].Position = XMFLOAT4(75.0f, 25.0f, 0.0f, 0.0f);
-	vecPosVel[3].Position = XMFLOAT4(75.0f, -25.0f, 0.0f, 0.0f);
+	vecPosVel[0].Position = XMFLOAT4(5.0f, 25.0f, 0.0f, 0.0f);
+	vecPosVel[1].Position = XMFLOAT4(0.0f, -25.0f, 0.0f, 0.0f);
+	vecPosVel[2].Position = XMFLOAT4(100.0f, 25.0f, 0.0f, 0.0f);
+	vecPosVel[3].Position = XMFLOAT4(95.0f, -25.0f, 0.0f, 0.0f);
 	vecPosVel[0].Velocity = XMFLOAT4(-1.0f, 1.0f, 0.0f, 0.0f);
 	vecPosVel[1].Velocity = XMFLOAT4(-1.0f, -1.0f, 0.0f, 0.0f);
 	vecPosVel[2].Velocity = XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f);

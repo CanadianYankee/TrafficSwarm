@@ -41,7 +41,7 @@ public:
 protected:
 	struct WORLD_PHYSICS
 	{
-		WORLD_PHYSICS() : g_fParticleRadius(50.0f), wpfDummy0(0.0f), wpfDummy1(0.0f), wpfDummy2(0.0f) {}
+		WORLD_PHYSICS() : g_fParticleRadius(0.5f), wpfDummy0(0.0f), wpfDummy1(0.0f), wpfDummy2(0.0f) {}
 		float g_fParticleRadius;
 		float wpfDummy0;
 		float wpfDummy1;
