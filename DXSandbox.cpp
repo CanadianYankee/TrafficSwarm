@@ -14,6 +14,11 @@ CDXSandbox::CDXSandbox() :
 	
 }
 
+CDXSandbox::~CDXSandbox()
+{
+	CleanUp();
+}
+
 BOOL CDXSandbox::Initialize(CWnd *pWnd)
 {
 	HRESULT hr = S_OK;

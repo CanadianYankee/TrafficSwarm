@@ -7,7 +7,6 @@
 #define IDS_ABOUTBOX                    101
 #define IDD_TRAFFICSWARM_DIALOG         102
 #define IDR_MAINFRAME                   128
-#define IDC_BUTTON1                     1000
 #define IDC_BUTTON_RUNSANDBOX           1000
 
 // Next default values for new objects

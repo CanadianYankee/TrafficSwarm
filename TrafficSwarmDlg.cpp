@@ -68,6 +68,7 @@ BEGIN_MESSAGE_MAP(CTrafficSwarmDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON_RUNSANDBOX, &CTrafficSwarmDlg::OnBnClickedButtonRunsandbox)
 	ON_MESSAGE(WM_CHILD_CLOSING, OnChildClosing)
+	ON_BN_CLICKED(IDCANCEL, &CTrafficSwarmDlg::OnBnClickedCancel)
 END_MESSAGE_MAP()
 
 
@@ -176,4 +177,15 @@ LRESULT CTrafficSwarmDlg::OnChildClosing(WPARAM wParam, LPARAM lParam)
 		m_setChildren.erase(iter);
 	}
 	return TRUE;
+}
+
+void CTrafficSwarmDlg::OnBnClickedCancel()
+{
+	for (auto iter = m_setChildren.begin(); iter != m_setChildren.end(); iter++)
+	{
+		delete* iter;
+	}
+	m_setChildren.clear();
+
+	CDialogEx::OnCancel();
 }

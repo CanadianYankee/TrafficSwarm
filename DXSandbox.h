@@ -14,6 +14,7 @@ class CDXSandbox
 {
 public:
 	CDXSandbox();
+	~CDXSandbox();
 
 	BOOL Initialize(CWnd *pWnd);
 	void CleanUp();
