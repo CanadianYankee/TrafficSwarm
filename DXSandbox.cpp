@@ -11,7 +11,6 @@ CDXSandbox::CDXSandbox() :
 	m_bRunning(false),
 	m_pAgentCourse(nullptr)
 {
-	
 }
 
 CDXSandbox::~CDXSandbox()
@@ -46,15 +45,15 @@ BOOL CDXSandbox::Initialize(CWnd *pWnd)
 	bSuccess = SUCCEEDED(hr);
 	if (!bSuccess) return bSuccess;
 
-	hr = LoadShaders();
+	m_pAgentCourse = new CAgentCourse(true);
+	hr = m_pAgentCourse->Initialize(m_pD3DDevice, _T(""));
 	if (FAILED(hr))
 	{
 		CleanUp();
 		return FALSE;
 	}
 
-	m_pAgentCourse = new CAgentCourse(true);
-	hr = m_pAgentCourse->Initialize(m_pD3DDevice, _T(""));
+	hr = m_pAgentCourse->LoadShaders();
 	if (FAILED(hr))
 	{
 		CleanUp();
@@ -114,68 +113,6 @@ HRESULT CDXSandbox::InitDirect3D()
 			hr = E_FAIL;
 	}
 	assert(SUCCEEDED(hr));
-
-	return hr;
-}
-
-HRESULT CDXSandbox::LoadShaders()
-{
-	HRESULT hr = S_OK;
-
-	// Shaders for rendering
-
-	ComPtr<ID3D11DeviceChild> pShader;
-
-	const D3D11_INPUT_ELEMENT_DESC vertexAgentDesc[] =
-	{
-		{ "COLOR",    0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-	};
-	CDXUtils::VS_INPUTLAYOUTSETUP ILS;
-	ILS.pInputDesc = vertexAgentDesc;
-	ILS.NumElements = ARRAYSIZE(vertexAgentDesc);
-	ILS.pInputLayout = NULL;
-	hr = CDXUtils::LoadShader(m_pD3DDevice, CDXUtils::VertexShader, _T("AgentVS.cso"), nullptr, &pShader, &ILS);
-	if (SUCCEEDED(hr))
-	{
-		hr = pShader.As<ID3D11VertexShader>(&m_pAgentVS);
-		m_pAgentIL = ILS.pInputLayout;
-		ILS.pInputLayout->Release();
-		D3DDEBUGNAME(m_pAgentVS, "Agent VS");
-		D3DDEBUGNAME(m_pAgentIL, "Agent IL");
-	}
-	if (FAILED(hr)) return hr;
-
-	hr = CDXUtils::LoadShader(m_pD3DDevice, CDXUtils::GeometryShader, _T("AgentGS.cso"), nullptr, &pShader);
-	if (SUCCEEDED(hr))
-	{
-		hr = pShader.As<ID3D11GeometryShader>(&m_pAgentGS);
-		D3DDEBUGNAME(m_pAgentGS, "Agent GS");
-	}
-	if (FAILED(hr)) return hr;
-
-	hr = CDXUtils::LoadShader(m_pD3DDevice, CDXUtils::PixelShader, L"AgentPS.cso", nullptr, &pShader);
-	if (SUCCEEDED(hr))
-	{
-		hr = pShader.As<ID3D11PixelShader>(&m_pAgentPS);
-		D3DDEBUGNAME(m_pAgentPS, "Agent PS");
-	}
-	if (FAILED(hr)) return hr;
-
-//	hr = LoadShader(ComputeShader, L"ConfigSpringsCS.cso", nullptr, &pShader);
-//	if (SUCCEEDED(hr))
-//	{
-//		hr = pShader.As<ID3D11ComputeShader>(&m_pConfigSpringsCS);
-//		D3DDEBUGNAME(m_pConfigSpringsCS, "Config Springs CS");
-//	}
-//	if (FAILED(hr)) return hr;
-
-//	hr = LoadShader(ComputeShader, L"PhysicsCS.cso", nullptr, &pShader);
-//	if (SUCCEEDED(hr))
-//	{
-//		hr = pShader.As<ID3D11ComputeShader>(&m_pPhysicsCS);
-//		D3DDEBUGNAME(m_pPhysicsCS, "Physics CS");
-//	}
-//	if (FAILED(hr)) return hr;
 
 	return hr;
 }
@@ -337,11 +274,9 @@ BOOL CDXSandbox::OnResize()
 		}
 	}
 
-	float fLen = m_pAgentCourse->GetCourseLength() * 0.25f;
-	XMFLOAT2 f2Center = XMFLOAT2(fLen, 0.0f);
-	XMFLOAT2 f2Scale = XMFLOAT2(1.0f / fLen, 1.0f * m_fAspectRatio / fLen);
-	XMVECTOR vCenter = XMLoadFloat2(&f2Center);
-	XMVECTOR vScale = XMLoadFloat2(&f2Scale);
+	float fLen = m_pAgentCourse->GetCourseLength() * 0.5f;
+	XMVECTOR vCenter = XMLoadFloat2(fLen, 0.0f);
+	XMVECTOR vScale = XMLoadFloat2(1.0f / fLen, 1.0f * m_fAspectRatio / fLen);
 	XMMATRIX mat = XMMatrixTransformation2D(vCenter, 0.0f, vScale, vCenter, 0.0f, -vCenter);
 	XMStoreFloat4x4(&(m_sFrameVariables.fv_ViewTransform), XMMatrixTranspose(mat));
 
@@ -406,37 +341,17 @@ BOOL CDXSandbox::RenderScene()
 	m_pD3DContext->OMGetBlendState(&oldBlendState, &oldBlendFactor.x, &oldSampleMask);
 	m_pD3DContext->OMGetDepthStencilState(&oldDepthStencilState, &oldStencilRef);
 
-	// Set the render shaders for the agents
-	m_pD3DContext->VSSetShader(m_pAgentVS.Get(), NULL, 0);
-	m_pD3DContext->GSSetShader(m_pAgentGS.Get(), NULL, 0);
-	m_pD3DContext->PSSetShader(m_pAgentPS.Get(), NULL, 0);
-
-	// Set IA parameters
-	m_pD3DContext->IASetInputLayout(m_pAgentIL.Get());
-
-	m_pAgentCourse->PrepareForRender(m_pD3DContext);
-
-	// Set geometry shader resources (note that frame variables should have been updated in the compute function)
-	ID3D11Buffer* GSbuffers[2] = { m_pAgentCourse->GetCBWorldPhysicsPtr(), m_pCBFrameVariables.Get() };
-	m_pD3DContext->GSSetConstantBuffers(0, 2, GSbuffers);
-
-	// Set pixel shader resources
-	m_pD3DContext->PSSetShaderResources(0, 1, m_pSRVParticleDraw.GetAddressOf());
-	m_pD3DContext->PSSetSamplers(0, 1, m_pTextureSampler.GetAddressOf());
-	m_pD3DContext->PSSetConstantBuffers(0, 1, m_pAgentCourse->GetCBWorldPhysicsAddress());
+	// Render the walls before setting blending
+	m_pAgentCourse->RenderWalls(m_pD3DContext, m_pCBFrameVariables);
 
 	// Set OM parameters
 	m_pD3DContext->OMSetBlendState(m_pRenderBlendState.Get(), colorBlack, 0xFFFFFFFF);
 	m_pD3DContext->OMSetDepthStencilState(m_pRenderDepthState.Get(), 0);
 
-	// Draw the particles
-	m_pD3DContext->Draw(m_pAgentCourse->GetAgentCount(), 0);
+	// Render the agents
+	m_pAgentCourse->RenderAgents(m_pD3DContext, m_pCBFrameVariables, m_pSRVParticleDraw, m_pTextureSampler);
 
 	// Restore the initial state
-	ID3D11ShaderResourceView* pSRVNULL[1] = { nullptr };
-	m_pD3DContext->VSSetShaderResources(0, 1, pSRVNULL);
-	m_pD3DContext->PSSetShaderResources(0, 1, pSRVNULL);
-	m_pD3DContext->GSSetShader(NULL, NULL, 0);
 	m_pD3DContext->OMSetBlendState(oldBlendState.Get(), &oldBlendFactor.x, oldSampleMask);
 	m_pD3DContext->OMSetDepthStencilState(oldDepthStencilState.Get(), oldStencilRef);
 

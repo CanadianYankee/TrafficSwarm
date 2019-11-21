@@ -12,14 +12,14 @@ struct PosVelo
 
 StructuredBuffer<PosVelo>   g_bufPosVelo;
 
-// Particle input to vertex shader 
+// Input to vertex shader 
 struct AgentVSIn
 {
 	float3	color	: COLOR;		// agent color
 	uint	id		: SV_VERTEXID;	// auto-generated vertex id
 };
 
-// Particle output from vertex shader
+// Output from vertex shader
 struct AgentVSOut
 {
 	float2 position	: POSITION0;	// agent 3D position

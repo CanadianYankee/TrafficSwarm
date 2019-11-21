@@ -3,6 +3,9 @@
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 
+inline XMVECTOR XMLoadFloat2(float x, float y) { XMFLOAT2 f2 = XMFLOAT2(x, y); return XMLoadFloat2(&f2); }
+inline XMFLOAT2 XMUnloadFloat2(const XMVECTOR &v) { XMFLOAT2 f2; XMStoreFloat2(&f2, v); return f2; }
+
 #if (defined(DEBUG) || defined(_DEBUG))
 #define D3DDEBUGNAME(pobj, name) pobj->SetPrivateData(WKPDID_D3DDebugObjectName, lstrlenA(name), name)
 #else

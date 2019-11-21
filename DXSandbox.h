@@ -24,7 +24,6 @@ public:
 
 protected:
 	HRESULT InitDirect3D();
-	HRESULT LoadShaders();
 	HRESULT PrepareShaderConstants();
 	BOOL OnResize();
 	BOOL UpdateScene(float dt, float T);
@@ -60,11 +59,6 @@ protected:
 	ComPtr<ID3D11RenderTargetView> m_pRenderTargetView;
 	ComPtr<ID3D11DepthStencilView> m_pDepthStencilView;
 	D3D11_VIEWPORT m_ScreenViewport;
-
-	ComPtr<ID3D11VertexShader> m_pAgentVS;
-	ComPtr<ID3D11InputLayout> m_pAgentIL;
-	ComPtr<ID3D11GeometryShader> m_pAgentGS;
-	ComPtr<ID3D11PixelShader> m_pAgentPS;
 
 	ComPtr<ID3D11Buffer> m_pCBFrameVariables;
 

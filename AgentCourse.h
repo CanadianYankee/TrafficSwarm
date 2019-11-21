@@ -20,8 +20,11 @@ public:
 	CAgentCourse(bool bVisualize);
 
 	HRESULT Initialize(ComPtr<ID3D11Device>& pD3DDevice, const CString &strJsonFile);
+	HRESULT LoadShaders();
+
 	typedef std::vector<XMFLOAT2> XMPOLYLINE;
 	struct AGENT_SOURCE_SINK {
+		AGENT_SOURCE_SINK() : vColor(0.0f, 0.0f, 0.0f) {}
 		XMFLOAT3 vColor;
 		XMPOLYLINE lineSource;
 		XMPOLYLINE lineSink;
@@ -34,9 +37,9 @@ public:
 	XMFLOAT3 GetColor(int iIndex) { return m_vecAgentSS[iIndex].vColor; }
 	XMFLOAT2 GetSpawnPoint(int iIndex);
 
-	void PrepareForRender(ComPtr<ID3D11DeviceContext>& pD3DContext);
-	ID3D11Buffer* GetCBWorldPhysicsPtr() { return m_pCBWorldPhysics.Get(); }
-	ID3D11Buffer** GetCBWorldPhysicsAddress() { return m_pCBWorldPhysics.GetAddressOf(); }
+	void RenderWalls(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables);
+	void RenderAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables,
+		const ComPtr<ID3D11ShaderResourceView>& pSRVParticleDraw, const ComPtr<ID3D11SamplerState>& pTextureSampler);
 
 protected:
 	struct WORLD_PHYSICS
@@ -61,6 +64,13 @@ protected:
 
 	struct WALL_SEGMENT
 	{
+		WALL_SEGMENT() : End1(0.0f, 0.0f), End2(0.0f, 0.0f) {}
+		WALL_SEGMENT(XMFLOAT2 p1, XMFLOAT2 p2)	{
+			// Align all segments in the same direction
+			if (p2.x > p1.x || (p1.x == p2.y && p1.y > p2.y)) { End1 = p1; End2 = p2; }
+			else { End1 = p2; End2 = p1; }
+		}
+
 		XMFLOAT2 End1;
 		XMFLOAT2 End2;
 	};
@@ -70,18 +80,22 @@ protected:
 		XMFLOAT2 Position;
 		XMFLOAT3 Color;
 	};
+	const XMFLOAT3 colorWall = XMFLOAT3(0.6f, 0.6f, 0.6f);
 
 	HRESULT InitializeHourglass();
 	HRESULT InitializeAgentBuffers();
 	HRESULT InitializeWallBuffers();
 
-	void MakeWallVertices(std::vector<WALL_VERTEX> &vecVerts, std::vector<UINT> &vecInds, const std::vector<WALL_SEGMENT> vecSegs);
+	void MakeSegmentVertices(std::vector<WALL_VERTEX> &vecVerts, std::vector<UINT> &vecInds, const std::vector<WALL_SEGMENT> &vecSegs, XMFLOAT3 color);
 
 	bool m_bVisualize;
 	CString m_strName;
 	float m_fCourseLength;
 	std::vector<XMPOLYLINE> m_vecWalls;
 	std::vector<AGENT_SOURCE_SINK> m_vecAgentSS;
+	UINT m_iWallSegments;
+	UINT m_iWallVertices;
+	UINT m_iWallIndices;
 
 	WORLD_PHYSICS m_sWorldPhysics;
 
@@ -101,4 +115,12 @@ protected:
 	// D3D stuff only needed for visualization
 	ComPtr<ID3D11Buffer> m_pVBAgentColors;
 	ComPtr<ID3D11Buffer> m_pVBWalls;
+	ComPtr<ID3D11Buffer> m_pIBWalls;
+	ComPtr<ID3D11VertexShader> m_pAgentVS;
+	ComPtr<ID3D11VertexShader> m_pWallVS;
+	ComPtr<ID3D11InputLayout> m_pAgentIL;
+	ComPtr<ID3D11InputLayout> m_pWallIL;
+	ComPtr<ID3D11GeometryShader> m_pAgentGS;
+	ComPtr<ID3D11PixelShader> m_pAgentPS;
+	ComPtr<ID3D11PixelShader> m_pWallPS;
 };
