@@ -92,22 +92,22 @@ HRESULT CAgentCourse::InitializeAgentBuffers()
 	if (FAILED(hr)) return hr;
 	D3DDEBUGNAME(m_pUAVPosVelNext, "Position/Velocity Next UAV");
 
-	// If we're visualizing, then also need color data
+	// If we're visualizing, then also need rendering data
 	if (m_bVisualize)
 	{
-		std::vector<COLOR_VERTEX> vecColors;
-		vecColors.resize(MAX_AGENTS);
-		vecColors[0].Color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-		vecColors[1].Color = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f);
-		vecColors[2].Color = XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f);
-		vecColors[3].Color = XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f);
+		std::vector<AGENT_VERTEX> vecAgent;
+		vecAgent.resize(MAX_AGENTS);
+		vecAgent[0].Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+		vecAgent[1].Color = XMFLOAT3(1.0f, 1.0f, 0.0f);
+		vecAgent[2].Color = XMFLOAT3(1.0f, 0.0f, 1.0f);
+		vecAgent[3].Color = XMFLOAT3(0.0f, 1.0f, 1.0f);
 
 		// Create color vertex buffer
 		D3D11_SUBRESOURCE_DATA vinitData = { 0 };
-		vinitData.pSysMem = &vecColors.front();
+		vinitData.pSysMem = &vecAgent.front();
 		vinitData.SysMemPitch = 0;
 		vinitData.SysMemSlicePitch = 0;
-		CD3D11_BUFFER_DESC vbdColors(sizeof(COLOR_VERTEX) * MAX_AGENTS, D3D11_BIND_VERTEX_BUFFER,
+		CD3D11_BUFFER_DESC vbdColors(sizeof(AGENT_VERTEX) * MAX_AGENTS, D3D11_BIND_VERTEX_BUFFER,
 			D3D11_USAGE_IMMUTABLE);
 		hr = m_pD3DDevice->CreateBuffer(&vbdColors, &vinitData, &m_pVBAgentColors);
 		if (FAILED(hr)) return hr;
@@ -117,11 +117,52 @@ HRESULT CAgentCourse::InitializeAgentBuffers()
 	return hr;
 }
 
-void CAgentCourse::PrepareAgentRender(ComPtr<ID3D11DeviceContext>& pD3DContext)
+HRESULT CAgentCourse::InitializeWallBuffers()
+{
+	HRESULT hr = S_OK;
+	D3D11_SUBRESOURCE_DATA vinitData = { 0 };
+
+	std::vector<WALL_SEGMENT> vecSegments;
+	for (size_t i = 0; i < m_vecWalls.size(); i++)
+	{
+		for (size_t j = 0; j < m_vecWalls[i].size() - 1; j++)
+		{
+			WALL_SEGMENT seg;
+			seg.End1 = m_vecWalls[i][j];
+			seg.End2 = m_vecWalls[i][j + 1];
+			vecSegments.push_back(seg);
+		}
+	}
+
+	// Create the wall segment buffers for simulation
+	CD3D11_BUFFER_DESC vbdW(MAX_AGENTS * sizeof(WALL_SEGMENT),
+		D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE, D3D11_USAGE_DEFAULT, 0,
+		D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, sizeof(WALL_SEGMENT));
+	vinitData.pSysMem = &vecSegments.front();
+	hr = m_pD3DDevice->CreateBuffer(&vbdW, &vinitData, &m_pSBWalls);
+	if (FAILED(hr)) return hr;
+	D3DDEBUGNAME(m_pSBWalls, "Wall Segments");
+
+	// Create the resource view (read-only in shaders)
+	CD3D11_SHADER_RESOURCE_VIEW_DESC srvW(D3D11_SRV_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN);
+	srvW.Buffer.FirstElement = 0;
+	srvW.Buffer.NumElements = vecSegments.size();
+	hr = m_pD3DDevice->CreateShaderResourceView(m_pSBWalls.Get(), &srvW, &m_pSRVWalls);
+	if (FAILED(hr)) return hr;
+	D3DDEBUGNAME(m_pSRVWalls, "Wall Segment SRV");
+
+	// If we're visualizing, then also need rendering data
+	if (m_bVisualize)
+	{
+		std::vector<WALL_VERTEX> vecWVerts;
+	}
+}
+
+void CAgentCourse::PrepareForRender(ComPtr<ID3D11DeviceContext>& pD3DContext)
 {
 	ASSERT(m_bVisualize);
 
-	UINT stride = sizeof(COLOR_VERTEX);
+	UINT stride = sizeof(AGENT_VERTEX);
 	UINT offset = 0;
 	pD3DContext->IASetVertexBuffers(0, 1, m_pVBAgentColors.GetAddressOf(), &stride, &offset);
 	pD3DContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
@@ -134,47 +175,37 @@ HRESULT CAgentCourse::InitializeHourglass()
 	m_strName = _T("Hourglass");
 	m_fCourseLength = 100.0f;
 
-	XMFLOAT2 point;
 	m_vecWalls.resize(2);
 
 	m_vecWalls[0].resize(3);
-	point.x = 0.0f; point.y = -15.0f;
-	m_vecWalls[0][0] = XMLoadFloat2(&point);
-	point.x = 50.0f; point.y = -5.0f;
-	m_vecWalls[0][1] = XMLoadFloat2(&point);
-	point.x = 100.0f; point.y = -15.0f;
-	m_vecWalls[0][2] = XMLoadFloat2(&point);
+	m_vecWalls[0][0] = XMFLOAT2(0.0f, -15.0f);
+	m_vecWalls[0][1] = XMFLOAT2(50.0f, -5.0f);
+	m_vecWalls[0][2] = XMFLOAT2(100.0f, -15.0f);
 
 	m_vecWalls[1].resize(3);
-	point.x = 0.0f; point.y = 15.0f;
-	m_vecWalls[1][0] = XMLoadFloat2(&point);
-	point.x = 50.0f; point.y = 5.0f;
-	m_vecWalls[1][1] = XMLoadFloat2(&point);
-	point.x = 100.0f; point.y = 15.0f;
-	m_vecWalls[1][2] = XMLoadFloat2(&point);
+	m_vecWalls[1][0] = XMFLOAT2(0.0f, 15.0f);
+	m_vecWalls[1][1] = XMFLOAT2(50.0f, 5.0f);
+	m_vecWalls[1][2] = XMFLOAT2(100.0f, 15.0f);
 
 	m_vecAgentSS.resize(1);
-	XMFLOAT4 color(1.0f, 1.0f, 1.0f, 1.0f);
-	m_vecAgentSS[0].vColor = XMLoadFloat4(&color);
+	m_vecAgentSS[0].vColor = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
 	m_vecAgentSS[0].lineSource.resize(2);
-	point.x = 0.0f; point.y = -13.5f;
-	m_vecAgentSS[0].lineSource[0] = XMLoadFloat2(&point);
-	point.x = 0.0f; point.y = 13.5f;
-	m_vecAgentSS[0].lineSource[1] = XMLoadFloat2(&point);
+	m_vecAgentSS[0].lineSource[0] = XMFLOAT2(0.0f, -13.5f);
+	m_vecAgentSS[0].lineSource[1] = XMFLOAT2(0.0f, 13.5f);
 
 	m_vecAgentSS[0].lineSink.resize(2);
-	point.x = 100.0f; point.y = -15.0f;
-	m_vecAgentSS[0].lineSink[0] = XMLoadFloat2(&point);
-	point.x = 100.0f; point.y = 15.0f;
-	m_vecAgentSS[0].lineSink[1] = XMLoadFloat2(&point);
+	m_vecAgentSS[0].lineSink[0] = XMFLOAT2(100.0f, -13.5f);
+	m_vecAgentSS[0].lineSink[1] = XMFLOAT2(100.0f, 13.5f);
 
 	return S_OK;
 }
 
-XMVECTOR CAgentCourse::GetSpawnPoint(int iIndex)
+XMFLOAT2 CAgentCourse::GetSpawnPoint(int iIndex)
 {
 	float f1 = frand();
 	float f2 = 1.0f - f1;
-	return f1 * m_vecAgentSS[iIndex].lineSource[0] + f2 * m_vecAgentSS[iIndex].lineSource[1];
+	return XMFLOAT2(
+		f1 * m_vecAgentSS[iIndex].lineSource[0].x + f2 * m_vecAgentSS[iIndex].lineSource[1].x,
+		f1 * m_vecAgentSS[iIndex].lineSource[0].y + f2 * m_vecAgentSS[iIndex].lineSource[1].y);
 }

@@ -126,13 +126,13 @@ HRESULT CDXSandbox::LoadShaders()
 
 	ComPtr<ID3D11DeviceChild> pShader;
 
-	const D3D11_INPUT_ELEMENT_DESC vertexDesc[] =
+	const D3D11_INPUT_ELEMENT_DESC vertexAgentDesc[] =
 	{
-		{ "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+		{ "COLOR",    0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 	CDXUtils::VS_INPUTLAYOUTSETUP ILS;
-	ILS.pInputDesc = vertexDesc;
-	ILS.NumElements = ARRAYSIZE(vertexDesc);
+	ILS.pInputDesc = vertexAgentDesc;
+	ILS.NumElements = ARRAYSIZE(vertexAgentDesc);
 	ILS.pInputLayout = NULL;
 	hr = CDXUtils::LoadShader(m_pD3DDevice, CDXUtils::VertexShader, _T("AgentVS.cso"), nullptr, &pShader, &ILS);
 	if (SUCCEEDED(hr))
@@ -386,7 +386,6 @@ BOOL CDXSandbox::UpdateScene(float dt, float T)
 		return FALSE;
 	}
 
-
 	return TRUE;
 }
 
@@ -415,7 +414,7 @@ BOOL CDXSandbox::RenderScene()
 	// Set IA parameters
 	m_pD3DContext->IASetInputLayout(m_pAgentIL.Get());
 
-	m_pAgentCourse->PrepareAgentRender(m_pD3DContext);
+	m_pAgentCourse->PrepareForRender(m_pD3DContext);
 
 	// Set geometry shader resources (note that frame variables should have been updated in the compute function)
 	ID3D11Buffer* GSbuffers[2] = { m_pAgentCourse->GetCBWorldPhysicsPtr(), m_pCBFrameVariables.Get() };

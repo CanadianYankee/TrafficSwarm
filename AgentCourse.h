@@ -20,9 +20,9 @@ public:
 	CAgentCourse(bool bVisualize);
 
 	HRESULT Initialize(ComPtr<ID3D11Device>& pD3DDevice, const CString &strJsonFile);
-	typedef std::vector<XMVECTOR> XMPOLYLINE;
+	typedef std::vector<XMFLOAT2> XMPOLYLINE;
 	struct AGENT_SOURCE_SINK {
-		XMVECTOR vColor;
+		XMFLOAT3 vColor;
 		XMPOLYLINE lineSource;
 		XMPOLYLINE lineSink;
 	};
@@ -31,10 +31,10 @@ public:
 	int GetAgentCount() { return MAX_AGENTS; }
 
 	int GetSpawnCount() { return (int)m_vecAgentSS.size(); }
-	XMVECTOR GetColor(int iIndex) { return m_vecAgentSS[iIndex].vColor; }
-	XMVECTOR GetSpawnPoint(int iIndex);
+	XMFLOAT3 GetColor(int iIndex) { return m_vecAgentSS[iIndex].vColor; }
+	XMFLOAT2 GetSpawnPoint(int iIndex);
 
-	void PrepareAgentRender(ComPtr<ID3D11DeviceContext>& pD3DContext);
+	void PrepareForRender(ComPtr<ID3D11DeviceContext>& pD3DContext);
 	ID3D11Buffer* GetCBWorldPhysicsPtr() { return m_pCBWorldPhysics.Get(); }
 	ID3D11Buffer** GetCBWorldPhysicsAddress() { return m_pCBWorldPhysics.GetAddressOf(); }
 
@@ -54,13 +54,26 @@ protected:
 		XMFLOAT4 Velocity;
 	};
 
-	struct COLOR_VERTEX
+	struct AGENT_VERTEX
 	{
-		XMFLOAT4 Color;
+		XMFLOAT3 Color;
+	};
+
+	struct WALL_SEGMENT
+	{
+		XMFLOAT2 End1;
+		XMFLOAT2 End2;
+	};
+
+	struct WALL_VERTEX
+	{
+		XMFLOAT2 Position;
+		XMFLOAT3 Color;
 	};
 
 	HRESULT InitializeHourglass();
 	HRESULT InitializeAgentBuffers();
+	HRESULT InitializeWallBuffers();
 
 	bool m_bVisualize;
 	CString m_strName;
@@ -76,13 +89,14 @@ protected:
 	ComPtr<ID3D11Buffer> m_pCBWorldPhysics;
 	ComPtr<ID3D11Buffer> m_pSBPosVel;
 	ComPtr<ID3D11Buffer> m_pSBPosVelNext;
+	ComPtr<ID3D11Buffer> m_pSBWalls;
 	ComPtr<ID3D11ShaderResourceView> m_pSRVPosVel;
 	ComPtr<ID3D11ShaderResourceView> m_pSRVPosVelNext;
+	ComPtr<ID3D11ShaderResourceView> m_pSRVWalls;
 	ComPtr<ID3D11UnorderedAccessView> m_pUAVPosVel;
 	ComPtr<ID3D11UnorderedAccessView> m_pUAVPosVelNext;
 
 	// D3D stuff only needed for visualization
 	ComPtr<ID3D11Buffer> m_pVBAgentColors;
-
+	ComPtr<ID3D11Buffer> m_pVBWalls;
 };
-

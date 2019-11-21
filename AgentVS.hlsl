@@ -15,7 +15,7 @@ StructuredBuffer<PosVelo>   g_bufPosVelo;
 // Particle input to vertex shader 
 struct AgentVSIn
 {
-	float4	color	: COLOR;		// agent color
+	float3	color	: COLOR;		// agent color
 	uint	id		: SV_VERTEXID;	// auto-generated vertex id
 };
 
@@ -37,7 +37,7 @@ AgentVSOut AgentVS(AgentVSIn input)
 	output.position = g_bufPosVelo[input.id].pos.xy;
 	float2 velo = g_bufPosVelo[input.id].velo.xy;
 	output.direction = any(velo) ? normalize(velo) : float2(1.0, 0.0);
-	output.color = input.color;
+	output.color = float4(input.color.xyz, 1.0f);
 
 	return output;
 }

@@ -92,8 +92,12 @@ BOOL CSandboxWnd::OnEraseBkgnd(CDC* pDC)
 
 void CSandboxWnd::OnClose()
 {
-	m_pSandbox->CleanUp();
-	delete m_pSandbox;
+	if (m_pSandbox)
+	{
+		m_pSandbox->CleanUp();
+		delete m_pSandbox;
+		m_pSandbox = nullptr;
+	}
 
 	CWnd::OnClose();
 	if (m_pOwner)

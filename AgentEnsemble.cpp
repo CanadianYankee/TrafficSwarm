@@ -28,9 +28,9 @@ void CAgentEnsemble::UpdateEnsemble(float dt, float T)
 void CAgentEnsemble::SpawnAgent()
 {
 	int iType = m_iTypes == 1 ? 1 : rand() % m_iTypes;
-	XMVECTOR vecPos = m_pAgentCourse->GetSpawnPoint(iType);
-	XMVECTOR vecVel = XMLoadFloat(&m_fInitialVelocity);
-	XMVECTOR color = m_pAgentCourse->GetColor(iType);
+	XMFLOAT2 vecPos = m_pAgentCourse->GetSpawnPoint(iType);
+	XMFLOAT2 vecVel = XMFLOAT2(m_fInitialVelocity, 0.0f);
+	XMFLOAT3 color = m_pAgentCourse->GetColor(iType);
 }
 
 
