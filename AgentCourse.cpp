@@ -127,9 +127,20 @@ HRESULT CAgentCourse::InitializeWallBuffers()
 	{
 		for (size_t j = 0; j < m_vecWalls[i].size() - 1; j++)
 		{
+			// Align all segments in the same direction
 			WALL_SEGMENT seg;
-			seg.End1 = m_vecWalls[i][j];
-			seg.End2 = m_vecWalls[i][j + 1];
+			XMFLOAT2 p1 = m_vecWalls[i][j]; 
+			XMFLOAT2 p2 = m_vecWalls[i][j + 1];
+			if (p2.x > p1.x || (p1.x == p2.y && p1.y > p2.y))
+			{
+				seg.End1 = p1;
+				seg.End2 = p2;
+			}
+			else
+			{
+				seg.End1 = p2;
+				seg.End2 = p1;
+			}
 			vecSegments.push_back(seg);
 		}
 	}
@@ -146,7 +157,7 @@ HRESULT CAgentCourse::InitializeWallBuffers()
 	// Create the resource view (read-only in shaders)
 	CD3D11_SHADER_RESOURCE_VIEW_DESC srvW(D3D11_SRV_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN);
 	srvW.Buffer.FirstElement = 0;
-	srvW.Buffer.NumElements = vecSegments.size();
+	srvW.Buffer.NumElements = (UINT)vecSegments.size();
 	hr = m_pD3DDevice->CreateShaderResourceView(m_pSBWalls.Get(), &srvW, &m_pSRVWalls);
 	if (FAILED(hr)) return hr;
 	D3DDEBUGNAME(m_pSRVWalls, "Wall Segment SRV");
@@ -155,7 +166,19 @@ HRESULT CAgentCourse::InitializeWallBuffers()
 	if (m_bVisualize)
 	{
 		std::vector<WALL_VERTEX> vecWVerts;
+		std::vector<UINT> vecWInds;
+		MakeWallVertices(vecWVerts, vecWInds, vecSegments);
 	}
+
+	return hr;
+}
+
+void CAgentCourse::MakeWallVertices(std::vector<WALL_VERTEX>& vecVerts, std::vector<UINT>& vecInds, const std::vector<WALL_SEGMENT> vecSegs)
+{
+	size_t nSegs = vecSegs.size();
+	vecVerts.resize(nSegs * 4);
+	vecInds.resize(nSegs * 6);
+
 }
 
 void CAgentCourse::PrepareForRender(ComPtr<ID3D11DeviceContext>& pD3DContext)

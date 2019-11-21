@@ -75,6 +75,8 @@ protected:
 	HRESULT InitializeAgentBuffers();
 	HRESULT InitializeWallBuffers();
 
+	void MakeWallVertices(std::vector<WALL_VERTEX> &vecVerts, std::vector<UINT> &vecInds, const std::vector<WALL_SEGMENT> vecSegs);
+
 	bool m_bVisualize;
 	CString m_strName;
 	float m_fCourseLength;

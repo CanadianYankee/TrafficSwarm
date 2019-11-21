@@ -337,7 +337,7 @@ BOOL CDXSandbox::OnResize()
 		}
 	}
 
-	float fLen = m_pAgentCourse->GetCourseLength() * 0.25;
+	float fLen = m_pAgentCourse->GetCourseLength() * 0.25f;
 	XMFLOAT2 f2Center = XMFLOAT2(fLen, 0.0f);
 	XMFLOAT2 f2Scale = XMFLOAT2(1.0f / fLen, 1.0f * m_fAspectRatio / fLen);
 	XMVECTOR vCenter = XMLoadFloat2(&f2Center);
