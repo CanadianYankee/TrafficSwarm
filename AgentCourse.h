@@ -80,7 +80,7 @@ protected:
 		XMFLOAT2 Position;
 		XMFLOAT3 Color;
 	};
-	const XMFLOAT3 colorWall = XMFLOAT3(0.6f, 0.6f, 0.6f);
+	const XMFLOAT3 colorWall = XMFLOAT3(0.75f, 0.75f, 0.75f);
 
 	HRESULT InitializeHourglass();
 	HRESULT InitializeAgentBuffers();

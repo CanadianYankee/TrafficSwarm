@@ -152,10 +152,10 @@ HRESULT CAgentCourse::InitializeAgentBuffers()
 	// Initial position/velocity data
 	std::vector<AGENT_POSVEL> vecPosVel;
 	vecPosVel.resize(MAX_AGENTS);
-	vecPosVel[0].Position = XMFLOAT4(5.0f, 25.0f, 0.0f, 0.0f);
-	vecPosVel[1].Position = XMFLOAT4(0.0f, -25.0f, 0.0f, 0.0f);
-	vecPosVel[2].Position = XMFLOAT4(100.0f, 25.0f, 0.0f, 0.0f);
-	vecPosVel[3].Position = XMFLOAT4(95.0f, -25.0f, 0.0f, 0.0f);
+	vecPosVel[0].Position = XMFLOAT4(5.0f, 5.0f, 0.0f, 0.0f);
+	vecPosVel[1].Position = XMFLOAT4(0.0f, -5.0f, 0.0f, 0.0f);
+	vecPosVel[2].Position = XMFLOAT4(100.0f, 5.0f, 0.0f, 0.0f);
+	vecPosVel[3].Position = XMFLOAT4(95.0f, -5.0f, 0.0f, 0.0f);
 	vecPosVel[0].Velocity = XMFLOAT4(-1.0f, 1.0f, 0.0f, 0.0f);
 	vecPosVel[1].Velocity = XMFLOAT4(-1.0f, -1.0f, 0.0f, 0.0f);
 	vecPosVel[2].Velocity = XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f);
@@ -416,7 +416,7 @@ HRESULT CAgentCourse::InitializeHourglass()
 	m_vecWalls[1][2] = XMFLOAT2(100.0f, 15.0f);
 
 	m_vecAgentSS.resize(1);
-	m_vecAgentSS[0].vColor = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	m_vecAgentSS[0].vColor = XMFLOAT3(0.5f, 0.5f, 1.0f);
 
 	m_vecAgentSS[0].lineSource.resize(2);
 	m_vecAgentSS[0].lineSource[0] = XMFLOAT2(0.0f, -13.5f);
