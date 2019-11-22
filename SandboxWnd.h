@@ -7,6 +7,7 @@ class CSandboxWnd :
 {
 public:
 	CSandboxWnd(CWnd* pOwner);
+	~CSandboxWnd();
 	BOOL Create();
 
 protected:

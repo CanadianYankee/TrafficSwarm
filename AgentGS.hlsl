@@ -53,8 +53,8 @@ void AgentGS(point AgentGSIn input[1], inout TriangleStream< AgentGSOut > Sprite
 	// Make two triangles to billboard the particle texture sprite
 	for (int i = 0; i < 4; i++)
 	{
-		float4 offset = float4(g_quadPositions[i] * g_fAgentRadius, 0.0, 1.0);
-
+		float4 offset = float4(g_quadPositions[i] * g_fAgentRadius, 0.0, 0.0);
+		
 		output.position = mul(mul(offset, facing) + center, g_matView);
 		output.position /= output.position.w;
 		output.color = input[0].color;

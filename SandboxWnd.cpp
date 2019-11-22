@@ -11,6 +11,15 @@ CSandboxWnd::CSandboxWnd(CWnd* pOwner) :
 	ASSERT(m_pOwner);
 }
 
+CSandboxWnd::~CSandboxWnd()
+{
+	if (m_pSandbox)
+	{
+		m_pSandbox->CleanUp();
+		delete m_pSandbox;
+	}
+}
+
 BOOL CSandboxWnd::Create()
 {
 	if (g_szWndClass.GetLength() == 0)
@@ -83,8 +92,12 @@ BOOL CSandboxWnd::OnEraseBkgnd(CDC* pDC)
 
 void CSandboxWnd::OnClose()
 {
-	m_pSandbox->CleanUp();
-	delete m_pSandbox;
+	if (m_pSandbox)
+	{
+		m_pSandbox->CleanUp();
+		delete m_pSandbox;
+		m_pSandbox = nullptr;
+	}
 
 	CWnd::OnClose();
 	if (m_pOwner)
