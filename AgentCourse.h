@@ -8,7 +8,7 @@ inline float frand()
 	return (float)rand() / (float)RAND_MAX;
 }
 
-constexpr int MAX_AGENTS = 4;
+constexpr int MAX_AGENTS = 2048;
 
 // This class defines the course that the agents must 
 // navigate, including walls and agent source-sinks. It 
@@ -50,10 +50,12 @@ protected:
 		float wpfDummy1;
 	};
 
-	struct AGENT_POSVEL
+	struct AGENT_DATA
 	{
 		XMFLOAT4 Position;
 		XMFLOAT4 Velocity;
+		float SpawnTime;
+		float Score;
 	};
 
 	struct AGENT_VERTEX
@@ -102,18 +104,20 @@ protected:
 
 	WORLD_PHYSICS m_sWorldPhysics;
 
+	UINT m_iMaxLiveAgents;
+
 	ComPtr<ID3D11Device> m_pD3DDevice;
 
 	// D3D stuff needed for simulation
 	ComPtr<ID3D11Buffer> m_pCBWorldPhysics;
-	ComPtr<ID3D11Buffer> m_pSBPosVel;
-	ComPtr<ID3D11Buffer> m_pSBPosVelNext;
+	ComPtr<ID3D11Buffer> m_pSBAgentData;
+	ComPtr<ID3D11Buffer> m_pSBAgentDataNext;
 	ComPtr<ID3D11Buffer> m_pSBWalls;
-	ComPtr<ID3D11ShaderResourceView> m_pSRVPosVel;
-	ComPtr<ID3D11ShaderResourceView> m_pSRVPosVelNext;
+	ComPtr<ID3D11ShaderResourceView> m_pSRVAgentData;
+	ComPtr<ID3D11ShaderResourceView> m_pSRVAgentDataNext;
 	ComPtr<ID3D11ShaderResourceView> m_pSRVWalls;
-	ComPtr<ID3D11UnorderedAccessView> m_pUAVPosVel;
-	ComPtr<ID3D11UnorderedAccessView> m_pUAVPosVelNext;
+	ComPtr<ID3D11UnorderedAccessView> m_pUAVAgentData;
+	ComPtr<ID3D11UnorderedAccessView> m_pUAVAgentDataNext;
 
 	// D3D stuff only needed for visualization
 	ComPtr<ID3D11Buffer> m_pVBAgentColors;

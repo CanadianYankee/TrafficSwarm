@@ -4,13 +4,15 @@
 //    physics compute shader) in untransformed space and a unit vector pointing 
 //    in the direction of the velocity.  Input color is passed on unchanged.
 
-struct PosVelo
+struct AgentData
 {
 	float4 pos;
 	float4 velo;
+	float birth;
+	float score;
 };
 
-StructuredBuffer<PosVelo>   g_bufPosVelo;
+StructuredBuffer<AgentData>   g_bufAgentData;
 
 // Input to vertex shader 
 struct AgentVSIn
@@ -34,8 +36,8 @@ AgentVSOut AgentVS(AgentVSIn input)
 	AgentVSOut output;
 
 	// Look up the particle position in the texture map
-	output.position = g_bufPosVelo[input.id].pos.xy;
-	float2 velo = g_bufPosVelo[input.id].velo.xy;
+	output.position = g_bufAgentData[input.id].pos.xy;
+	float2 velo = g_bufAgentData[input.id].velo.xy;
 	output.direction = any(velo) ? normalize(velo) : float2(1.0, 0.0);
 	output.color = float4(input.color.xyz, 1.0f);
 
