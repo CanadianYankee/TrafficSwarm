@@ -5,6 +5,8 @@
 CAgentCourse::CAgentCourse(bool bVisualize) :
 	m_fCourseLength(0.0f),
 	m_bVisualize(bVisualize),
+	m_fNextSpawn(0.0f),
+	m_fSpawnRate(2.0f),
 	m_iWallSegments(0),
 	m_iWallVertices(0),
 	m_iWallIndices(0)
@@ -327,6 +329,21 @@ void CAgentCourse::MakeSegmentVertices(std::vector<WALL_VERTEX>& vecVerts, std::
 	vecInds.insert(vecInds.end(), newInds.begin(), newInds.end());
 }
 
+BOOL CAgentCourse::UpdateAgents(float dt, float T)
+{
+	// If total time exceeds the next scheduled spawn time, then 
+	// spawn a new agent.
+	if (T >= m_fNextSpawn)
+	{
+		XMFLOAT2 ptSpawn = GetSpawnPoint();
+
+		m_fNextSpawn = T - logf(1.0f - frand()) / m_fSpawnRate;
+		CString str; str.Format(_T("Now = %f; Next = %f\n"), T, m_fNextSpawn);
+		OutputDebugString(str);
+	}
+	return TRUE;
+}
+
 void CAgentCourse::RenderWalls(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables)
 {
 	ASSERT(m_bVisualize);
@@ -387,7 +404,7 @@ void CAgentCourse::RenderAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const 
 	pD3DContext->PSSetConstantBuffers(0, 1, m_pCBWorldPhysics.GetAddressOf());
 
 	// Draw the agents
-	pD3DContext->Draw(GetAgentCount(), 0);
+	pD3DContext->Draw(MAX_AGENTS, 0);
 
 	// Clear out the shaders
 	ID3D11ShaderResourceView* pSRVNULL[1] = { nullptr };
@@ -417,20 +434,38 @@ HRESULT CAgentCourse::InitializeHourglass()
 
 	m_vecAgentSS.resize(1);
 	m_vecAgentSS[0].vColor = XMFLOAT3(0.5f, 0.5f, 1.0f);
+	m_vecAgentSS[0].randLimit = 1.0f;
 
 	m_vecAgentSS[0].lineSource.resize(2);
 	m_vecAgentSS[0].lineSource[0] = XMFLOAT2(0.0f, -13.5f);
 	m_vecAgentSS[0].lineSource[1] = XMFLOAT2(0.0f, 13.5f);
+	m_vecAgentSS[0].lenSource = m_vecAgentSS[0].lineSource[1].y - m_vecAgentSS[0].lineSource[0].y;
 
 	m_vecAgentSS[0].lineSink.resize(2);
 	m_vecAgentSS[0].lineSink[0] = XMFLOAT2(100.0f, -13.5f);
 	m_vecAgentSS[0].lineSink[1] = XMFLOAT2(100.0f, 13.5f);
 
+	m_fSpawnRate *= m_vecAgentSS[0].lenSource;
+
 	return S_OK;
 }
 
-XMFLOAT2 CAgentCourse::GetSpawnPoint(int iIndex)
+XMFLOAT2 CAgentCourse::GetSpawnPoint()
 {
+	size_t iIndex = 0;
+	if (m_vecAgentSS.size() > 1)
+	{
+		float fi = frand();
+		for (size_t i = 0; i < m_vecAgentSS.size(); i++)
+		{
+			if (fi < m_vecAgentSS[i].randLimit)
+			{
+				iIndex = i;
+				break;
+			}
+		}
+	}
+
 	float f1 = frand();
 	float f2 = 1.0f - f1;
 	return XMFLOAT2(

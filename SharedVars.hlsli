@@ -1,9 +1,9 @@
 cbuffer cbWorldPhysics : register(b0)
 {
 	float g_fAgentRadius;
+	float g_fIdealSpeed;
 	float wpfDummy0;
 	float wpfDummy1;
-	float wpfDummy2;
 };
 
 cbuffer cbFrameVariables : register(b1)

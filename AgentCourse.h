@@ -21,34 +21,33 @@ public:
 
 	HRESULT Initialize(ComPtr<ID3D11Device>& pD3DDevice, const CString &strJsonFile);
 	HRESULT LoadShaders();
+	BOOL UpdateAgents(float dt, float T);
 
-	typedef std::vector<XMFLOAT2> XMPOLYLINE;
-	struct AGENT_SOURCE_SINK {
-		AGENT_SOURCE_SINK() : vColor(0.0f, 0.0f, 0.0f) {}
-		XMFLOAT3 vColor;
-		XMPOLYLINE lineSource;
-		XMPOLYLINE lineSink;
-	};
 	CString GetName() { return m_strName; }
 	float GetCourseLength() { return m_fCourseLength; }
-	int GetAgentCount() { return MAX_AGENTS; }
-
-	int GetSpawnCount() { return (int)m_vecAgentSS.size(); }
-	XMFLOAT3 GetColor(int iIndex) { return m_vecAgentSS[iIndex].vColor; }
-	XMFLOAT2 GetSpawnPoint(int iIndex);
 
 	void RenderWalls(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables);
 	void RenderAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables,
 		const ComPtr<ID3D11ShaderResourceView>& pSRVParticleDraw, const ComPtr<ID3D11SamplerState>& pTextureSampler);
 
 protected:
+	typedef std::vector<XMFLOAT2> XMPOLYLINE;
+	struct AGENT_SOURCE_SINK {
+		AGENT_SOURCE_SINK() : vColor(0.0f, 0.0f, 0.0f) {}
+		XMFLOAT3 vColor;
+		XMPOLYLINE lineSource;
+		XMPOLYLINE lineSink;
+		float randLimit;
+		float lenSource;
+	};
+
 	struct WORLD_PHYSICS
 	{
-		WORLD_PHYSICS() : g_fParticleRadius(0.5f), wpfDummy0(0.0f), wpfDummy1(0.0f), wpfDummy2(0.0f) {}
+		WORLD_PHYSICS() : g_fParticleRadius(0.5f), g_fIdealSpeed(5.0f), wpfDummy0(0.0f), wpfDummy1(0.0f) {}
 		float g_fParticleRadius;
+		float g_fIdealSpeed;
 		float wpfDummy0;
 		float wpfDummy1;
-		float wpfDummy2;
 	};
 
 	struct AGENT_POSVEL
@@ -88,9 +87,13 @@ protected:
 
 	void MakeSegmentVertices(std::vector<WALL_VERTEX> &vecVerts, std::vector<UINT> &vecInds, const std::vector<WALL_SEGMENT> &vecSegs, XMFLOAT3 color);
 
+	XMFLOAT2 GetSpawnPoint();
+
 	bool m_bVisualize;
 	CString m_strName;
 	float m_fCourseLength;
+	float m_fNextSpawn;
+	float m_fSpawnRate;
 	std::vector<XMPOLYLINE> m_vecWalls;
 	std::vector<AGENT_SOURCE_SINK> m_vecAgentSS;
 	UINT m_iWallSegments;
