@@ -187,6 +187,24 @@ HRESULT CAgentCourse::InitializeAgentBuffers()
 	if (FAILED(hr)) return hr;
 	D3DDEBUGNAME(m_pUAVAgentDataNext, "Position/Velocity Next UAV");
 
+	// Create the dead agent index list and an unordered access view
+	std::vector<DEAD_AGENT> vecDead(MAX_DEAD_AGENTS);
+	DEAD_AGENT agentNull = { 0, 0.0f };
+	std::fill(vecDead.begin(), vecDead.end(), agentNull);
+	CD3D11_BUFFER_DESC vbdDead(MAX_DEAD_AGENTS * sizeof(DEAD_AGENT),
+		D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE, D3D11_USAGE_DEFAULT, 0, 
+		D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, sizeof(DEAD_AGENT));
+	vinitData.pSysMem = &vecDead.front();
+	hr = m_pD3DDevice->CreateBuffer(&vbdDead, &vinitData, &m_pSBDeadList);
+	if (FAILED(hr)) return hr;
+	D3DDEBUGNAME(m_pSBDeadList, "Dead Agent List");
+
+	CD3D11_UNORDERED_ACCESS_VIEW_DESC uavDead(m_pSBDeadList.Get(), DXGI_FORMAT_UNKNOWN, 0, 
+		MAX_DEAD_AGENTS, D3D11_BUFFER_UAV_FLAG_COUNTER);
+	hr = m_pD3DDevice->CreateUnorderedAccessView(m_pSBDeadList.Get(), &uavDead, &m_pUAVDeadList);
+	if (FAILED(hr)) return hr;
+	D3DDEBUGNAME(m_pUAVDeadList, "Dead Agent UAV");
+
 	// Spawn variables will be set for each new agent
 	D3D11_BUFFER_DESC Desc;
 	Desc.Usage = D3D11_USAGE_DYNAMIC;
@@ -360,6 +378,7 @@ BOOL CAgentCourse::UpdateAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const 
 	{
 		SpawnAgent(pD3DContext, T);
 		m_fNextSpawn = T - logf(1.0f - frand()) / m_fSpawnRate;
+		m_iMaxLiveAgents++;
 	}
 
 	return TRUE;

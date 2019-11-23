@@ -9,6 +9,7 @@ inline float frand()
 }
 
 constexpr int MAX_AGENTS = 2048;
+constexpr int MAX_DEAD_AGENTS = MAX_AGENTS >> 3;
 
 // This class defines the course that the agents must 
 // navigate, including walls and agent source-sinks. It 
@@ -78,6 +79,12 @@ protected:
 		UINT maxAgents;
 	};
 
+	struct DEAD_AGENT
+	{
+		UINT Index;
+		float FinalScore;
+	};
+
 
 	typedef int AGENT_VERTEX;
 //	struct AGENT_VERTEX
@@ -135,14 +142,25 @@ protected:
 	// D3D stuff needed for simulation
 	ComPtr<ID3D11Buffer> m_pCBWorldPhysics;
 	ComPtr<ID3D11Buffer> m_pCBRender;
+
 	ComPtr<ID3D11Buffer> m_pSBAgentData;
-	ComPtr<ID3D11Buffer> m_pSBAgentDataNext;
-	ComPtr<ID3D11Buffer> m_pSBWalls;
 	ComPtr<ID3D11ShaderResourceView> m_pSRVAgentData;
-	ComPtr<ID3D11ShaderResourceView> m_pSRVAgentDataNext;
-	ComPtr<ID3D11ShaderResourceView> m_pSRVWalls;
 	ComPtr<ID3D11UnorderedAccessView> m_pUAVAgentData;
+
+	ComPtr<ID3D11Buffer> m_pSBAgentDataNext;
+	ComPtr<ID3D11ShaderResourceView> m_pSRVAgentDataNext;
 	ComPtr<ID3D11UnorderedAccessView> m_pUAVAgentDataNext;
+
+	ComPtr<ID3D11Buffer> m_pSBDeadList;
+	ComPtr<ID3D11ShaderResourceView> m_pSRVDeadList;
+	ComPtr<ID3D11UnorderedAccessView> m_pUAVDeadList;
+
+	ComPtr<ID3D11Buffer> m_pSBFinalScores;
+	ComPtr<ID3D11Buffer> m_pSBCPUScores;
+	ComPtr<ID3D11UnorderedAccessView> m_pUAVFinalScores;
+
+	ComPtr<ID3D11Buffer> m_pSBWalls;
+	ComPtr<ID3D11ShaderResourceView> m_pSRVWalls;
 
 	ComPtr<ID3D11Buffer> m_pCBSpawnAgent;
 	ComPtr<ID3D11ComputeShader> m_pAgentCSSpawn;

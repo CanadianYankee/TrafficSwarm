@@ -23,5 +23,8 @@ void AgentCSSpawn( uint3 DTid : SV_DispatchThreadID )
 	newAgent.score = 0.0f;
 	newAgent.type = type;
 
-	arrAgents[maxLiveAgents] = newAgent;
+	if (maxLiveAgents < maxAgents)
+	{
+		arrAgents[maxLiveAgents] = newAgent;
+	}
 }
