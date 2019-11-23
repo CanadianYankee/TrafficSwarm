@@ -12,6 +12,11 @@ inline XMFLOAT2 XMUnloadFloat2(const XMVECTOR &v) { XMFLOAT2 f2; XMStoreFloat2(&
 #define D3DDEBUGNAME(pobj, name)
 #endif 
 
+template <class T> void SwapComPtr(ComPtr<T>& ptr1, ComPtr<T>& ptr2)
+{
+	ComPtr<T> temp = ptr1;  ptr1 = ptr2;  ptr2 = temp;
+}
+
 class CDXUtils
 {
 public:

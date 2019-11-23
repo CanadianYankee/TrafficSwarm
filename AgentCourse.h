@@ -21,10 +21,11 @@ public:
 
 	HRESULT Initialize(ComPtr<ID3D11Device>& pD3DDevice, const CString &strJsonFile);
 	HRESULT LoadShaders();
-	BOOL UpdateAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, float dt, float T);
+	BOOL UpdateAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables, float dt, float T);
 
 	CString GetName() { return m_strName; }
 	float GetCourseLength() { return m_fCourseLength; }
+	UINT GetMaxAlive() { return m_iMaxLiveAgents; }
 
 	void RenderWalls(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables);
 	void RenderAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables,
@@ -111,6 +112,7 @@ protected:
 	void MakeSegmentVertices(std::vector<WALL_VERTEX> &vecVerts, std::vector<UINT> &vecInds, const std::vector<WALL_SEGMENT> &vecSegs, XMFLOAT3 color);
 
 	void SpawnAgent(ComPtr<ID3D11DeviceContext>& pD3DContext, float T);
+	void ComputeAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables);
 	XMFLOAT2 GetSpawnPoint(size_t& iIndex);
 
 	bool m_bVisualize;
@@ -144,6 +146,7 @@ protected:
 
 	ComPtr<ID3D11Buffer> m_pCBSpawnAgent;
 	ComPtr<ID3D11ComputeShader> m_pAgentCSSpawn;
+	ComPtr<ID3D11ComputeShader> m_pAgentCSIterate;
 
 	// D3D stuff only needed for visualization
 	ComPtr<ID3D11Buffer> m_pVBAgentColors;

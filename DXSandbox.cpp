@@ -313,6 +313,7 @@ BOOL CDXSandbox::UpdateScene(float dt, float T)
 {
 	m_sFrameVariables.g_fElapsedTime = dt;
 	m_sFrameVariables.g_fGlobalTime = T;
+	m_sFrameVariables.g_iMaxAliveAgents = m_pAgentCourse->GetMaxAlive();
 
 	HRESULT hr = CDXUtils::MapDataIntoBuffer(m_pD3DContext, &m_sFrameVariables, sizeof(m_sFrameVariables), m_pCBFrameVariables);
 	if (FAILED(hr))
@@ -321,7 +322,7 @@ BOOL CDXSandbox::UpdateScene(float dt, float T)
 		return FALSE;
 	}
 
-	BOOL bSuccess = m_pAgentCourse->UpdateAgents(m_pD3DContext, dt, T);
+	BOOL bSuccess = m_pAgentCourse->UpdateAgents(m_pD3DContext, m_pCBFrameVariables, dt, T);
 
 	return bSuccess;
 }

@@ -136,13 +136,13 @@ HRESULT CAgentCourse::LoadShaders()
 	}
 	if (FAILED(hr)) return hr;
 
-//	hr = LoadShader(ComputeShader, L"PhysicsCS.cso", nullptr, &pShader);
-//	if (SUCCEEDED(hr))
-//	{
-//		hr = pShader.As<ID3D11ComputeShader>(&m_pPhysicsCS);
-//		D3DDEBUGNAME(m_pPhysicsCS, "Physics CS");
-//	}
-//	if (FAILED(hr)) return hr;
+	hr = CDXUtils::LoadShader(m_pD3DDevice, CDXUtils::ComputeShader, _T("AgentCSIterate.cso"), nullptr, &pShader);
+	if (SUCCEEDED(hr))
+	{
+		hr = pShader.As<ID3D11ComputeShader>(&m_pAgentCSIterate);
+		D3DDEBUGNAME(m_pAgentCSIterate, "Agent Iterate CS");
+	}
+	if (FAILED(hr)) return hr;
 
 	return hr;
 }
@@ -349,8 +349,11 @@ void CAgentCourse::MakeSegmentVertices(std::vector<WALL_VERTEX>& vecVerts, std::
 	vecInds.insert(vecInds.end(), newInds.begin(), newInds.end());
 }
 
-BOOL CAgentCourse::UpdateAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, float dt, float T)
+BOOL CAgentCourse::UpdateAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables, float dt, float T)
 {
+	// Let the agents do their physics thing
+	ComputeAgents(pD3DContext, pCBFrameVariables);
+
 	// If total time exceeds the next scheduled spawn time, then 
 	// spawn a new agent.
 	if (T >= m_fNextSpawn && m_iMaxLiveAgents < MAX_AGENTS)
@@ -358,6 +361,7 @@ BOOL CAgentCourse::UpdateAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, float 
 		SpawnAgent(pD3DContext, T);
 		m_fNextSpawn = T - logf(1.0f - frand()) / m_fSpawnRate;
 	}
+
 	return TRUE;
 }
 
@@ -370,7 +374,7 @@ void CAgentCourse::SpawnAgent(ComPtr<ID3D11DeviceContext>& pD3DContext, float T)
 
 	SPAWN_AGENT agent = { ptSpawn, m_vecAgentSS[iIndex].velStart, T, (int)iIndex, m_iMaxLiveAgents, MAX_AGENTS };
 
-	// Select the computer shader that spawns new agents
+	// Select the compute shader that spawns new agents
 	pD3DContext->CSSetShader(m_pAgentCSSpawn.Get(), NULL, 0);
 
 	// Map new agent information into spawn compute shader
@@ -387,6 +391,37 @@ void CAgentCourse::SpawnAgent(ComPtr<ID3D11DeviceContext>& pD3DContext, float T)
 	pD3DContext->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 
 	m_iMaxLiveAgents++;
+}
+
+void CAgentCourse::ComputeAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables)
+{
+	ID3D11UnorderedAccessView* pUAVNULL[1] = { nullptr };
+	ID3D11ShaderResourceView* pSRVNULL[1] = { nullptr };
+
+	// Select the compute shader that iterates agents through time
+	pD3DContext->CSSetShader(m_pAgentCSIterate.Get(), NULL, 0);
+
+	// Set the constant buffers defining the world physics and the frame variables
+	ID3D11Buffer* CSCBuffers[2] = { m_pCBWorldPhysics.Get(), pCBFrameVariables.Get() };
+	pD3DContext->CSSetConstantBuffers(0, 2, CSCBuffers);
+
+	// Input to the shader - current agent kinematics
+	pD3DContext->CSSetShaderResources(0, 1, m_pSRVAgentData.GetAddressOf());
+
+	// Output from the shader - updated particle kinematics
+	pD3DContext->CSSetUnorderedAccessViews(0, 1, m_pUAVAgentDataNext.GetAddressOf(), nullptr);
+
+	// Run the compute shader - acts on a 1D array of agents
+	pD3DContext->Dispatch(32, 1, 1);
+
+	// Unbind the resources
+	pD3DContext->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
+	pD3DContext->CSSetShaderResources(0, 1, pSRVNULL);
+
+	// Swap the new kinematic results with the current ones for rendering
+	SwapComPtr<ID3D11Buffer>(m_pSBAgentData, m_pSBAgentDataNext);
+	SwapComPtr<ID3D11ShaderResourceView>(m_pSRVAgentData, m_pSRVAgentDataNext);
+	SwapComPtr<ID3D11UnorderedAccessView>(m_pUAVAgentData, m_pUAVAgentDataNext);
 }
 
 void CAgentCourse::RenderWalls(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables)

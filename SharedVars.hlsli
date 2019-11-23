@@ -11,6 +11,6 @@ cbuffer cbFrameVariables : register(b1)
 	float4x4 g_matView;
 	float g_fGlobalTime;
 	float g_fElapsedTime;
-	float fvfDummy0;
-	float fvfDummy1;
+	uint g_iMaxAliveAgents;
+	uint fviDummyo;
 };

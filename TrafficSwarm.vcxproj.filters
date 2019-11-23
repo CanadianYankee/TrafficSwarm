@@ -128,5 +128,8 @@
     <FxCompile Include="AgentCSSpawn.hlsl">
       <Filter>Shader Files</Filter>
     </FxCompile>
+    <FxCompile Include="AgentCSIterate.hlsl">
+      <Filter>Shader Files</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
