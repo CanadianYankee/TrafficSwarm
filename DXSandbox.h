@@ -8,7 +8,7 @@ using namespace DirectX;
 class CAgentCourse;
 
 //
-// CDXSandbox does all of the DirectX initialization and rendering. 
+// CDXSandbox does DirectX initialization and rendering. 
 //
 class CDXSandbox
 {

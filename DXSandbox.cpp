@@ -321,7 +321,7 @@ BOOL CDXSandbox::UpdateScene(float dt, float T)
 		return FALSE;
 	}
 
-	BOOL bSuccess = m_pAgentCourse->UpdateAgents(dt, T);
+	BOOL bSuccess = m_pAgentCourse->UpdateAgents(m_pD3DContext, dt, T);
 
 	return bSuccess;
 }

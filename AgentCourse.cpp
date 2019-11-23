@@ -111,7 +111,7 @@ HRESULT CAgentCourse::LoadShaders()
 		}
 		if (FAILED(hr)) return hr;
 
-		hr = CDXUtils::LoadShader(m_pD3DDevice, CDXUtils::PixelShader, L"AgentPS.cso", nullptr, &pShader);
+		hr = CDXUtils::LoadShader(m_pD3DDevice, CDXUtils::PixelShader, _T("AgentPS.cso"), nullptr, &pShader);
 		if (SUCCEEDED(hr))
 		{
 			hr = pShader.As<ID3D11PixelShader>(&m_pAgentPS);
@@ -119,7 +119,7 @@ HRESULT CAgentCourse::LoadShaders()
 		}
 		if (FAILED(hr)) return hr;
 
-		hr = CDXUtils::LoadShader(m_pD3DDevice, CDXUtils::PixelShader, L"WallPS.cso", nullptr, &pShader);
+		hr = CDXUtils::LoadShader(m_pD3DDevice, CDXUtils::PixelShader, _T("WallPS.cso"), nullptr, &pShader);
 		if (SUCCEEDED(hr))
 		{
 			hr = pShader.As<ID3D11PixelShader>(&m_pWallPS);
@@ -128,13 +128,13 @@ HRESULT CAgentCourse::LoadShaders()
 		if (FAILED(hr)) return hr;
 	}
 		
-//	hr = LoadShader(ComputeShader, L"ConfigSpringsCS.cso", nullptr, &pShader);
-//	if (SUCCEEDED(hr))
-//	{
-//		hr = pShader.As<ID3D11ComputeShader>(&m_pConfigSpringsCS);
-//		D3DDEBUGNAME(m_pConfigSpringsCS, "Config Springs CS");
-//	}
-//	if (FAILED(hr)) return hr;
+	hr = CDXUtils::LoadShader(m_pD3DDevice, CDXUtils::ComputeShader, _T("AgentCSSpawn.cso"), nullptr, &pShader);
+	if (SUCCEEDED(hr))
+	{
+		hr = pShader.As<ID3D11ComputeShader>(&m_pAgentCSSpawn);
+		D3DDEBUGNAME(m_pAgentCSSpawn, "Agent Spawn CS");
+	}
+	if (FAILED(hr)) return hr;
 
 //	hr = LoadShader(ComputeShader, L"PhysicsCS.cso", nullptr, &pShader);
 //	if (SUCCEEDED(hr))
@@ -152,21 +152,8 @@ HRESULT CAgentCourse::InitializeAgentBuffers()
 	HRESULT hr = S_OK;
 	D3D11_SUBRESOURCE_DATA vinitData = { 0 };
 
-	m_iMaxLiveAgents = 4;
+	m_iMaxLiveAgents = 0;
 	std::vector<AGENT_DATA> vecAgent(MAX_AGENTS);
-//	vecAgent[0].Position = XMFLOAT4(40.0f, 0.0f, 0.0f, 0.0f);
-//	vecAgent[1].Position = XMFLOAT4(45.0f, 0.0f, 0.0f, 0.0f);
-//	vecAgent[2].Position = XMFLOAT4(55.0f, 0.0f, 0.0f, 0.0f);
-//	vecAgent[3].Position = XMFLOAT4(60.0f, 0.0f, 0.0f, 0.0f);
-//	vecAgent[0].Velocity = XMFLOAT4(-1.0f, 1.0f, 0.0f, 0.0f);
-//	vecAgent[1].Velocity = XMFLOAT4(-1.0f, -1.0f, 0.0f, 0.0f);
-//	vecAgent[2].Velocity = XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f);
-//	vecAgent[3].Velocity = XMFLOAT4(1.0f, -1.0f, 0.0f, 0.0f);
-	vecAgent[0] = { XMFLOAT4(40.0f, 0.0f, 0.0f, 0.0f), XMFLOAT4(-1.0f, 1.0f, 0.0f, 0.0f), 0.0f, 0.0f, 0 };
-	vecAgent[1] = { XMFLOAT4(45.0f, 0.0f, 0.0f, 0.0f), XMFLOAT4(-1.0f, -1.0f, 0.0f, 0.0f), 0.0f, 0.0f, 0 };
-	vecAgent[2] = { XMFLOAT4(55.0f, 0.0f, 0.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f), 0.0f, 0.0f, 0 };
-	vecAgent[3] = { XMFLOAT4(60.0f, 0.0f, 0.0f, 0.0f), XMFLOAT4(1.0f, -1.0f, 0.0f, 0.0f), 0.0f, 0.0f, 0 };
-
 
 	// Create the agent data structured buffers for simulation; no data yet
 	CD3D11_BUFFER_DESC vbdPV(MAX_AGENTS * sizeof(AGENT_DATA),
@@ -200,12 +187,24 @@ HRESULT CAgentCourse::InitializeAgentBuffers()
 	if (FAILED(hr)) return hr;
 	D3DDEBUGNAME(m_pUAVAgentDataNext, "Position/Velocity Next UAV");
 
+	// Spawn variables will be set for each new agent
+	D3D11_BUFFER_DESC Desc;
+	Desc.Usage = D3D11_USAGE_DYNAMIC;
+	Desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	Desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	Desc.MiscFlags = 0;
+	Desc.ByteWidth = sizeof(SPAWN_AGENT);
+	hr = m_pD3DDevice->CreateBuffer(&Desc, NULL, &m_pCBSpawnAgent);
+	if (FAILED(hr)) return hr;
+	D3DDEBUGNAME(m_pCBSpawnAgent, "Spawn Agent CB");
+
 	// If we're visualizing, then also need rendering data
 	if (m_bVisualize)
 	{
 		RENDER_VARIABLES rVar;
 		for (auto i = 0; i < m_vecAgentSS.size(); i++)
 		{
+
 			XMFLOAT3 clr = m_vecAgentSS[i].vColor;
 			rVar.g_arrColors[i] = XMFLOAT4(clr.x, clr.y, clr.z, 1.0f);
 		}
@@ -350,19 +349,44 @@ void CAgentCourse::MakeSegmentVertices(std::vector<WALL_VERTEX>& vecVerts, std::
 	vecInds.insert(vecInds.end(), newInds.begin(), newInds.end());
 }
 
-BOOL CAgentCourse::UpdateAgents(float dt, float T)
+BOOL CAgentCourse::UpdateAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, float dt, float T)
 {
 	// If total time exceeds the next scheduled spawn time, then 
 	// spawn a new agent.
-	if (T >= m_fNextSpawn)
+	if (T >= m_fNextSpawn && m_iMaxLiveAgents < MAX_AGENTS)
 	{
-		XMFLOAT2 ptSpawn = GetSpawnPoint();
-
+		SpawnAgent(pD3DContext, T);
 		m_fNextSpawn = T - logf(1.0f - frand()) / m_fSpawnRate;
-		CString str; str.Format(_T("Now = %f; Next = %f\n"), T, m_fNextSpawn);
-		OutputDebugString(str);
 	}
 	return TRUE;
+}
+
+void CAgentCourse::SpawnAgent(ComPtr<ID3D11DeviceContext>& pD3DContext, float T)
+{
+	size_t iIndex;
+	XMFLOAT2 ptSpawn = GetSpawnPoint(iIndex);
+	XMFLOAT2 ptVelocity = XMFLOAT2(m_sWorldPhysics.g_fIdealSpeed, 0.0f);
+	ID3D11UnorderedAccessView* pUAVNULL[1] = { nullptr };
+
+	SPAWN_AGENT agent = { ptSpawn, m_vecAgentSS[iIndex].velStart, T, (int)iIndex, m_iMaxLiveAgents, MAX_AGENTS };
+
+	// Select the computer shader that spawns new agents
+	pD3DContext->CSSetShader(m_pAgentCSSpawn.Get(), NULL, 0);
+
+	// Map new agent information into spawn compute shader
+	HRESULT hr = CDXUtils::MapDataIntoBuffer(pD3DContext, &agent, sizeof(agent), m_pCBSpawnAgent);
+	pD3DContext->CSSetConstantBuffers(0, 1, m_pCBSpawnAgent.GetAddressOf());
+
+	// Give the spawn compute shader read access to agent data array
+	pD3DContext->CSSetUnorderedAccessViews(0, 1, m_pUAVAgentData.GetAddressOf(), nullptr);
+
+	// Run the spawn compute shader
+	pD3DContext->Dispatch(1, 1, 1);
+
+	// Unbind the resources
+	pD3DContext->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
+
+	m_iMaxLiveAgents++;
 }
 
 void CAgentCourse::RenderWalls(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables)
@@ -467,14 +491,16 @@ HRESULT CAgentCourse::InitializeHourglass()
 	m_vecAgentSS[0].lineSink[0] = XMFLOAT2(100.0f, -13.5f);
 	m_vecAgentSS[0].lineSink[1] = XMFLOAT2(100.0f, 13.5f);
 
+	m_vecAgentSS[0].velStart = XMFLOAT2(m_sWorldPhysics.g_fIdealSpeed, 0.0f);
+
 	m_fSpawnRate *= m_vecAgentSS[0].lenSource;
 
 	return S_OK;
 }
 
-XMFLOAT2 CAgentCourse::GetSpawnPoint()
+XMFLOAT2 CAgentCourse::GetSpawnPoint(size_t &iIndex)
 {
-	size_t iIndex = 0;
+	iIndex = 0;
 	if (m_vecAgentSS.size() > 1)
 	{
 		float fi = frand();

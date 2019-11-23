@@ -21,7 +21,7 @@ public:
 
 	HRESULT Initialize(ComPtr<ID3D11Device>& pD3DDevice, const CString &strJsonFile);
 	HRESULT LoadShaders();
-	BOOL UpdateAgents(float dt, float T);
+	BOOL UpdateAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, float dt, float T);
 
 	CString GetName() { return m_strName; }
 	float GetCourseLength() { return m_fCourseLength; }
@@ -37,6 +37,7 @@ protected:
 		XMFLOAT3 vColor;
 		XMPOLYLINE lineSource;
 		XMPOLYLINE lineSink;
+		XMFLOAT2 velStart;
 		float randLimit;
 		float lenSource;
 	};
@@ -65,6 +66,17 @@ protected:
 		float Score;
 		int Type;
 	};
+
+	struct SPAWN_AGENT
+	{
+		XMFLOAT2 Position;
+		XMFLOAT2 Velocity;
+		float SpawnTime;
+		int Type;
+		UINT maxLiveAgents;
+		UINT maxAgents;
+	};
+
 
 	typedef int AGENT_VERTEX;
 //	struct AGENT_VERTEX
@@ -98,7 +110,8 @@ protected:
 
 	void MakeSegmentVertices(std::vector<WALL_VERTEX> &vecVerts, std::vector<UINT> &vecInds, const std::vector<WALL_SEGMENT> &vecSegs, XMFLOAT3 color);
 
-	XMFLOAT2 GetSpawnPoint();
+	void SpawnAgent(ComPtr<ID3D11DeviceContext>& pD3DContext, float T);
+	XMFLOAT2 GetSpawnPoint(size_t& iIndex);
 
 	bool m_bVisualize;
 	CString m_strName;
@@ -128,6 +141,9 @@ protected:
 	ComPtr<ID3D11ShaderResourceView> m_pSRVWalls;
 	ComPtr<ID3D11UnorderedAccessView> m_pUAVAgentData;
 	ComPtr<ID3D11UnorderedAccessView> m_pUAVAgentDataNext;
+
+	ComPtr<ID3D11Buffer> m_pCBSpawnAgent;
+	ComPtr<ID3D11ComputeShader> m_pAgentCSSpawn;
 
 	// D3D stuff only needed for visualization
 	ComPtr<ID3D11Buffer> m_pVBAgentColors;

@@ -4,18 +4,11 @@
 //    physics compute shader) in untransformed space and a unit vector pointing 
 //    in the direction of the velocity.  Input color is passed on unchanged.
 
-cbuffer cbRenderVariables 
+#include "AgentData.hlsli"
+
+cbuffer cbRenderVariables : register(b0)
 {
 	float4 g_arrColors[4];
-};
-
-struct AgentData
-{
-	float4 pos;
-	float4 velo;
-	float birth;
-	float score;
-	int type;
 };
 
 StructuredBuffer<AgentData>   g_bufAgentData;
