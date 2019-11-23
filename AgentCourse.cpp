@@ -188,12 +188,11 @@ HRESULT CAgentCourse::InitializeAgentBuffers()
 	D3DDEBUGNAME(m_pUAVAgentDataNext, "Position/Velocity Next UAV");
 
 	// Create the dead agent index list and an unordered access view
-	std::vector<DEAD_AGENT> vecDead(MAX_DEAD_AGENTS);
-	DEAD_AGENT agentNull = { 0, 0.0f };
-	std::fill(vecDead.begin(), vecDead.end(), agentNull);
-	CD3D11_BUFFER_DESC vbdDead(MAX_DEAD_AGENTS * sizeof(DEAD_AGENT),
+	std::vector<UINT> vecDead(MAX_DEAD_AGENTS);
+	std::fill(vecDead.begin(), vecDead.end(), 0);
+	CD3D11_BUFFER_DESC vbdDead(MAX_DEAD_AGENTS * sizeof(UINT),
 		D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE, D3D11_USAGE_DEFAULT, 0, 
-		D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, sizeof(DEAD_AGENT));
+		D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, sizeof(UINT));
 	vinitData.pSysMem = &vecDead.front();
 	hr = m_pD3DDevice->CreateBuffer(&vbdDead, &vinitData, &m_pSBDeadList);
 	if (FAILED(hr)) return hr;
@@ -215,6 +214,53 @@ HRESULT CAgentCourse::InitializeAgentBuffers()
 	hr = m_pD3DDevice->CreateBuffer(&Desc, NULL, &m_pCBSpawnAgent);
 	if (FAILED(hr)) return hr;
 	D3DDEBUGNAME(m_pCBSpawnAgent, "Spawn Agent CB");
+
+	// Create spawn output data for the CPU to read
+	const UINT NUM_SPAWN_OUTPUT = 2;
+	std::vector<UINT> vecSpawnOut(NUM_SPAWN_OUTPUT);
+	std::fill(vecSpawnOut.begin(), vecSpawnOut.end(), 0);
+	CD3D11_BUFFER_DESC vbdSpawnOut(NUM_SPAWN_OUTPUT * sizeof(UINT),
+		D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE, D3D11_USAGE_DEFAULT, 0,
+		D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, sizeof(UINT));
+	vinitData.pSysMem = &vecSpawnOut.front();
+	hr = m_pD3DDevice->CreateBuffer(&vbdSpawnOut, &vinitData, &m_pSBSpawnOutput);
+	if (FAILED(hr)) return hr;
+	D3DDEBUGNAME(m_pSBSpawnOutput, "Spawn Output");
+
+	CD3D11_UNORDERED_ACCESS_VIEW_DESC uavSpawnOutput(m_pSBSpawnOutput.Get(), DXGI_FORMAT_UNKNOWN, 0,
+		NUM_SPAWN_OUTPUT, D3D11_BUFFER_UAV_FLAG_COUNTER);
+	hr = m_pD3DDevice->CreateUnorderedAccessView(m_pSBSpawnOutput.Get(), &uavSpawnOutput, &m_pUAVSpawnOutput);
+	if (FAILED(hr)) return hr;
+	D3DDEBUGNAME(m_pUAVSpawnOutput, "Spawn Output UAV");
+
+	CD3D11_BUFFER_DESC vbdCPUSpawnOut(NUM_SPAWN_OUTPUT * sizeof(UINT),
+		0, D3D11_USAGE_STAGING, D3D11_CPU_ACCESS_READ, 0, sizeof(UINT));
+	hr = m_pD3DDevice->CreateBuffer(&vbdCPUSpawnOut, NULL, &m_pSBCPUSpawnOutput);
+	assert(SUCCEEDED(hr));
+	D3DDEBUGNAME(m_pSBCPUSpawnOutput, "Spawn Ouput CPU");
+
+	// Create final scores for the CPU to read
+	std::vector<float> vecScores(MAX_DEAD_AGENTS);
+	std::fill(vecScores.begin(), vecScores.end(), 0.0f);
+	CD3D11_BUFFER_DESC vbdScores(MAX_DEAD_AGENTS * sizeof(float),
+		D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE, D3D11_USAGE_DEFAULT, 0,
+		D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, sizeof(float));
+	vinitData.pSysMem = &vecScores.front();
+	hr = m_pD3DDevice->CreateBuffer(&vbdScores, &vinitData, &m_pSBFinalScores);
+	if (FAILED(hr)) return hr;
+	D3DDEBUGNAME(m_pSBFinalScores, "Final Scores");
+
+	CD3D11_UNORDERED_ACCESS_VIEW_DESC uavScores(m_pSBFinalScores.Get(), DXGI_FORMAT_UNKNOWN, 0,
+		MAX_DEAD_AGENTS, D3D11_BUFFER_UAV_FLAG_COUNTER);
+	hr = m_pD3DDevice->CreateUnorderedAccessView(m_pSBFinalScores.Get(), &uavScores, &m_pUAVFinalScores);
+	if (FAILED(hr)) return hr;
+	D3DDEBUGNAME(m_pUAVFinalScores, "Final Scores UAV");
+
+	CD3D11_BUFFER_DESC vbdCPUScores(MAX_DEAD_AGENTS * sizeof(float),
+		0, D3D11_USAGE_STAGING, D3D11_CPU_ACCESS_READ, 0, sizeof(float));
+	hr = m_pD3DDevice->CreateBuffer(&vbdCPUScores, NULL, &m_pSBCPUScores);
+	assert(SUCCEEDED(hr));
+	D3DDEBUGNAME(m_pSBCPUScores, "Final Scores CPU");
 
 	// If we're visualizing, then also need rendering data
 	if (m_bVisualize)
@@ -378,7 +424,6 @@ BOOL CAgentCourse::UpdateAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const 
 	{
 		SpawnAgent(pD3DContext, T);
 		m_fNextSpawn = T - logf(1.0f - frand()) / m_fSpawnRate;
-		m_iMaxLiveAgents++;
 	}
 
 	return TRUE;
@@ -391,7 +436,8 @@ void CAgentCourse::SpawnAgent(ComPtr<ID3D11DeviceContext>& pD3DContext, float T)
 	XMFLOAT2 ptVelocity = XMFLOAT2(m_sWorldPhysics.g_fIdealSpeed, 0.0f);
 	ID3D11UnorderedAccessView* pUAVNULL[1] = { nullptr };
 
-	SPAWN_AGENT agent = { ptSpawn, m_vecAgentSS[iIndex].velStart, T, (int)iIndex, m_iMaxLiveAgents, MAX_AGENTS };
+	SPAWN_AGENT agent = { ptSpawn, m_vecAgentSS[iIndex].velStart, T, m_sWorldPhysics.g_fParticleRadius,
+		(int)iIndex, m_iMaxLiveAgents, MAX_AGENTS };
 
 	// Select the compute shader that spawns new agents
 	pD3DContext->CSSetShader(m_pAgentCSSpawn.Get(), NULL, 0);
@@ -400,16 +446,31 @@ void CAgentCourse::SpawnAgent(ComPtr<ID3D11DeviceContext>& pD3DContext, float T)
 	HRESULT hr = CDXUtils::MapDataIntoBuffer(pD3DContext, &agent, sizeof(agent), m_pCBSpawnAgent);
 	pD3DContext->CSSetConstantBuffers(0, 1, m_pCBSpawnAgent.GetAddressOf());
 
-	// Give the spawn compute shader read access to agent data array
-	pD3DContext->CSSetUnorderedAccessViews(0, 1, m_pUAVAgentData.GetAddressOf(), nullptr);
+	// Set all of the UAVs (R/W buffers) that are needed
+	ID3D11UnorderedAccessView *arrUAV[4] = { m_pUAVAgentData.Get(), m_pUAVDeadList.Get(), m_pUAVSpawnOutput.Get(), m_pUAVFinalScores.Get() };
+	pD3DContext->CSSetUnorderedAccessViews(0, 4, arrUAV, nullptr);
 
 	// Run the spawn compute shader
 	pD3DContext->Dispatch(1, 1, 1);
 
-	// Unbind the resources
-	pD3DContext->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
+	// Get the shader output info
+	pD3DContext->CopyResource(m_pSBCPUSpawnOutput.Get(), m_pSBSpawnOutput.Get());
+	UINT iSpawnData[2];
+	hr = CDXUtils::MapDataFromBuffer(pD3DContext, (PVOID)iSpawnData, 2 * sizeof(UINT), m_pSBCPUSpawnOutput);
+	ASSERT(SUCCEEDED(hr));
 
 	m_iMaxLiveAgents++;
+
+	int iNumDead = iSpawnData[1];
+	if (iNumDead > 0)
+	{
+		m_iMaxLiveAgents -= iNumDead;
+	}
+	ASSERT(m_iMaxLiveAgents == iSpawnData[0]);
+
+	// Unbind the resources
+	pD3DContext->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
+	pD3DContext->CSSetShader(nullptr, nullptr, 0);
 }
 
 void CAgentCourse::ComputeAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables)

@@ -1,4 +1,3 @@
-
 struct AgentData
 {
 	float4 pos;
@@ -8,3 +7,8 @@ struct AgentData
 	int type;
 };
 
+struct DeadAgent
+{
+	uint index;
+	float score;
+};

@@ -74,17 +74,14 @@ protected:
 		XMFLOAT2 Position;
 		XMFLOAT2 Velocity;
 		float SpawnTime;
+		float Radius;
 		int Type;
 		UINT maxLiveAgents;
 		UINT maxAgents;
+		UINT iDummy0;
+		UINT iDummy1;
+		UINT iDummy2;
 	};
-
-	struct DEAD_AGENT
-	{
-		UINT Index;
-		float FinalScore;
-	};
-
 
 	typedef int AGENT_VERTEX;
 //	struct AGENT_VERTEX
@@ -152,8 +149,11 @@ protected:
 	ComPtr<ID3D11UnorderedAccessView> m_pUAVAgentDataNext;
 
 	ComPtr<ID3D11Buffer> m_pSBDeadList;
-	ComPtr<ID3D11ShaderResourceView> m_pSRVDeadList;
 	ComPtr<ID3D11UnorderedAccessView> m_pUAVDeadList;
+
+	ComPtr<ID3D11Buffer> m_pSBSpawnOutput;
+	ComPtr<ID3D11Buffer> m_pSBCPUSpawnOutput;
+	ComPtr<ID3D11UnorderedAccessView> m_pUAVSpawnOutput;
 
 	ComPtr<ID3D11Buffer> m_pSBFinalScores;
 	ComPtr<ID3D11Buffer> m_pSBCPUScores;

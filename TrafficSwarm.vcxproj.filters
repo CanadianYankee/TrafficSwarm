@@ -94,10 +94,10 @@
     <None Include="res\TrafficSwarm.rc2">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="SharedVars.hlsli">
+    <None Include="AgentData.hlsli">
       <Filter>Shader Files</Filter>
     </None>
-    <None Include="AgentData.hlsli">
+    <None Include="SharedVars.hlsli">
       <Filter>Shader Files</Filter>
     </None>
   </ItemGroup>

@@ -55,7 +55,7 @@ void DoComputeTest()
 
 	ComPtr<ID3D11Buffer> pSBData;
 	D3D11_SUBRESOURCE_DATA vinitData = { 0 };
-	UINT MAX_DATA = 1024;
+	const UINT MAX_DATA = 1024;
 	struct DATA {
 		UINT iSource;
 	};
@@ -71,7 +71,7 @@ void DoComputeTest()
 	D3DDEBUGNAME(pSBData, "Data List");
 
 	ComPtr<ID3D11UnorderedAccessView> pUAVData;
-	CD3D11_UNORDERED_ACCESS_VIEW_DESC uavDead(pSBData.Get(), DXGI_FORMAT_UNKNOWN, 0, MAX_DATA, D3D11_BUFFER_UAV_FLAG_APPEND);
+	CD3D11_UNORDERED_ACCESS_VIEW_DESC uavDead(pSBData.Get(), DXGI_FORMAT_UNKNOWN, 0, MAX_DATA, D3D11_BUFFER_UAV_FLAG_COUNTER);
 	hr = pD3DDevice->CreateUnorderedAccessView(pSBData.Get(), &uavDead, &pUAVData);
 	assert(SUCCEEDED(hr));
 	D3DDEBUGNAME(pUAVData, "Data UAV");
@@ -88,7 +88,7 @@ void DoComputeTest()
 	UINT count = 0;
 	pD3DContext->CSSetUnorderedAccessViews(0, 1, pUAVData.GetAddressOf(), &count);
 
-	pD3DContext->Dispatch(32, 1, 1);
+	pD3DContext->Dispatch(1, 1, 1);
 
 	// Copy the output data
 	pD3DContext->CopyResource(pOutputData.Get(), pSBData.Get());
@@ -97,13 +97,15 @@ void DoComputeTest()
 	pD3DContext->Map(pOutputData.Get(), 0, D3D11_MAP_READ, 0, &mappedResource);
 
 	DATA* pOutput = reinterpret_cast<DATA*>(mappedResource.pData);
+	DATA arrOut[MAX_DATA];
+	memcpy(arrOut, pOutput, MAX_DATA * sizeof(DATA));
+
+	pD3DContext->Unmap(pOutputData.Get(), 0);
 
 	for (int i = 0; i < 33; i++)
 	{
-		DATA d = pOutput[i];
+		UINT d = arrOut[i].iSource;
 	}
-
-	pD3DContext->Unmap(pOutputData.Get(), 0);
 
 
 	// Unbind the resources
