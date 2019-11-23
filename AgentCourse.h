@@ -43,11 +43,18 @@ protected:
 
 	struct WORLD_PHYSICS
 	{
-		WORLD_PHYSICS() : g_fParticleRadius(0.5f), g_fIdealSpeed(5.0f), wpfDummy0(0.0f), wpfDummy1(0.0f) {}
+		WORLD_PHYSICS() : g_fParticleRadius(0.5f), g_fIdealSpeed(10.0f), wpiDummy0(0),
+			g_iMaxAgents(MAX_AGENTS)
+		{}
 		float g_fParticleRadius;
 		float g_fIdealSpeed;
-		float wpfDummy0;
-		float wpfDummy1;
+		UINT g_iMaxAgents;
+		UINT wpiDummy0;
+	};
+
+	struct RENDER_VARIABLES
+	{
+		XMFLOAT4 g_arrColors[4];
 	};
 
 	struct AGENT_DATA
@@ -56,12 +63,14 @@ protected:
 		XMFLOAT4 Velocity;
 		float SpawnTime;
 		float Score;
+		int Type;
 	};
 
-	struct AGENT_VERTEX
-	{
-		XMFLOAT3 Color;
-	};
+	typedef int AGENT_VERTEX;
+//	struct AGENT_VERTEX
+//	{
+//		int Dummy;
+//	};
 
 	struct WALL_SEGMENT
 	{
@@ -110,6 +119,7 @@ protected:
 
 	// D3D stuff needed for simulation
 	ComPtr<ID3D11Buffer> m_pCBWorldPhysics;
+	ComPtr<ID3D11Buffer> m_pCBRender;
 	ComPtr<ID3D11Buffer> m_pSBAgentData;
 	ComPtr<ID3D11Buffer> m_pSBAgentDataNext;
 	ComPtr<ID3D11Buffer> m_pSBWalls;

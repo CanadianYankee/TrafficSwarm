@@ -66,7 +66,7 @@ HRESULT CAgentCourse::LoadShaders()
 		// Agent vertex shader
 		const D3D11_INPUT_ELEMENT_DESC vertexAgentDesc[] =
 		{
-			{ "COLOR",    0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(AGENT_VERTEX, Color), D3D11_INPUT_PER_VERTEX_DATA, 0 }
+			{ "DUMMY",    0, DXGI_FORMAT_R32_SINT  , 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 		};
 		CDXUtils::VS_INPUTLAYOUTSETUP ILS;
 		ILS.pInputDesc = vertexAgentDesc;
@@ -153,15 +153,20 @@ HRESULT CAgentCourse::InitializeAgentBuffers()
 	D3D11_SUBRESOURCE_DATA vinitData = { 0 };
 
 	m_iMaxLiveAgents = 4;
-	std::vector<AGENT_DATA> vecAgent(m_iMaxLiveAgents);
-	vecAgent[0].Position = XMFLOAT4(40.0f, 0.0f, 0.0f, 0.0f);
-	vecAgent[1].Position = XMFLOAT4(45.0f, 0.0f, 0.0f, 0.0f);
-	vecAgent[2].Position = XMFLOAT4(55.0f, 0.0f, 0.0f, 0.0f);
-	vecAgent[3].Position = XMFLOAT4(60.0f, 0.0f, 0.0f, 0.0f);
-	vecAgent[0].Velocity = XMFLOAT4(-1.0f, 1.0f, 0.0f, 0.0f);
-	vecAgent[1].Velocity = XMFLOAT4(-1.0f, -1.0f, 0.0f, 0.0f);
-	vecAgent[2].Velocity = XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f);
-	vecAgent[3].Velocity = XMFLOAT4(1.0f, -1.0f, 0.0f, 0.0f);
+	std::vector<AGENT_DATA> vecAgent(MAX_AGENTS);
+//	vecAgent[0].Position = XMFLOAT4(40.0f, 0.0f, 0.0f, 0.0f);
+//	vecAgent[1].Position = XMFLOAT4(45.0f, 0.0f, 0.0f, 0.0f);
+//	vecAgent[2].Position = XMFLOAT4(55.0f, 0.0f, 0.0f, 0.0f);
+//	vecAgent[3].Position = XMFLOAT4(60.0f, 0.0f, 0.0f, 0.0f);
+//	vecAgent[0].Velocity = XMFLOAT4(-1.0f, 1.0f, 0.0f, 0.0f);
+//	vecAgent[1].Velocity = XMFLOAT4(-1.0f, -1.0f, 0.0f, 0.0f);
+//	vecAgent[2].Velocity = XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f);
+//	vecAgent[3].Velocity = XMFLOAT4(1.0f, -1.0f, 0.0f, 0.0f);
+	vecAgent[0] = { XMFLOAT4(40.0f, 0.0f, 0.0f, 0.0f), XMFLOAT4(-1.0f, 1.0f, 0.0f, 0.0f), 0.0f, 0.0f, 0 };
+	vecAgent[1] = { XMFLOAT4(45.0f, 0.0f, 0.0f, 0.0f), XMFLOAT4(-1.0f, -1.0f, 0.0f, 0.0f), 0.0f, 0.0f, 0 };
+	vecAgent[2] = { XMFLOAT4(55.0f, 0.0f, 0.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f), 0.0f, 0.0f, 0 };
+	vecAgent[3] = { XMFLOAT4(60.0f, 0.0f, 0.0f, 0.0f), XMFLOAT4(1.0f, -1.0f, 0.0f, 0.0f), 0.0f, 0.0f, 0 };
+
 
 	// Create the agent data structured buffers for simulation; no data yet
 	CD3D11_BUFFER_DESC vbdPV(MAX_AGENTS * sizeof(AGENT_DATA),
@@ -198,14 +203,30 @@ HRESULT CAgentCourse::InitializeAgentBuffers()
 	// If we're visualizing, then also need rendering data
 	if (m_bVisualize)
 	{
-		std::vector<AGENT_VERTEX> vecAgent;
-		vecAgent.resize(MAX_AGENTS);
-		vecAgent[0].Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
-		vecAgent[1].Color = XMFLOAT3(1.0f, 1.0f, 0.0f);
-		vecAgent[2].Color = XMFLOAT3(1.0f, 0.0f, 1.0f);
-		vecAgent[3].Color = XMFLOAT3(0.0f, 1.0f, 1.0f);
+		RENDER_VARIABLES rVar;
+		for (auto i = 0; i < m_vecAgentSS.size(); i++)
+		{
+			XMFLOAT3 clr = m_vecAgentSS[i].vColor;
+			rVar.g_arrColors[i] = XMFLOAT4(clr.x, clr.y, clr.z, 1.0f);
+		}
 
-		// Create color vertex buffer
+		D3D11_SUBRESOURCE_DATA cbData;
+		cbData.pSysMem = &rVar;
+		cbData.SysMemPitch = 0;
+		cbData.SysMemSlicePitch = 0;
+		D3D11_BUFFER_DESC Desc;
+		Desc.Usage = D3D11_USAGE_IMMUTABLE;
+		Desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		Desc.CPUAccessFlags = 0;
+		Desc.MiscFlags = 0;
+		Desc.ByteWidth = sizeof(RENDER_VARIABLES);
+		hr = m_pD3DDevice->CreateBuffer(&Desc, &cbData, &m_pCBRender);
+		if (FAILED(hr)) return hr;
+		D3DDEBUGNAME(m_pCBWorldPhysics, "Render CB");
+
+		// Create type vertex buffer
+		std::vector<AGENT_VERTEX> vecAgent(MAX_AGENTS);
+		std::fill(vecAgent.begin(), vecAgent.end(), 0);
 		D3D11_SUBRESOURCE_DATA vinitData = { 0 };
 		vinitData.pSysMem = &vecAgent.front();
 		vinitData.SysMemPitch = 0;
@@ -214,7 +235,7 @@ HRESULT CAgentCourse::InitializeAgentBuffers()
 			D3D11_USAGE_IMMUTABLE);
 		hr = m_pD3DDevice->CreateBuffer(&vbdColors, &vinitData, &m_pVBAgentColors);
 		if (FAILED(hr)) return hr;
-		D3DDEBUGNAME(m_pVBAgentColors, "Agent colors");
+		D3DDEBUGNAME(m_pVBAgentColors, "Agent vertices");
 	}
 
 	return hr;
@@ -392,6 +413,7 @@ void CAgentCourse::RenderAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const 
 	pD3DContext->IASetVertexBuffers(0, 1, m_pVBAgentColors.GetAddressOf(), &stride, &offset);
 	pD3DContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 
+	pD3DContext->VSSetConstantBuffers(0, 1, m_pCBRender.GetAddressOf());
 	pD3DContext->VSSetShaderResources(0, 1, m_pSRVAgentData.GetAddressOf());
 
 	// Set geometry shader resources 
