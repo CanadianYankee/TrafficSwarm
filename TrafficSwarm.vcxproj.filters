@@ -52,9 +52,6 @@
     <ClInclude Include="DDSTextureLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AgentEnsemble.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="AgentCourse.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -84,9 +81,6 @@
     <ClCompile Include="DDSTextureLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AgentEnsemble.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="AgentCourse.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -99,6 +93,9 @@
   <ItemGroup>
     <None Include="res\TrafficSwarm.rc2">
       <Filter>Resource Files</Filter>
+    </None>
+    <None Include="AgentData.hlsli">
+      <Filter>Shader Files</Filter>
     </None>
     <None Include="SharedVars.hlsli">
       <Filter>Shader Files</Filter>
@@ -126,6 +123,12 @@
       <Filter>Shader Files</Filter>
     </FxCompile>
     <FxCompile Include="WallPS.hlsl">
+      <Filter>Shader Files</Filter>
+    </FxCompile>
+    <FxCompile Include="AgentCSSpawn.hlsl">
+      <Filter>Shader Files</Filter>
+    </FxCompile>
+    <FxCompile Include="AgentCSIterate.hlsl">
       <Filter>Shader Files</Filter>
     </FxCompile>
   </ItemGroup>

@@ -228,7 +228,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AgentCourse.h" />
-    <ClInclude Include="AgentEnsemble.h" />
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="DXUtils.h" />
     <ClInclude Include="SandboxWnd.h" />
@@ -243,7 +242,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AgentCourse.cpp" />
-    <ClCompile Include="AgentEnsemble.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="DXUtils.cpp" />
     <ClCompile Include="SandboxWnd.cpp" />
@@ -262,6 +260,7 @@
     <ResourceCompile Include="TrafficSwarm.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="AgentData.hlsli" />
     <None Include="SharedVars.hlsli" />
     <None Include="res\TrafficSwarm.rc2" />
   </ItemGroup>
@@ -270,6 +269,26 @@
     <Image Include="RoundAgent.dds" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="AgentCSIterate.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="AgentCSSpawn.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
+    </FxCompile>
     <FxCompile Include="AgentGS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Geometry</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>

@@ -170,3 +170,33 @@ HRESULT CDXUtils::MapDataIntoBuffer(ComPtr<ID3D11DeviceContext>& pD3DDeviceConte
 
 	return hr;
 }
+
+HRESULT CDXUtils::MapDataFromBuffer(ComPtr<ID3D11DeviceContext>& pD3DDeviceContext, void* pData, size_t nSize, ComPtr<ID3D11Resource> pResource, UINT Subresource /* = 0 */, D3D11_MAP MapType /* = D3D11_MAP_READ */)
+{
+	if (pD3DDeviceContext == nullptr || pResource == nullptr)
+	{
+		ASSERT(FALSE);
+		return E_INVALIDARG;
+	}
+
+	HRESULT hr = S_OK;
+
+	D3D11_MAPPED_SUBRESOURCE mapData;
+	hr = pD3DDeviceContext->Map(pResource.Get(), Subresource, MapType, 0, &mapData);
+	if (SUCCEEDED(hr))
+	{
+		size_t nTarget = mapData.RowPitch * ((mapData.DepthPitch > 0) ? mapData.DepthPitch : 1);
+		if (nTarget >= nSize)
+		{
+			memcpy(pData, mapData.pData, nSize);
+		}
+		else
+		{
+			hr = E_FAIL;
+		}
+		pD3DDeviceContext->Unmap(pResource.Get(), Subresource);
+	}
+
+	return hr;
+
+}

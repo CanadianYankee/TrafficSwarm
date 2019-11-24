@@ -8,7 +8,8 @@ inline float frand()
 	return (float)rand() / (float)RAND_MAX;
 }
 
-constexpr int MAX_AGENTS = 4;
+constexpr int MAX_AGENTS = 2048;
+constexpr int MAX_DEAD_AGENTS = MAX_AGENTS >> 3;
 
 // This class defines the course that the agents must 
 // navigate, including walls and agent source-sinks. It 
@@ -19,48 +20,76 @@ class CAgentCourse
 public:
 	CAgentCourse(bool bVisualize);
 
-	HRESULT Initialize(ComPtr<ID3D11Device>& pD3DDevice, const CString &strJsonFile);
+	HRESULT Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11DeviceContext>& pD3DContext, const CString &strJsonFile);
 	HRESULT LoadShaders();
+	BOOL UpdateAgents(const ComPtr<ID3D11Buffer>& pCBFrameVariables, float dt, float T);
 
+	CString GetName() { return m_strName; }
+	float GetCourseLength() { return m_fCourseLength; }
+	UINT GetMaxAlive() { return m_iMaxLiveAgents; }
+
+	void RenderWalls(const ComPtr<ID3D11Buffer>& pCBFrameVariables);
+	void RenderAgents(const ComPtr<ID3D11Buffer>& pCBFrameVariables, const ComPtr<ID3D11ShaderResourceView>& pSRVParticleDraw, 
+		const ComPtr<ID3D11SamplerState>& pTextureSampler);
+
+protected:
 	typedef std::vector<XMFLOAT2> XMPOLYLINE;
 	struct AGENT_SOURCE_SINK {
 		AGENT_SOURCE_SINK() : vColor(0.0f, 0.0f, 0.0f) {}
 		XMFLOAT3 vColor;
 		XMPOLYLINE lineSource;
 		XMPOLYLINE lineSink;
+		XMFLOAT2 velStart;
+		float randLimit;
+		float lenSource;
 	};
-	CString GetName() { return m_strName; }
-	float GetCourseLength() { return m_fCourseLength; }
-	int GetAgentCount() { return MAX_AGENTS; }
 
-	int GetSpawnCount() { return (int)m_vecAgentSS.size(); }
-	XMFLOAT3 GetColor(int iIndex) { return m_vecAgentSS[iIndex].vColor; }
-	XMFLOAT2 GetSpawnPoint(int iIndex);
-
-	void RenderWalls(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables);
-	void RenderAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables,
-		const ComPtr<ID3D11ShaderResourceView>& pSRVParticleDraw, const ComPtr<ID3D11SamplerState>& pTextureSampler);
-
-protected:
 	struct WORLD_PHYSICS
 	{
-		WORLD_PHYSICS() : g_fParticleRadius(0.5f), wpfDummy0(0.0f), wpfDummy1(0.0f), wpfDummy2(0.0f) {}
+		WORLD_PHYSICS() : g_fParticleRadius(0.5f), g_fIdealSpeed(10.0f), wpiDummy0(0),
+			g_iMaxAgents(MAX_AGENTS)
+		{}
 		float g_fParticleRadius;
-		float wpfDummy0;
-		float wpfDummy1;
-		float wpfDummy2;
+		float g_fIdealSpeed;
+		UINT g_iMaxAgents;
+		UINT wpiDummy0;
 	};
 
-	struct AGENT_POSVEL
+	struct RENDER_VARIABLES
+	{
+		XMFLOAT4 g_arrColors[4];
+	};
+
+	struct AGENT_DATA
 	{
 		XMFLOAT4 Position;
 		XMFLOAT4 Velocity;
+		float SpawnTime;
+		float Score;
+		int Type;
 	};
 
-	struct AGENT_VERTEX
+	struct SPAWN_AGENT
 	{
-		XMFLOAT3 Color;
+		XMFLOAT2 Position;
+		XMFLOAT2 Velocity;
+
+		float SpawnTime;
+		float Radius;
+		int Type;
+		UINT maxLiveAgents;
+
+		UINT maxAgents;
+		UINT iDummy0;
+		UINT iDummy1;
+		UINT iDummy2;
 	};
+
+	typedef int AGENT_VERTEX;
+//	struct AGENT_VERTEX
+//	{
+//		int Dummy;
+//	};
 
 	struct WALL_SEGMENT
 	{
@@ -88,9 +117,15 @@ protected:
 
 	void MakeSegmentVertices(std::vector<WALL_VERTEX> &vecVerts, std::vector<UINT> &vecInds, const std::vector<WALL_SEGMENT> &vecSegs, XMFLOAT3 color);
 
+	void SpawnAgent(ComPtr<ID3D11DeviceContext>& pD3DContext, float T);
+	void ComputeAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables);
+	XMFLOAT2 GetSpawnPoint(size_t& iIndex);
+
 	bool m_bVisualize;
 	CString m_strName;
 	float m_fCourseLength;
+	float m_fNextSpawn;
+	float m_fSpawnRate;
 	std::vector<XMPOLYLINE> m_vecWalls;
 	std::vector<AGENT_SOURCE_SINK> m_vecAgentSS;
 	UINT m_iWallSegments;
@@ -99,18 +134,38 @@ protected:
 
 	WORLD_PHYSICS m_sWorldPhysics;
 
+	UINT m_iMaxLiveAgents;
+
 	ComPtr<ID3D11Device> m_pD3DDevice;
+	ComPtr<ID3D11DeviceContext> m_pD3DContext;
 
 	// D3D stuff needed for simulation
 	ComPtr<ID3D11Buffer> m_pCBWorldPhysics;
-	ComPtr<ID3D11Buffer> m_pSBPosVel;
-	ComPtr<ID3D11Buffer> m_pSBPosVelNext;
+	ComPtr<ID3D11Buffer> m_pCBRender;
+
+	ComPtr<ID3D11Buffer> m_pSBAgentData;
+	ComPtr<ID3D11ShaderResourceView> m_pSRVAgentData;
+	ComPtr<ID3D11UnorderedAccessView> m_pUAVAgentData;
+
+	ComPtr<ID3D11Buffer> m_pSBAgentDataNext;
+	ComPtr<ID3D11ShaderResourceView> m_pSRVAgentDataNext;
+	ComPtr<ID3D11UnorderedAccessView> m_pUAVAgentDataNext;
+	
+	#define NUM_COMPUTE_OUT 8
+	ComPtr<ID3D11Buffer> m_pSBComputeOutput;
+	ComPtr<ID3D11Buffer> m_pSBCPUComputeOutput;
+	ComPtr<ID3D11UnorderedAccessView> m_pUAVComputeOutput;
+
+	ComPtr<ID3D11Buffer> m_pSBFinalScores;
+	ComPtr<ID3D11Buffer> m_pSBCPUScores;
+	ComPtr<ID3D11UnorderedAccessView> m_pUAVFinalScores;
+
 	ComPtr<ID3D11Buffer> m_pSBWalls;
-	ComPtr<ID3D11ShaderResourceView> m_pSRVPosVel;
-	ComPtr<ID3D11ShaderResourceView> m_pSRVPosVelNext;
 	ComPtr<ID3D11ShaderResourceView> m_pSRVWalls;
-	ComPtr<ID3D11UnorderedAccessView> m_pUAVPosVel;
-	ComPtr<ID3D11UnorderedAccessView> m_pUAVPosVelNext;
+
+	ComPtr<ID3D11Buffer> m_pCBSpawnAgent;
+	ComPtr<ID3D11ComputeShader> m_pAgentCSSpawn;
+	ComPtr<ID3D11ComputeShader> m_pAgentCSIterate;
 
 	// D3D stuff only needed for visualization
 	ComPtr<ID3D11Buffer> m_pVBAgentColors;
