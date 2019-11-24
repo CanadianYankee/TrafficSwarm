@@ -49,7 +49,17 @@ void DoComputeTest()
 	if (SUCCEEDED(hr))
 	{
 		hr = pShader.As<ID3D11ComputeShader>(&pAppendCS);
+		pShader = nullptr;
 		D3DDEBUGNAME(pAppendCS, "Append CS");
+	}
+	assert(SUCCEEDED(hr));
+
+	ComPtr<ID3D11ComputeShader> pConsumeCS;
+	hr = CDXUtils::LoadShader(pD3DDevice, CDXUtils::ComputeShader, _T("ConsumeCS.cso"), nullptr, &pShader);
+	if (SUCCEEDED(hr))
+	{
+		hr = pShader.As<ID3D11ComputeShader>(&pConsumeCS);
+		D3DDEBUGNAME(pAppendCS, "Consume CS");
 	}
 	assert(SUCCEEDED(hr));
 
@@ -71,7 +81,7 @@ void DoComputeTest()
 	D3DDEBUGNAME(pSBData, "Data List");
 
 	ComPtr<ID3D11UnorderedAccessView> pUAVData;
-	CD3D11_UNORDERED_ACCESS_VIEW_DESC uavDead(pSBData.Get(), DXGI_FORMAT_UNKNOWN, 0, MAX_DATA, D3D11_BUFFER_UAV_FLAG_COUNTER);
+	CD3D11_UNORDERED_ACCESS_VIEW_DESC uavDead(pSBData.Get(), DXGI_FORMAT_UNKNOWN, 0, MAX_DATA);
 	hr = pD3DDevice->CreateUnorderedAccessView(pSBData.Get(), &uavDead, &pUAVData);
 	assert(SUCCEEDED(hr));
 	D3DDEBUGNAME(pUAVData, "Data UAV");
@@ -102,14 +112,37 @@ void DoComputeTest()
 
 	pD3DContext->Unmap(pOutputData.Get(), 0);
 
-	for (int i = 0; i < 33; i++)
+	for (int i = 0; i < 6; i++)
 	{
 		UINT d = arrOut[i].iSource;
 	}
-
-
 	// Unbind the resources
 	ID3D11UnorderedAccessView* pUAVNULL[1] = { nullptr };
+	pD3DContext->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
+	pD3DContext->CSSetShader(NULL, NULL, 0);
+
+
+	pD3DContext->CSSetShader(pConsumeCS.Get(), NULL, 0);
+	count = 0;
+	pD3DContext->CSSetUnorderedAccessViews(0, 1, pUAVData.GetAddressOf(), NULL);
+
+	pD3DContext->Dispatch(1, 1, 1);
+
+	// Copy the output data
+	pD3DContext->CopyResource(pOutputData.Get(), pSBData.Get());
+	ZeroMemory(&mappedResource, sizeof(D3D11_MAPPED_SUBRESOURCE));
+	pD3DContext->Map(pOutputData.Get(), 0, D3D11_MAP_READ, 0, &mappedResource);
+
+	pOutput = reinterpret_cast<DATA*>(mappedResource.pData);
+	memcpy(arrOut, pOutput, MAX_DATA * sizeof(DATA));
+
+	pD3DContext->Unmap(pOutputData.Get(), 0);
+
+	for (int i = 0; i < 6; i++)
+	{
+		UINT d = arrOut[i].iSource;
+	}
+	// Unbind the resources
 	pD3DContext->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 	pD3DContext->CSSetShader(NULL, NULL, 0);
 }

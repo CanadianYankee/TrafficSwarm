@@ -58,5 +58,6 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="AppendCS.hlsl" />
+    <FxCompile Include="ConsumeCS.hlsl" />
   </ItemGroup>
 </Project>

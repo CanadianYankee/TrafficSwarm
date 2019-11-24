@@ -14,9 +14,10 @@ CAgentCourse::CAgentCourse(bool bVisualize) :
 {
 }
 
-HRESULT CAgentCourse::Initialize(ComPtr<ID3D11Device>& pD3DDevice, const CString& strJsonFile)
+HRESULT CAgentCourse::Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11DeviceContext>& pD3DContext, const CString& strJsonFile)
 {
 	m_pD3DDevice = pD3DDevice;
+	m_pD3DContext = pD3DContext;
 	HRESULT hr = S_OK;
 
 	if (strJsonFile.IsEmpty())
@@ -186,24 +187,7 @@ HRESULT CAgentCourse::InitializeAgentBuffers()
 	hr = m_pD3DDevice->CreateUnorderedAccessView(m_pSBAgentDataNext.Get(), &uavPV, &m_pUAVAgentDataNext);
 	if (FAILED(hr)) return hr;
 	D3DDEBUGNAME(m_pUAVAgentDataNext, "Position/Velocity Next UAV");
-
-	// Create the dead agent index list and an unordered access view
-	std::vector<UINT> vecDead(MAX_DEAD_AGENTS);
-	std::fill(vecDead.begin(), vecDead.end(), 0);
-	CD3D11_BUFFER_DESC vbdDead(MAX_DEAD_AGENTS * sizeof(UINT),
-		D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE, D3D11_USAGE_DEFAULT, 0, 
-		D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, sizeof(UINT));
-	vinitData.pSysMem = &vecDead.front();
-	hr = m_pD3DDevice->CreateBuffer(&vbdDead, &vinitData, &m_pSBDeadList);
-	if (FAILED(hr)) return hr;
-	D3DDEBUGNAME(m_pSBDeadList, "Dead Agent List");
-
-	CD3D11_UNORDERED_ACCESS_VIEW_DESC uavDead(m_pSBDeadList.Get(), DXGI_FORMAT_UNKNOWN, 0, 
-		MAX_DEAD_AGENTS, D3D11_BUFFER_UAV_FLAG_COUNTER);
-	hr = m_pD3DDevice->CreateUnorderedAccessView(m_pSBDeadList.Get(), &uavDead, &m_pUAVDeadList);
-	if (FAILED(hr)) return hr;
-	D3DDEBUGNAME(m_pUAVDeadList, "Dead Agent UAV");
-
+	
 	// Spawn variables will be set for each new agent
 	D3D11_BUFFER_DESC Desc;
 	Desc.Usage = D3D11_USAGE_DYNAMIC;
@@ -216,28 +200,27 @@ HRESULT CAgentCourse::InitializeAgentBuffers()
 	D3DDEBUGNAME(m_pCBSpawnAgent, "Spawn Agent CB");
 
 	// Create spawn output data for the CPU to read
-	const UINT NUM_SPAWN_OUTPUT = 2;
-	std::vector<UINT> vecSpawnOut(NUM_SPAWN_OUTPUT);
+	std::vector<UINT> vecSpawnOut(NUM_COMPUTE_OUT);
 	std::fill(vecSpawnOut.begin(), vecSpawnOut.end(), 0);
-	CD3D11_BUFFER_DESC vbdSpawnOut(NUM_SPAWN_OUTPUT * sizeof(UINT),
+	CD3D11_BUFFER_DESC vbdSpawnOut(NUM_COMPUTE_OUT * sizeof(UINT),
 		D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE, D3D11_USAGE_DEFAULT, 0,
 		D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, sizeof(UINT));
 	vinitData.pSysMem = &vecSpawnOut.front();
-	hr = m_pD3DDevice->CreateBuffer(&vbdSpawnOut, &vinitData, &m_pSBSpawnOutput);
+	hr = m_pD3DDevice->CreateBuffer(&vbdSpawnOut, &vinitData, &m_pSBComputeOutput);
 	if (FAILED(hr)) return hr;
-	D3DDEBUGNAME(m_pSBSpawnOutput, "Spawn Output");
+	D3DDEBUGNAME(m_pSBComputeOutput, "Spawn Output");
 
-	CD3D11_UNORDERED_ACCESS_VIEW_DESC uavSpawnOutput(m_pSBSpawnOutput.Get(), DXGI_FORMAT_UNKNOWN, 0,
-		NUM_SPAWN_OUTPUT, D3D11_BUFFER_UAV_FLAG_COUNTER);
-	hr = m_pD3DDevice->CreateUnorderedAccessView(m_pSBSpawnOutput.Get(), &uavSpawnOutput, &m_pUAVSpawnOutput);
+	CD3D11_UNORDERED_ACCESS_VIEW_DESC uavComputeOutput(m_pSBComputeOutput.Get(), DXGI_FORMAT_UNKNOWN, 0,
+		NUM_COMPUTE_OUT);
+	hr = m_pD3DDevice->CreateUnorderedAccessView(m_pSBComputeOutput.Get(), &uavComputeOutput, &m_pUAVComputeOutput);
 	if (FAILED(hr)) return hr;
-	D3DDEBUGNAME(m_pUAVSpawnOutput, "Spawn Output UAV");
+	D3DDEBUGNAME(m_pUAVComputeOutput, "Spawn Output UAV");
 
-	CD3D11_BUFFER_DESC vbdCPUSpawnOut(NUM_SPAWN_OUTPUT * sizeof(UINT),
-		0, D3D11_USAGE_STAGING, D3D11_CPU_ACCESS_READ, 0, sizeof(UINT));
-	hr = m_pD3DDevice->CreateBuffer(&vbdCPUSpawnOut, NULL, &m_pSBCPUSpawnOutput);
+	CD3D11_BUFFER_DESC vbdCPUSpawnOut(NUM_COMPUTE_OUT * sizeof(UINT),
+		0, D3D11_USAGE_STAGING, D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE, 0, sizeof(UINT));
+	hr = m_pD3DDevice->CreateBuffer(&vbdCPUSpawnOut, NULL, &m_pSBCPUComputeOutput);
 	assert(SUCCEEDED(hr));
-	D3DDEBUGNAME(m_pSBCPUSpawnOutput, "Spawn Ouput CPU");
+	D3DDEBUGNAME(m_pSBCPUComputeOutput, "Spawn Ouput CPU");
 
 	// Create final scores for the CPU to read
 	std::vector<float> vecScores(MAX_DEAD_AGENTS);
@@ -251,7 +234,7 @@ HRESULT CAgentCourse::InitializeAgentBuffers()
 	D3DDEBUGNAME(m_pSBFinalScores, "Final Scores");
 
 	CD3D11_UNORDERED_ACCESS_VIEW_DESC uavScores(m_pSBFinalScores.Get(), DXGI_FORMAT_UNKNOWN, 0,
-		MAX_DEAD_AGENTS, D3D11_BUFFER_UAV_FLAG_COUNTER);
+		MAX_DEAD_AGENTS);
 	hr = m_pD3DDevice->CreateUnorderedAccessView(m_pSBFinalScores.Get(), &uavScores, &m_pUAVFinalScores);
 	if (FAILED(hr)) return hr;
 	D3DDEBUGNAME(m_pUAVFinalScores, "Final Scores UAV");
@@ -413,16 +396,16 @@ void CAgentCourse::MakeSegmentVertices(std::vector<WALL_VERTEX>& vecVerts, std::
 	vecInds.insert(vecInds.end(), newInds.begin(), newInds.end());
 }
 
-BOOL CAgentCourse::UpdateAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables, float dt, float T)
+BOOL CAgentCourse::UpdateAgents( const ComPtr<ID3D11Buffer>& pCBFrameVariables, float dt, float T)
 {
 	// Let the agents do their physics thing
-	ComputeAgents(pD3DContext, pCBFrameVariables);
+	ComputeAgents(m_pD3DContext, pCBFrameVariables);
 
 	// If total time exceeds the next scheduled spawn time, then 
 	// spawn a new agent.
 	if (T >= m_fNextSpawn && m_iMaxLiveAgents < MAX_AGENTS)
 	{
-		SpawnAgent(pD3DContext, T);
+		SpawnAgent(m_pD3DContext, T);
 		m_fNextSpawn = T - logf(1.0f - frand()) / m_fSpawnRate;
 	}
 
@@ -447,24 +430,35 @@ void CAgentCourse::SpawnAgent(ComPtr<ID3D11DeviceContext>& pD3DContext, float T)
 	pD3DContext->CSSetConstantBuffers(0, 1, m_pCBSpawnAgent.GetAddressOf());
 
 	// Set all of the UAVs (R/W buffers) that are needed
-	ID3D11UnorderedAccessView *arrUAV[4] = { m_pUAVAgentData.Get(), m_pUAVDeadList.Get(), m_pUAVSpawnOutput.Get(), m_pUAVFinalScores.Get() };
-	pD3DContext->CSSetUnorderedAccessViews(0, 4, arrUAV, nullptr);
+	ID3D11UnorderedAccessView *arrUAV[3] = { m_pUAVAgentData.Get(), m_pUAVComputeOutput.Get(), m_pUAVFinalScores.Get() };
+	pD3DContext->CSSetUnorderedAccessViews(0, 3, arrUAV, nullptr);
 
 	// Run the spawn compute shader
 	pD3DContext->Dispatch(1, 1, 1);
 
 	// Get the shader output info
-	pD3DContext->CopyResource(m_pSBCPUSpawnOutput.Get(), m_pSBSpawnOutput.Get());
-	UINT iSpawnData[2];
-	hr = CDXUtils::MapDataFromBuffer(pD3DContext, (PVOID)iSpawnData, 2 * sizeof(UINT), m_pSBCPUSpawnOutput);
+	pD3DContext->CopyResource(m_pSBCPUComputeOutput.Get(), m_pSBComputeOutput.Get());
+	UINT iSpawnData[NUM_COMPUTE_OUT];
+	hr = CDXUtils::MapDataFromBuffer(pD3DContext, (PVOID)iSpawnData, NUM_COMPUTE_OUT * sizeof(UINT), m_pSBCPUComputeOutput);
 	ASSERT(SUCCEEDED(hr));
 
 	m_iMaxLiveAgents++;
-
-	int iNumDead = iSpawnData[1];
+	UINT iNumDead = iSpawnData[1];
 	if (iNumDead > 0)
 	{
 		m_iMaxLiveAgents -= iNumDead;
+		pD3DContext->CopyResource(m_pSBCPUScores.Get(), m_pSBFinalScores.Get());
+		float arrScores[MAX_DEAD_AGENTS];
+		hr = CDXUtils::MapDataFromBuffer(pD3DContext, (PVOID)arrScores, MAX_DEAD_AGENTS * sizeof(float), m_pSBCPUScores);
+		CString str;
+		str.Format(_T("Dead at %f: "), T);
+		OutputDebugString(str);
+		for (UINT i = 0; i < iNumDead; i++)
+		{
+			str.Format(_T("%f "), arrScores[i]);
+			OutputDebugString(str);
+		}
+		OutputDebugString(_T("\n"));
 	}
 	ASSERT(m_iMaxLiveAgents == iSpawnData[0]);
 
@@ -488,11 +482,12 @@ void CAgentCourse::ComputeAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const
 	// Input to the shader - current agent kinematics
 	pD3DContext->CSSetShaderResources(0, 1, m_pSRVAgentData.GetAddressOf());
 
-	// Output from the shader - updated particle kinematics
+	// Output from the shader - updated particle kinematics	
+	// Set all of the UAVs (R/W buffers) that are needed
 	pD3DContext->CSSetUnorderedAccessViews(0, 1, m_pUAVAgentDataNext.GetAddressOf(), nullptr);
 
 	// Run the compute shader - acts on a 1D array of agents
-	pD3DContext->Dispatch(32, 1, 1);
+	pD3DContext->Dispatch(MAX_AGENTS / 128, 1, 1);
 
 	// Unbind the resources
 	pD3DContext->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
@@ -504,76 +499,76 @@ void CAgentCourse::ComputeAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const
 	SwapComPtr<ID3D11UnorderedAccessView>(m_pUAVAgentData, m_pUAVAgentDataNext);
 }
 
-void CAgentCourse::RenderWalls(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables)
+void CAgentCourse::RenderWalls(const ComPtr<ID3D11Buffer>& pCBFrameVariables)
 {
 	ASSERT(m_bVisualize);
 
 	// Set the render shaders for the walls
-	pD3DContext->VSSetShader(m_pWallVS.Get(), NULL, 0);
-	pD3DContext->PSSetShader(m_pWallPS.Get(), NULL, 0);
+	m_pD3DContext->VSSetShader(m_pWallVS.Get(), NULL, 0);
+	m_pD3DContext->PSSetShader(m_pWallPS.Get(), NULL, 0);
 
 	// Set IA parameters
-	pD3DContext->IASetInputLayout(m_pWallIL.Get());
+	m_pD3DContext->IASetInputLayout(m_pWallIL.Get());
 	UINT stride = sizeof(WALL_VERTEX);
 	UINT offset = 0;
-	pD3DContext->IASetVertexBuffers(0, 1, m_pVBWalls.GetAddressOf(), &stride, &offset);
-	pD3DContext->IASetIndexBuffer(m_pIBWalls.Get(), DXGI_FORMAT_R32_UINT, 0);
-	pD3DContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	m_pD3DContext->IASetVertexBuffers(0, 1, m_pVBWalls.GetAddressOf(), &stride, &offset);
+	m_pD3DContext->IASetIndexBuffer(m_pIBWalls.Get(), DXGI_FORMAT_R32_UINT, 0);
+	m_pD3DContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// Set vertex shader resources 
 	ID3D11Buffer* VSbuffers[2] = { m_pCBWorldPhysics.Get(), pCBFrameVariables.Get() };
-	pD3DContext->VSSetConstantBuffers(0, 2, VSbuffers);
+	m_pD3DContext->VSSetConstantBuffers(0, 2, VSbuffers);
 
 	// Draw the walls
-	pD3DContext->DrawIndexed(m_iWallIndices, 0, 0);
+	m_pD3DContext->DrawIndexed(m_iWallIndices, 0, 0);
 
 	// Clear out the shaders
 	ID3D11ShaderResourceView* pSRVNULL[1] = { nullptr };
-	pD3DContext->VSSetShaderResources(0, 1, pSRVNULL);
-	pD3DContext->PSSetShaderResources(0, 1, pSRVNULL);
-	pD3DContext->VSSetShader(NULL, NULL, 0);
-	pD3DContext->PSSetShader(NULL, NULL, 0);
+	m_pD3DContext->VSSetShaderResources(0, 1, pSRVNULL);
+	m_pD3DContext->PSSetShaderResources(0, 1, pSRVNULL);
+	m_pD3DContext->VSSetShader(NULL, NULL, 0);
+	m_pD3DContext->PSSetShader(NULL, NULL, 0);
 }
 
-void CAgentCourse::RenderAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables, 
-	const ComPtr<ID3D11ShaderResourceView>& pSRVParticleDraw, const ComPtr<ID3D11SamplerState>& pTextureSampler)
+void CAgentCourse::RenderAgents(const ComPtr<ID3D11Buffer>& pCBFrameVariables, const ComPtr<ID3D11ShaderResourceView>& pSRVParticleDraw, 
+	const ComPtr<ID3D11SamplerState>& pTextureSampler)
 {
 	ASSERT(m_bVisualize);
 
 	// Set the render shaders for the agents
-	pD3DContext->VSSetShader(m_pAgentVS.Get(), NULL, 0);
-	pD3DContext->GSSetShader(m_pAgentGS.Get(), NULL, 0);
-	pD3DContext->PSSetShader(m_pAgentPS.Get(), NULL, 0);
+	m_pD3DContext->VSSetShader(m_pAgentVS.Get(), NULL, 0);
+	m_pD3DContext->GSSetShader(m_pAgentGS.Get(), NULL, 0);
+	m_pD3DContext->PSSetShader(m_pAgentPS.Get(), NULL, 0);
 
 	// Set IA parameters
-	pD3DContext->IASetInputLayout(m_pAgentIL.Get());
+	m_pD3DContext->IASetInputLayout(m_pAgentIL.Get());
 	UINT stride = sizeof(AGENT_VERTEX);
 	UINT offset = 0;
-	pD3DContext->IASetVertexBuffers(0, 1, m_pVBAgentColors.GetAddressOf(), &stride, &offset);
-	pD3DContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+	m_pD3DContext->IASetVertexBuffers(0, 1, m_pVBAgentColors.GetAddressOf(), &stride, &offset);
+	m_pD3DContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 
-	pD3DContext->VSSetConstantBuffers(0, 1, m_pCBRender.GetAddressOf());
-	pD3DContext->VSSetShaderResources(0, 1, m_pSRVAgentData.GetAddressOf());
+	m_pD3DContext->VSSetConstantBuffers(0, 1, m_pCBRender.GetAddressOf());
+	m_pD3DContext->VSSetShaderResources(0, 1, m_pSRVAgentData.GetAddressOf());
 
 	// Set geometry shader resources 
 	ID3D11Buffer* GSbuffers[2] = { m_pCBWorldPhysics.Get(), pCBFrameVariables.Get() };
-	pD3DContext->GSSetConstantBuffers(0, 2, GSbuffers);
+	m_pD3DContext->GSSetConstantBuffers(0, 2, GSbuffers);
 
 	// Set pixel shader resources
-	pD3DContext->PSSetShaderResources(0, 1, pSRVParticleDraw.GetAddressOf());
-	pD3DContext->PSSetSamplers(0, 1, pTextureSampler.GetAddressOf());
-	pD3DContext->PSSetConstantBuffers(0, 1, m_pCBWorldPhysics.GetAddressOf());
+	m_pD3DContext->PSSetShaderResources(0, 1, pSRVParticleDraw.GetAddressOf());
+	m_pD3DContext->PSSetSamplers(0, 1, pTextureSampler.GetAddressOf());
+	m_pD3DContext->PSSetConstantBuffers(0, 1, m_pCBWorldPhysics.GetAddressOf());
 
 	// Draw the agents
-	pD3DContext->Draw(m_iMaxLiveAgents, 0);
+	m_pD3DContext->Draw(m_iMaxLiveAgents, 0);
 
 	// Clear out the shaders
 	ID3D11ShaderResourceView* pSRVNULL[1] = { nullptr };
-	pD3DContext->VSSetShaderResources(0, 1, pSRVNULL);
-	pD3DContext->PSSetShaderResources(0, 1, pSRVNULL);
-	pD3DContext->VSSetShader(NULL, NULL, 0);
-	pD3DContext->GSSetShader(NULL, NULL, 0);
-	pD3DContext->PSSetShader(NULL, NULL, 0);
+	m_pD3DContext->VSSetShaderResources(0, 1, pSRVNULL);
+	m_pD3DContext->PSSetShaderResources(0, 1, pSRVNULL);
+	m_pD3DContext->VSSetShader(NULL, NULL, 0);
+	m_pD3DContext->GSSetShader(NULL, NULL, 0);
+	m_pD3DContext->PSSetShader(NULL, NULL, 0);
 }
 
 HRESULT CAgentCourse::InitializeHourglass()

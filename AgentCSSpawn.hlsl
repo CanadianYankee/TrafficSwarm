@@ -18,9 +18,8 @@ cbuffer cbSpawnAgent : register(b0)
 
 
 RWStructuredBuffer<AgentData> arrAgents : register(u0);
-RWStructuredBuffer<uint> arrDeadIndices : register(u1);
-RWStructuredBuffer<uint> arrSpawnOutput : register(u2);
-RWStructuredBuffer<float> arrFinalScores : register(u3);
+RWStructuredBuffer<uint> arrComputeOutput : register(u1);
+RWStructuredBuffer<float> arrFinalScores : register(u2);
 
 [numthreads(1, 1, 1)]
 void AgentCSSpawn( uint3 DTid : SV_DispatchThreadID )
@@ -33,22 +32,31 @@ void AgentCSSpawn( uint3 DTid : SV_DispatchThreadID )
 	newAgent.score = 0.0f;
 	newAgent.type = type;
 
-	// TODO: take care of dead agents
-	uint nDeadCount = 0;
-	uint nLiveAgents = maxLiveAgents;
-
+	// Count up our dead and save the scores
 	// Suppress spawn if new agent collides with a live one
+	uint nDeadCount = 0;
 	bool bSuppress = false;
-	for (uint i = 0; i < nLiveAgents; i++)
+	uint nLiveAgents = maxLiveAgents;
+	for (int i = maxLiveAgents - 1; i >= 0; i--)
 	{
-		if (arrAgents[i].type >= 0)
+		if (arrAgents[i].type < 0)
 		{
-			if (distance(arrAgents[i].pos.xy, newAgent.pos) <= radius * 2.0f)
+			arrFinalScores[nDeadCount] = arrAgents[i].score;
+			if (i < nLiveAgents - 1)
+			{
+				AgentData agent = arrAgents[nLiveAgents - 1];
+				arrAgents[i] = agent;
+			}
+			nLiveAgents--;
+			nDeadCount++;
+		}
+		else
+		{
+			if (!bSuppress && distance(arrAgents[i].pos.xy, newAgent.pos) <= radius * 2.0f)
 			{
 				arrFinalScores[nDeadCount] = -1.0f;
 				nDeadCount++;
 				bSuppress = true;
-				break;
 			}
 		}
 	}
@@ -60,6 +68,6 @@ void AgentCSSpawn( uint3 DTid : SV_DispatchThreadID )
 	}
 
 	// For read by the CPU
-	arrSpawnOutput[0] = nLiveAgents;
-	arrSpawnOutput[1] = nDeadCount;
+	arrComputeOutput[0] = nLiveAgents;
+	arrComputeOutput[1] = nDeadCount;
 }

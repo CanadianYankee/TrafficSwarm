@@ -20,17 +20,17 @@ class CAgentCourse
 public:
 	CAgentCourse(bool bVisualize);
 
-	HRESULT Initialize(ComPtr<ID3D11Device>& pD3DDevice, const CString &strJsonFile);
+	HRESULT Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11DeviceContext>& pD3DContext, const CString &strJsonFile);
 	HRESULT LoadShaders();
-	BOOL UpdateAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables, float dt, float T);
+	BOOL UpdateAgents(const ComPtr<ID3D11Buffer>& pCBFrameVariables, float dt, float T);
 
 	CString GetName() { return m_strName; }
 	float GetCourseLength() { return m_fCourseLength; }
 	UINT GetMaxAlive() { return m_iMaxLiveAgents; }
 
-	void RenderWalls(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables);
-	void RenderAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const ComPtr<ID3D11Buffer>& pCBFrameVariables,
-		const ComPtr<ID3D11ShaderResourceView>& pSRVParticleDraw, const ComPtr<ID3D11SamplerState>& pTextureSampler);
+	void RenderWalls(const ComPtr<ID3D11Buffer>& pCBFrameVariables);
+	void RenderAgents(const ComPtr<ID3D11Buffer>& pCBFrameVariables, const ComPtr<ID3D11ShaderResourceView>& pSRVParticleDraw, 
+		const ComPtr<ID3D11SamplerState>& pTextureSampler);
 
 protected:
 	typedef std::vector<XMFLOAT2> XMPOLYLINE;
@@ -73,10 +73,12 @@ protected:
 	{
 		XMFLOAT2 Position;
 		XMFLOAT2 Velocity;
+
 		float SpawnTime;
 		float Radius;
 		int Type;
 		UINT maxLiveAgents;
+
 		UINT maxAgents;
 		UINT iDummy0;
 		UINT iDummy1;
@@ -135,6 +137,7 @@ protected:
 	UINT m_iMaxLiveAgents;
 
 	ComPtr<ID3D11Device> m_pD3DDevice;
+	ComPtr<ID3D11DeviceContext> m_pD3DContext;
 
 	// D3D stuff needed for simulation
 	ComPtr<ID3D11Buffer> m_pCBWorldPhysics;
@@ -147,13 +150,11 @@ protected:
 	ComPtr<ID3D11Buffer> m_pSBAgentDataNext;
 	ComPtr<ID3D11ShaderResourceView> m_pSRVAgentDataNext;
 	ComPtr<ID3D11UnorderedAccessView> m_pUAVAgentDataNext;
-
-	ComPtr<ID3D11Buffer> m_pSBDeadList;
-	ComPtr<ID3D11UnorderedAccessView> m_pUAVDeadList;
-
-	ComPtr<ID3D11Buffer> m_pSBSpawnOutput;
-	ComPtr<ID3D11Buffer> m_pSBCPUSpawnOutput;
-	ComPtr<ID3D11UnorderedAccessView> m_pUAVSpawnOutput;
+	
+	#define NUM_COMPUTE_OUT 8
+	ComPtr<ID3D11Buffer> m_pSBComputeOutput;
+	ComPtr<ID3D11Buffer> m_pSBCPUComputeOutput;
+	ComPtr<ID3D11UnorderedAccessView> m_pUAVComputeOutput;
 
 	ComPtr<ID3D11Buffer> m_pSBFinalScores;
 	ComPtr<ID3D11Buffer> m_pSBCPUScores;

@@ -46,7 +46,7 @@ BOOL CDXSandbox::Initialize(CWnd *pWnd)
 	if (!bSuccess) return bSuccess;
 
 	m_pAgentCourse = new CAgentCourse(true);
-	hr = m_pAgentCourse->Initialize(m_pD3DDevice, _T(""));
+	hr = m_pAgentCourse->Initialize(m_pD3DDevice, m_pD3DContext, _T(""));
 	if (FAILED(hr))
 	{
 		CleanUp();
@@ -322,7 +322,7 @@ BOOL CDXSandbox::UpdateScene(float dt, float T)
 		return FALSE;
 	}
 
-	BOOL bSuccess = m_pAgentCourse->UpdateAgents(m_pD3DContext, m_pCBFrameVariables, dt, T);
+	BOOL bSuccess = m_pAgentCourse->UpdateAgents(m_pCBFrameVariables, dt, T);
 
 	return bSuccess;
 }
@@ -345,14 +345,14 @@ BOOL CDXSandbox::RenderScene()
 	m_pD3DContext->OMGetDepthStencilState(&oldDepthStencilState, &oldStencilRef);
 
 	// Render the walls before setting blending
-	m_pAgentCourse->RenderWalls(m_pD3DContext, m_pCBFrameVariables);
+	m_pAgentCourse->RenderWalls(m_pCBFrameVariables);
 
 	// Set OM parameters
 	m_pD3DContext->OMSetBlendState(m_pRenderBlendState.Get(), colorBlack, 0xFFFFFFFF);
 	m_pD3DContext->OMSetDepthStencilState(m_pRenderDepthState.Get(), 0);
 
 	// Render the agents
-	m_pAgentCourse->RenderAgents(m_pD3DContext, m_pCBFrameVariables, m_pSRVParticleDraw, m_pTextureSampler);
+	m_pAgentCourse->RenderAgents(m_pCBFrameVariables, m_pSRVParticleDraw, m_pTextureSampler);
 
 	// Restore the initial state
 	m_pD3DContext->OMSetBlendState(oldBlendState.Get(), &oldBlendFactor.x, oldSampleMask);
