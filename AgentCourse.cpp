@@ -3,7 +3,6 @@
 #include "DXUtils.h"
 
 CAgentCourse::CAgentCourse(bool bVisualize) :
-	m_fCourseLength(0.0f),
 	m_bVisualize(bVisualize),
 	m_fNextSpawn(0.0f),
 	m_fSpawnRate(2.0f),
@@ -594,7 +593,7 @@ void CAgentCourse::RenderAgents(const ComPtr<ID3D11Buffer>& pCBFrameVariables, c
 HRESULT CAgentCourse::InitializeHourglass()
 {
 	m_strName = _T("Hourglass");
-	m_fCourseLength = 100.0f;
+	m_sWorldPhysics.g_fCourseLength = 100.0f;
 
 	m_vecWalls.resize(2);
 

@@ -124,11 +124,11 @@ void AgentCSIterate( uint3 DTid : SV_DispatchThreadID )
 		}
 
 		// Check for running off the course
-//		if (pos.x > g_fCourseLength)
-//		{
-//			agent.type = -1;
-//			agent.score += g_fGlobalTime - agent.birth + g_fCollisionPenalty;
-//		}
+		if (pos.x > g_fCourseLength)
+		{
+			agent.type = -1;
+			agent.score += g_fGlobalTime - agent.birth + g_fCollisionPenalty;
+		}
 	}
 	newAgentData[iAgent] = agent;
 }

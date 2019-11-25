@@ -25,7 +25,7 @@ public:
 	BOOL UpdateAgents(const ComPtr<ID3D11Buffer>& pCBFrameVariables, float dt, float T);
 
 	CString GetName() { return m_strName; }
-	float GetCourseLength() { return m_fCourseLength; }
+	float GetCourseLength() { return m_sWorldPhysics.g_fCourseLength; }
 	UINT GetMaxAlive() { return m_iMaxLiveAgents; }
 
 	void RenderWalls(const ComPtr<ID3D11Buffer>& pCBFrameVariables);
@@ -46,28 +46,29 @@ protected:
 
 	struct WORLD_PHYSICS
 	{
-		WORLD_PHYSICS() : g_fParticleRadius(0.5f), g_fIdealSpeed(10.0f), g_fMaxAcceleration(10.0f), g_iMaxAgents(MAX_AGENTS),
-			g_iNumWalls(0), g_iNumSinks(0), g_fCollisionPenalty(10.0f), g_fRepulseDist(0.0f), g_fRepulseStrength(0.0f),
-			g_fWallRepulseDist(0.0f), g_fWallRepulseStrength(0.0f),
-			wpfDummy0(0.0f)// , wpfDummy1(0.0f), wpfDummy2(0.0f)
+		WORLD_PHYSICS() : g_fCourseLength(100.0f), g_fParticleRadius(0.5f), g_fIdealSpeed(10.0f), g_fMaxAcceleration(10.0f), 
+			g_iMaxAgents(MAX_AGENTS), g_iNumWalls(0), g_iNumSinks(0), g_fCollisionPenalty(10.0f), 
+			g_fRepulseDist(0.0f), g_fRepulseStrength(0.0f),	g_fWallRepulseDist(0.0f), g_fWallRepulseStrength(0.0f)
+			//wpfDummy0(0.0f)// , wpfDummy1(0.0f), wpfDummy2(0.0f)
 		{}
+		float g_fCourseLength;
 		float g_fParticleRadius;
 		float g_fIdealSpeed;
 		float g_fMaxAcceleration;
-		UINT g_iMaxAgents;
 
+		UINT g_iMaxAgents;
 		UINT g_iNumWalls;
 		UINT g_iNumSinks;
 		float g_fCollisionPenalty;
+
 		float g_fRepulseDist;
-	
 		float g_fRepulseStrength;
 		float g_fWallRepulseDist;
 		float g_fWallRepulseStrength;
-		float wpfDummy0;
 
-//		float wpfDummy1;
-//		float wpfDummy2;
+		//float wpfDummy0;
+		//float wpfDummy1;
+		//float wpfDummy2;
 	};
 
 	struct RENDER_VARIABLES
@@ -139,7 +140,6 @@ protected:
 
 	bool m_bVisualize;
 	CString m_strName;
-	float m_fCourseLength;
 	float m_fNextSpawn;
 	float m_fSpawnRate;
 	std::vector<XMPOLYLINE> m_vecWalls;
