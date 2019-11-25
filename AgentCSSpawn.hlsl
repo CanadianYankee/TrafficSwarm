@@ -30,6 +30,7 @@ void AgentCSSpawn( uint3 DTid : SV_DispatchThreadID )
 	newAgent.velo = float4(velo.xy, 0.0f, 0.0f);
 	newAgent.birth = birth;
 	newAgent.score = 0.0f;
+	newAgent.lastCollision = -100.0f;
 	newAgent.type = type;
 
 	// Count up our dead and save the scores

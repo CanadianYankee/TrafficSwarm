@@ -7,7 +7,6 @@ CAgentCourse::CAgentCourse(bool bVisualize) :
 	m_bVisualize(bVisualize),
 	m_fNextSpawn(0.0f),
 	m_fSpawnRate(2.0f),
-	m_iWallSegments(0),
 	m_iWallVertices(0),
 	m_iWallIndices(0),
 	m_iMaxLiveAgents(0)
@@ -29,7 +28,18 @@ HRESULT CAgentCourse::Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11
 		hr = E_NOTIMPL;
 	}
 	if (FAILED(hr)) return hr;
-	
+
+	hr = InitializeAgentBuffers();
+	if (SUCCEEDED(hr))
+	{
+		hr = InitializeWallBuffers();
+	}
+
+	m_sWorldPhysics.g_fRepulseDist = 1.5f;
+	m_sWorldPhysics.g_fRepulseStrength = 5.0f;
+	m_sWorldPhysics.g_fWallRepulseDist = 1.5f;
+	m_sWorldPhysics.g_fWallRepulseStrength = 10.0f;
+
 	// World physics is just set once and remains unchanged for the life of the saver
 	D3D11_SUBRESOURCE_DATA cbData;
 	cbData.pSysMem = &m_sWorldPhysics;
@@ -44,12 +54,6 @@ HRESULT CAgentCourse::Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11
 	hr = m_pD3DDevice->CreateBuffer(&Desc, &cbData, &m_pCBWorldPhysics);
 	if (FAILED(hr)) return hr;
 	D3DDEBUGNAME(m_pCBWorldPhysics, "WorldPhysics CB");
-
-	hr = InitializeAgentBuffers();
-	if (SUCCEEDED(hr))
-	{
-		hr = InitializeWallBuffers();
-	}
 
 	return hr;
 }
@@ -268,7 +272,7 @@ HRESULT CAgentCourse::InitializeAgentBuffers()
 		Desc.ByteWidth = sizeof(RENDER_VARIABLES);
 		hr = m_pD3DDevice->CreateBuffer(&Desc, &cbData, &m_pCBRender);
 		if (FAILED(hr)) return hr;
-		D3DDEBUGNAME(m_pCBWorldPhysics, "Render CB");
+		D3DDEBUGNAME(m_pCBRender, "Render CB");
 
 		// Create type vertex buffer
 		std::vector<AGENT_VERTEX> vecAgent(MAX_AGENTS);
@@ -301,24 +305,36 @@ HRESULT CAgentCourse::InitializeWallBuffers()
 		}
 	}
 
-	m_iWallSegments = (UINT)vecSegments.size();
+	m_sWorldPhysics.g_iNumWalls = (UINT)vecSegments.size();
+
+	// Also need the sinks for simulation
+	for (size_t i = 0; i < m_vecAgentSS.size(); i++)
+	{
+		vecSegments.push_back(WALL_SEGMENT(m_vecAgentSS[i].lineSink[0], m_vecAgentSS[i].lineSink[1]));
+	}
+
+	m_sWorldPhysics.g_iNumSinks = (UINT)m_vecAgentSS.size();
+
+	UINT nWallsSinks = m_sWorldPhysics.g_iNumWalls + m_sWorldPhysics.g_iNumSinks;
 
 	// Create the wall segment buffers for simulation
-	CD3D11_BUFFER_DESC vbdW(m_iWallSegments * sizeof(WALL_SEGMENT),
+	CD3D11_BUFFER_DESC vbdW(nWallsSinks * sizeof(WALL_SEGMENT),
 		D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE, D3D11_USAGE_DEFAULT, 0,
 		D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, sizeof(WALL_SEGMENT));
 	vinitData.pSysMem = &vecSegments.front();
-	hr = m_pD3DDevice->CreateBuffer(&vbdW, &vinitData, &m_pSBWalls);
+	hr = m_pD3DDevice->CreateBuffer(&vbdW, &vinitData, &m_pSBWallsSinks);
 	if (FAILED(hr)) return hr;
-	D3DDEBUGNAME(m_pSBWalls, "Wall Segments");
+	D3DDEBUGNAME(m_pSBWallsSinks, "Wall Segments");
 
 	// Create the resource view (read-only in shaders)
 	CD3D11_SHADER_RESOURCE_VIEW_DESC srvW(D3D11_SRV_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN);
 	srvW.Buffer.FirstElement = 0;
-	srvW.Buffer.NumElements = m_iWallSegments;
-	hr = m_pD3DDevice->CreateShaderResourceView(m_pSBWalls.Get(), &srvW, &m_pSRVWalls);
+	srvW.Buffer.NumElements = nWallsSinks;
+	hr = m_pD3DDevice->CreateShaderResourceView(m_pSBWallsSinks.Get(), &srvW, &m_pSRVWallsSinks);
 	if (FAILED(hr)) return hr;
-	D3DDEBUGNAME(m_pSRVWalls, "Wall Segment SRV");
+	D3DDEBUGNAME(m_pSRVWallsSinks, "Wall Segment SRV");
+
+	vecSegments.resize(m_sWorldPhysics.g_iNumWalls);
 
 	// If we're visualizing, then also need rendering data
 	if (m_bVisualize)
@@ -479,15 +495,17 @@ void CAgentCourse::ComputeAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const
 	ID3D11Buffer* CSCBuffers[2] = { m_pCBWorldPhysics.Get(), pCBFrameVariables.Get() };
 	pD3DContext->CSSetConstantBuffers(0, 2, CSCBuffers);
 
-	// Input to the shader - current agent kinematics
-	pD3DContext->CSSetShaderResources(0, 1, m_pSRVAgentData.GetAddressOf());
+	// Input to the shader - current agent kinematics and locations of walls/sinks
+	ID3D11ShaderResourceView* pSRV[] = { m_pSRVAgentData.Get(), m_pSRVWallsSinks.Get() };
+	pD3DContext->CSSetShaderResources(0, 2, pSRV);
 
 	// Output from the shader - updated particle kinematics	
 	// Set all of the UAVs (R/W buffers) that are needed
 	pD3DContext->CSSetUnorderedAccessViews(0, 1, m_pUAVAgentDataNext.GetAddressOf(), nullptr);
 
 	// Run the compute shader - acts on a 1D array of agents
-	pD3DContext->Dispatch(MAX_AGENTS / 128, 1, 1);
+	UINT nBlocks = (UINT)ceil(((double)m_iMaxLiveAgents / 128.0));
+	pD3DContext->Dispatch(nBlocks, 1, 1);
 
 	// Unbind the resources
 	pD3DContext->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
@@ -547,7 +565,9 @@ void CAgentCourse::RenderAgents(const ComPtr<ID3D11Buffer>& pCBFrameVariables, c
 	m_pD3DContext->IASetVertexBuffers(0, 1, m_pVBAgentColors.GetAddressOf(), &stride, &offset);
 	m_pD3DContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 
-	m_pD3DContext->VSSetConstantBuffers(0, 1, m_pCBRender.GetAddressOf());
+	// Set vertex shader resources
+	ID3D11Buffer* VSBuffers[3] = { m_pCBWorldPhysics.Get(), pCBFrameVariables.Get(), m_pCBRender.Get() };
+	m_pD3DContext->VSSetConstantBuffers(0, 3, VSBuffers);
 	m_pD3DContext->VSSetShaderResources(0, 1, m_pSRVAgentData.GetAddressOf());
 
 	// Set geometry shader resources 
@@ -588,20 +608,48 @@ HRESULT CAgentCourse::InitializeHourglass()
 	m_vecWalls[1][1] = XMFLOAT2(50.0f, 5.0f);
 	m_vecWalls[1][2] = XMFLOAT2(100.0f, 15.0f);
 
-	m_vecAgentSS.resize(1);
+	m_vecAgentSS.resize(2);
 	m_vecAgentSS[0].vColor = XMFLOAT3(0.5f, 0.5f, 1.0f);
-	m_vecAgentSS[0].randLimit = 1.0f;
+	m_vecAgentSS[0].randLimit = 0.5f;
 
 	m_vecAgentSS[0].lineSource.resize(2);
 	m_vecAgentSS[0].lineSource[0] = XMFLOAT2(0.0f, -13.5f);
-	m_vecAgentSS[0].lineSource[1] = XMFLOAT2(0.0f, 13.5f);
+	m_vecAgentSS[0].lineSource[1] = XMFLOAT2(0.0f, 0.0f); // 13.5f);
 	m_vecAgentSS[0].lenSource = m_vecAgentSS[0].lineSource[1].y - m_vecAgentSS[0].lineSource[0].y;
 
 	m_vecAgentSS[0].lineSink.resize(2);
-	m_vecAgentSS[0].lineSink[0] = XMFLOAT2(100.0f, -13.5f);
+	m_vecAgentSS[0].lineSink[0] = XMFLOAT2(100.0f, 0.0f); // -13.5f);
 	m_vecAgentSS[0].lineSink[1] = XMFLOAT2(100.0f, 13.5f);
 
 	m_vecAgentSS[0].velStart = XMFLOAT2(m_sWorldPhysics.g_fIdealSpeed, 0.0f);
+
+		m_vecAgentSS[0].vColor = XMFLOAT3(0.5f, 0.5f, 1.0f);
+	m_vecAgentSS[0].randLimit = 0.5f;
+
+	m_vecAgentSS[0].lineSource.resize(2);
+	m_vecAgentSS[0].lineSource[0] = XMFLOAT2(0.0f, -13.5f);
+	m_vecAgentSS[0].lineSource[1] = XMFLOAT2(0.0f, 0.0f); // 13.5f);
+	m_vecAgentSS[0].lenSource = m_vecAgentSS[0].lineSource[1].y - m_vecAgentSS[0].lineSource[0].y;
+
+	m_vecAgentSS[0].lineSink.resize(2);
+	m_vecAgentSS[0].lineSink[0] = XMFLOAT2(100.0f, 0.0f); // -13.5f);
+	m_vecAgentSS[0].lineSink[1] = XMFLOAT2(100.0f, 13.5f);
+
+	m_vecAgentSS[0].velStart = XMFLOAT2(m_sWorldPhysics.g_fIdealSpeed, 0.0f);
+///
+	m_vecAgentSS[1].vColor = XMFLOAT3(0.5f, 1.0f, 0.5f);
+	m_vecAgentSS[1].randLimit = 1.0f;
+
+	m_vecAgentSS[1].lineSource.resize(2);
+	m_vecAgentSS[1].lineSource[0] = XMFLOAT2(0.0f, 0.0f);
+	m_vecAgentSS[1].lineSource[1] = XMFLOAT2(0.0f, 13.5f);
+	m_vecAgentSS[1].lenSource = m_vecAgentSS[0].lineSource[1].y - m_vecAgentSS[0].lineSource[0].y;
+
+	m_vecAgentSS[1].lineSink.resize(2);
+	m_vecAgentSS[1].lineSink[0] = XMFLOAT2(100.0f, -13.5f);
+	m_vecAgentSS[1].lineSink[1] = XMFLOAT2(100.0f, 0.0f);
+
+	m_vecAgentSS[1].velStart = XMFLOAT2(m_sWorldPhysics.g_fIdealSpeed, 0.0f);
 
 	m_fSpawnRate *= m_vecAgentSS[0].lenSource;
 

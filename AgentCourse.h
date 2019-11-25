@@ -46,13 +46,28 @@ protected:
 
 	struct WORLD_PHYSICS
 	{
-		WORLD_PHYSICS() : g_fParticleRadius(0.5f), g_fIdealSpeed(10.0f), wpiDummy0(0),
-			g_iMaxAgents(MAX_AGENTS)
+		WORLD_PHYSICS() : g_fParticleRadius(0.5f), g_fIdealSpeed(10.0f), g_fMaxAcceleration(10.0f), g_iMaxAgents(MAX_AGENTS),
+			g_iNumWalls(0), g_iNumSinks(0), g_fCollisionPenalty(10.0f), g_fRepulseDist(0.0f), g_fRepulseStrength(0.0f),
+			g_fWallRepulseDist(0.0f), g_fWallRepulseStrength(0.0f),
+			wpfDummy0(0.0f)// , wpfDummy1(0.0f), wpfDummy2(0.0f)
 		{}
 		float g_fParticleRadius;
 		float g_fIdealSpeed;
+		float g_fMaxAcceleration;
 		UINT g_iMaxAgents;
-		UINT wpiDummy0;
+
+		UINT g_iNumWalls;
+		UINT g_iNumSinks;
+		float g_fCollisionPenalty;
+		float g_fRepulseDist;
+	
+		float g_fRepulseStrength;
+		float g_fWallRepulseDist;
+		float g_fWallRepulseStrength;
+		float wpfDummy0;
+
+//		float wpfDummy1;
+//		float wpfDummy2;
 	};
 
 	struct RENDER_VARIABLES
@@ -66,6 +81,7 @@ protected:
 		XMFLOAT4 Velocity;
 		float SpawnTime;
 		float Score;
+		float lastCollision;
 		int Type;
 	};
 
@@ -128,7 +144,6 @@ protected:
 	float m_fSpawnRate;
 	std::vector<XMPOLYLINE> m_vecWalls;
 	std::vector<AGENT_SOURCE_SINK> m_vecAgentSS;
-	UINT m_iWallSegments;
 	UINT m_iWallVertices;
 	UINT m_iWallIndices;
 
@@ -142,6 +157,9 @@ protected:
 	// D3D stuff needed for simulation
 	ComPtr<ID3D11Buffer> m_pCBWorldPhysics;
 	ComPtr<ID3D11Buffer> m_pCBRender;
+
+	ComPtr<ID3D11Buffer> m_pSBWallsSinks;
+	ComPtr<ID3D11ShaderResourceView> m_pSRVWallsSinks;
 
 	ComPtr<ID3D11Buffer> m_pSBAgentData;
 	ComPtr<ID3D11ShaderResourceView> m_pSRVAgentData;
@@ -159,9 +177,6 @@ protected:
 	ComPtr<ID3D11Buffer> m_pSBFinalScores;
 	ComPtr<ID3D11Buffer> m_pSBCPUScores;
 	ComPtr<ID3D11UnorderedAccessView> m_pUAVFinalScores;
-
-	ComPtr<ID3D11Buffer> m_pSBWalls;
-	ComPtr<ID3D11ShaderResourceView> m_pSRVWalls;
 
 	ComPtr<ID3D11Buffer> m_pCBSpawnAgent;
 	ComPtr<ID3D11ComputeShader> m_pAgentCSSpawn;

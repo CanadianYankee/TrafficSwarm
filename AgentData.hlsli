@@ -4,6 +4,7 @@ struct AgentData
 	float4 velo;
 	float birth;
 	float score;
+	float lastCollision;
 	int type;
 };
 
