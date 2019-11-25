@@ -46,7 +46,7 @@ protected:
 
 	struct WORLD_PHYSICS
 	{
-		WORLD_PHYSICS() : g_fCourseLength(100.0f), g_fParticleRadius(0.5f), g_fIdealSpeed(10.0f), g_fMaxAcceleration(10.0f), 
+		WORLD_PHYSICS() : g_fCourseLength(100.0f), g_fParticleRadius(0.5f), g_fIdealSpeed(10.0f), g_fMaxAcceleration(50.0f), 
 			g_iMaxAgents(MAX_AGENTS), g_iNumWalls(0), g_iNumSinks(0), g_fCollisionPenalty(10.0f), 
 			g_fRepulseDist(0.0f), g_fRepulseStrength(0.0f),	g_fWallRepulseDist(0.0f), g_fWallRepulseStrength(0.0f)
 			//wpfDummy0(0.0f)// , wpfDummy1(0.0f), wpfDummy2(0.0f)

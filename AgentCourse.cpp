@@ -34,8 +34,8 @@ HRESULT CAgentCourse::Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11
 		hr = InitializeWallBuffers();
 	}
 
-	m_sWorldPhysics.g_fRepulseDist = 1.5f;
-	m_sWorldPhysics.g_fRepulseStrength = 5.0f;
+	m_sWorldPhysics.g_fRepulseDist = 3.0f;
+	m_sWorldPhysics.g_fRepulseStrength = 10.0f;
 	m_sWorldPhysics.g_fWallRepulseDist = 1.5f;
 	m_sWorldPhysics.g_fWallRepulseStrength = 10.0f;
 
@@ -607,48 +607,20 @@ HRESULT CAgentCourse::InitializeHourglass()
 	m_vecWalls[1][1] = XMFLOAT2(50.0f, 5.0f);
 	m_vecWalls[1][2] = XMFLOAT2(100.0f, 15.0f);
 
-	m_vecAgentSS.resize(2);
+	m_vecAgentSS.resize(1);
 	m_vecAgentSS[0].vColor = XMFLOAT3(0.5f, 0.5f, 1.0f);
-	m_vecAgentSS[0].randLimit = 0.5f;
+	m_vecAgentSS[0].randLimit = 1.0f;
 
 	m_vecAgentSS[0].lineSource.resize(2);
 	m_vecAgentSS[0].lineSource[0] = XMFLOAT2(0.0f, -13.5f);
-	m_vecAgentSS[0].lineSource[1] = XMFLOAT2(0.0f, 0.0f); // 13.5f);
+	m_vecAgentSS[0].lineSource[1] = XMFLOAT2(0.0f, 13.5f);
 	m_vecAgentSS[0].lenSource = m_vecAgentSS[0].lineSource[1].y - m_vecAgentSS[0].lineSource[0].y;
 
 	m_vecAgentSS[0].lineSink.resize(2);
-	m_vecAgentSS[0].lineSink[0] = XMFLOAT2(100.0f, 0.0f); // -13.5f);
+	m_vecAgentSS[0].lineSink[0] = XMFLOAT2(100.0f, -13.5f);
 	m_vecAgentSS[0].lineSink[1] = XMFLOAT2(100.0f, 13.5f);
 
 	m_vecAgentSS[0].velStart = XMFLOAT2(m_sWorldPhysics.g_fIdealSpeed, 0.0f);
-
-		m_vecAgentSS[0].vColor = XMFLOAT3(0.5f, 0.5f, 1.0f);
-	m_vecAgentSS[0].randLimit = 0.5f;
-
-	m_vecAgentSS[0].lineSource.resize(2);
-	m_vecAgentSS[0].lineSource[0] = XMFLOAT2(0.0f, -13.5f);
-	m_vecAgentSS[0].lineSource[1] = XMFLOAT2(0.0f, 0.0f); // 13.5f);
-	m_vecAgentSS[0].lenSource = m_vecAgentSS[0].lineSource[1].y - m_vecAgentSS[0].lineSource[0].y;
-
-	m_vecAgentSS[0].lineSink.resize(2);
-	m_vecAgentSS[0].lineSink[0] = XMFLOAT2(100.0f, 0.0f); // -13.5f);
-	m_vecAgentSS[0].lineSink[1] = XMFLOAT2(100.0f, 13.5f);
-
-	m_vecAgentSS[0].velStart = XMFLOAT2(m_sWorldPhysics.g_fIdealSpeed, 0.0f);
-///
-	m_vecAgentSS[1].vColor = XMFLOAT3(0.5f, 1.0f, 0.5f);
-	m_vecAgentSS[1].randLimit = 1.0f;
-
-	m_vecAgentSS[1].lineSource.resize(2);
-	m_vecAgentSS[1].lineSource[0] = XMFLOAT2(0.0f, 0.0f);
-	m_vecAgentSS[1].lineSource[1] = XMFLOAT2(0.0f, 13.5f);
-	m_vecAgentSS[1].lenSource = m_vecAgentSS[0].lineSource[1].y - m_vecAgentSS[0].lineSource[0].y;
-
-	m_vecAgentSS[1].lineSink.resize(2);
-	m_vecAgentSS[1].lineSink[0] = XMFLOAT2(100.0f, -13.5f);
-	m_vecAgentSS[1].lineSink[1] = XMFLOAT2(100.0f, 0.0f);
-
-	m_vecAgentSS[1].velStart = XMFLOAT2(m_sWorldPhysics.g_fIdealSpeed, 0.0f);
 
 	m_fSpawnRate *= m_vecAgentSS[0].lenSource;
 
