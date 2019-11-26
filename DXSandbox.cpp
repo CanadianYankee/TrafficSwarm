@@ -2,6 +2,7 @@
 #include "DXSandbox.h"
 #include "DXUtils.h"
 #include "AgentCourse.h"
+#include "RunStatistics.h"
 
 CDXSandbox::CDXSandbox() :
 	m_pMyWindow(nullptr),
@@ -9,7 +10,8 @@ CDXSandbox::CDXSandbox() :
 	m_iClientHeight(0),
 	m_fAspectRatio(1.0),
 	m_bRunning(false),
-	m_pAgentCourse(nullptr)
+	m_pAgentCourse(nullptr),
+	m_pRunStats(nullptr)
 {
 }
 
@@ -45,7 +47,8 @@ BOOL CDXSandbox::Initialize(CWnd *pWnd)
 	bSuccess = SUCCEEDED(hr);
 	if (!bSuccess) return bSuccess;
 
-	m_pAgentCourse = new CAgentCourse(true);
+	m_pRunStats = new CRunStatistics();
+	m_pAgentCourse = new CAgentCourse(true, m_pRunStats);
 	hr = m_pAgentCourse->Initialize(m_pD3DDevice, m_pD3DContext, _T(""));
 	if (FAILED(hr))
 	{
@@ -324,6 +327,18 @@ BOOL CDXSandbox::UpdateScene(float dt, float T)
 
 	BOOL bSuccess = m_pAgentCourse->UpdateAgents(m_pCBFrameVariables, dt, T);
 
+	//if (m_pAgentCourse->GetNumSpawned() >= 2048)
+	//{
+	//	m_pAgentCourse->SetSpawnActive(false);
+	//	if (m_pAgentCourse->GetMaxAlive() == 0)
+	//	{
+	//		CString str;
+	//		str.Format(_T("Final average score = %f\n"), m_pRunStats->GetAverageScore());
+	//		OutputDebugString(str);
+	//		m_pMyWindow->PostMessage(WM_CLOSE);
+	//	}
+	//}
+
 	return bSuccess;
 }
 
@@ -369,5 +384,11 @@ void CDXSandbox::CleanUp()
 	{
 		delete m_pAgentCourse;
 		m_pAgentCourse = nullptr;
+	}
+
+	if (m_pRunStats)
+	{
+		delete m_pRunStats;
+		m_pRunStats = nullptr;
 	}
 }

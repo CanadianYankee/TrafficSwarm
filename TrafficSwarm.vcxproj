@@ -230,6 +230,7 @@
     <ClInclude Include="AgentCourse.h" />
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="DXUtils.h" />
+    <ClInclude Include="RunStatistics.h" />
     <ClInclude Include="SandboxWnd.h" />
     <ClInclude Include="DrawTimer.h" />
     <ClInclude Include="DXSandbox.h" />
@@ -244,6 +245,7 @@
     <ClCompile Include="AgentCourse.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="DXUtils.cpp" />
+    <ClCompile Include="RunStatistics.cpp" />
     <ClCompile Include="SandboxWnd.cpp" />
     <ClCompile Include="DrawTimer.cpp" />
     <ClCompile Include="DXSandbox.cpp" />

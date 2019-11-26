@@ -52,7 +52,7 @@ bool Calculate2Body(inout float2 accumVel, in uint id1, in uint id2)
 		}
 
 		// Velocity alignment
-		if (dist >= g_fMinAlignDist && dist <= g_fMaxAlignDist)
+		if (dist >= g_fMinAlignDist && dist <= g_fMaxAlignDist && g_fMaxAlignDist > 0.0f && g_fMaxAlignDist > g_fMinAlignDist)
 		{
 			float attenuate = lerp(g_fAlignAtMin, g_fAlignAtMax, (dist - g_fMinAlignDist) / (g_fMaxAlignDist - g_fMinAlignDist));
 			attenuate *= lerp(1.0f, g_fAlignAtRear, 0.5f * (dot(normalize(vel1), vecAxis) + 1.0f));
@@ -89,7 +89,7 @@ bool CalculateBodyWall(inout float2 accumVel, in uint idB, in uint idW)
 	}
 
 	// "Velocity alignment" with mirror image 
-	if (dist < g_fWallAlignDist && !bBounce)
+	if (g_fWallAlignDist > 0.0f && dist < g_fWallAlignDist && !bBounce)
 	{
 		float attenuate = lerp(1.0f, 0.0f, dist / g_fWallAlignDist);
 		accumVel += (vel - 2.0f * dot(vel, vecAxis) * vecAxis) * g_fWallAlign * attenuate;

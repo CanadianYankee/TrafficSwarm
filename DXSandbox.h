@@ -6,6 +6,7 @@ using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 
 class CAgentCourse;
+class CRunStatistics;
 
 //
 // CDXSandbox does DirectX initialization and rendering. 
@@ -49,6 +50,7 @@ protected:
 	CDrawTimer m_Timer;
 
 	CAgentCourse* m_pAgentCourse;
+	CRunStatistics* m_pRunStats;
 
 	FRAME_VARIABLES m_sFrameVariables;
 
