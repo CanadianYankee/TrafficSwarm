@@ -2,17 +2,20 @@
 #include <afxwin.h>
 #include "DXSandbox.h"
 
+class CCourse;
+
 class CSandboxWnd :
 	public CWnd
 {
 public:
-	CSandboxWnd(CWnd* pOwner);
+	CSandboxWnd(CWnd* pOwner, CCourse *pCourse);
 	~CSandboxWnd();
 	BOOL Create();
 
 protected:
 	CWnd* m_pOwner;
 	CDXSandbox* m_pSandbox;
+	CCourse* m_pCourse;
 
 private:
 	bool m_bSizing;

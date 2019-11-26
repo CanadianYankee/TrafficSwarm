@@ -1,14 +1,16 @@
 #include "pch.h"
 #include "SandboxWnd.h"
+#include "Course.h"
 
 CString g_szWndClass;
 
-CSandboxWnd::CSandboxWnd(CWnd* pOwner) :
+CSandboxWnd::CSandboxWnd(CWnd* pOwner, CCourse *pCourse) :
 	m_pOwner(pOwner),
 	m_pSandbox(nullptr),
-	m_bSizing(false)
+	m_bSizing(false),
+	m_pCourse(pCourse)
 {
-	ASSERT(m_pOwner);
+	ASSERT(m_pOwner && m_pCourse);
 }
 
 CSandboxWnd::~CSandboxWnd()
@@ -56,7 +58,7 @@ void CSandboxWnd::OnShowWindow(BOOL bShow, UINT nStatus)
 		if (!m_pSandbox)
 		{
 			m_pSandbox = new CDXSandbox();
-			bSuccess = m_pSandbox->Initialize((CWnd *)this);
+			bSuccess = m_pSandbox->Initialize((CWnd *)this, m_pCourse);
 			if (!bSuccess)
 			{
 				ASSERT(FALSE);

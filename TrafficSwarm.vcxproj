@@ -228,6 +228,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AgentCourse.h" />
+    <ClInclude Include="Course.h" />
+    <ClInclude Include="TrialRun.h" />
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="DXUtils.h" />
     <ClInclude Include="RunStatistics.h" />
@@ -243,6 +245,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AgentCourse.cpp" />
+    <ClCompile Include="Course.cpp" />
+    <ClCompile Include="TrialRun.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="DXUtils.cpp" />
     <ClCompile Include="RunStatistics.cpp" />

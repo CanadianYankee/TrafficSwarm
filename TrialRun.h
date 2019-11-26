@@ -1,0 +1,59 @@
+#pragma once
+
+using Microsoft::WRL::ComPtr;
+using namespace DirectX;
+
+class CAgentCourse;
+class CRunStatistics;
+class CCourse;
+
+class CTrialRun
+{
+public:
+	CTrialRun();
+	~CTrialRun() { CleanUp(); }
+
+	struct RUN_RESULTS
+	{
+		CString strCourseName;
+		UINT nAgents;
+		UINT nComplete;
+		UINT nSpawnFails;
+		float fSimulatedTime;
+		float fRealTime;
+		float fAverageScore;
+	};
+
+	HRESULT Intialize(CCourse *pCourse);
+	BOOL Run(UINT nAgents, RUN_RESULTS &results);
+	void CleanUp();
+
+protected:
+	HRESULT InitDirect3D();
+	HRESULT PrepareShaderConstants();
+
+	const float MAX_STOP_WAIT = 1000.0f;
+
+	struct FRAME_VARIABLES
+	{
+		FRAME_VARIABLES() : g_fGlobalTime(0.0f), g_fElapsedTime(0.0f), g_iMaxAliveAgents(0), fviDummy0(0) {}
+
+		XMFLOAT4X4 fv_ViewTransform;  // Not needed if we're not rendering, but shaders have this memory reserved.
+
+		float g_fGlobalTime;
+		float g_fElapsedTime;
+		UINT g_iMaxAliveAgents;
+		UINT fviDummy0;
+	};
+
+	FRAME_VARIABLES m_sFrameVariables;
+
+	ComPtr<ID3D11Device> m_pD3DDevice;
+	ComPtr<ID3D11DeviceContext> m_pD3DContext;
+	ComPtr<ID3D11Buffer> m_pCBFrameVariables;
+
+	CRunStatistics* m_pRunStats;
+	CCourse* m_pCourse;
+	CAgentCourse* m_pAgentCourse;
+};
+

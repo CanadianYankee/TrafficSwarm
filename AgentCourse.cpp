@@ -11,25 +11,21 @@ CAgentCourse::CAgentCourse(bool bVisualize, CRunStatistics *pRunStats) :
 	m_iWallVertices(0),
 	m_iWallIndices(0),
 	m_nMaxLiveAgents(0),
+	m_pCourse(nullptr),
 	m_pRunStats(pRunStats)
 {
 }
 
-HRESULT CAgentCourse::Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11DeviceContext>& pD3DContext, const CString& strJsonFile)
+HRESULT CAgentCourse::Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11DeviceContext>& pD3DContext, CCourse *pCourse)
 {
 	m_pD3DDevice = pD3DDevice;
 	m_pD3DContext = pD3DContext;
 	HRESULT hr = S_OK;
 
-	if (strJsonFile.IsEmpty())
-	{
-		hr = InitializeHourglass();
-	}
-	else
-	{
-		hr = E_NOTIMPL;
-	}
-	if (FAILED(hr)) return hr;
+	ASSERT(pCourse);
+	m_pCourse = pCourse;
+	m_sWorldPhysics.g_fCourseLength = pCourse->m_fCourseLength;
+	m_fSpawnRate *= pCourse->GetTotalSourceLength();
 
 	hr = InitializeAgentBuffers();
 	if (SUCCEEDED(hr))
@@ -66,6 +62,8 @@ HRESULT CAgentCourse::Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11
 	hr = m_pD3DDevice->CreateBuffer(&Desc, &cbData, &m_pCBWorldPhysics);
 	if (FAILED(hr)) return hr;
 	D3DDEBUGNAME(m_pCBWorldPhysics, "WorldPhysics CB");
+
+	hr = LoadShaders();
 
 	return hr;
 }
@@ -265,10 +263,10 @@ HRESULT CAgentCourse::InitializeAgentBuffers()
 	if (m_bVisualize)
 	{
 		RENDER_VARIABLES rVar;
-		for (auto i = 0; i < m_vecAgentSS.size(); i++)
+		for (auto i = 0; i < m_pCourse->m_vecAgentSS.size(); i++)
 		{
 
-			XMFLOAT3 clr = m_vecAgentSS[i].vColor;
+			XMFLOAT3 clr = m_pCourse->m_vecAgentSS[i].vColor;
 			rVar.g_arrColors[i] = XMFLOAT4(clr.x, clr.y, clr.z, 1.0f);
 		}
 
@@ -309,23 +307,23 @@ HRESULT CAgentCourse::InitializeWallBuffers()
 	D3D11_SUBRESOURCE_DATA vinitData = { 0 };
 
 	std::vector<WALL_SEGMENT> vecSegments;
-	for (size_t i = 0; i < m_vecWalls.size(); i++)
+	for (size_t i = 0; i < m_pCourse->m_vecWalls.size(); i++)
 	{
-		for (size_t j = 0; j < m_vecWalls[i].size() - 1; j++)
+		for (size_t j = 0; j < m_pCourse->m_vecWalls[i].size() - 1; j++)
 		{
-			vecSegments.push_back(WALL_SEGMENT(m_vecWalls[i][j], m_vecWalls[i][j + 1]));
+			vecSegments.push_back(WALL_SEGMENT(m_pCourse->m_vecWalls[i][j], m_pCourse->m_vecWalls[i][j + 1]));
 		}
 	}
 
 	m_sWorldPhysics.g_iNumWalls = (UINT)vecSegments.size();
 
 	// Also need the sinks for simulation
-	for (size_t i = 0; i < m_vecAgentSS.size(); i++)
+	for (size_t i = 0; i < m_pCourse->m_vecAgentSS.size(); i++)
 	{
-		vecSegments.push_back(WALL_SEGMENT(m_vecAgentSS[i].lineSink[0], m_vecAgentSS[i].lineSink[1]));
+		vecSegments.push_back(WALL_SEGMENT(m_pCourse->m_vecAgentSS[i].lineSink[0], m_pCourse->m_vecAgentSS[i].lineSink[1]));
 	}
 
-	m_sWorldPhysics.g_iNumSinks = (UINT)m_vecAgentSS.size();
+	m_sWorldPhysics.g_iNumSinks = (UINT)m_pCourse->m_vecAgentSS.size();
 
 	UINT nWallsSinks = m_sWorldPhysics.g_iNumWalls + m_sWorldPhysics.g_iNumSinks;
 
@@ -346,23 +344,24 @@ HRESULT CAgentCourse::InitializeWallBuffers()
 	if (FAILED(hr)) return hr;
 	D3DDEBUGNAME(m_pSRVWallsSinks, "Wall Segment SRV");
 
-	vecSegments.resize(m_sWorldPhysics.g_iNumWalls);
-
 	// If we're visualizing, then also need rendering data
 	if (m_bVisualize)
 	{
+		// Remove the segments for the sinks
+		vecSegments.resize(m_sWorldPhysics.g_iNumWalls);
+
 		std::vector<WALL_VERTEX> vecWVerts;
 		std::vector<UINT> vecWInds;
 		MakeSegmentVertices(vecWVerts, vecWInds, vecSegments, colorWall);
 
 		// Draw sources and sinks
-		for (size_t i = 0; i < m_vecAgentSS.size(); i++)
+		for (size_t i = 0; i < m_pCourse->m_vecAgentSS.size(); i++)
 		{
-			XMFLOAT3 color = m_vecAgentSS[i].vColor;
+			XMFLOAT3 color = m_pCourse->m_vecAgentSS[i].vColor;
 			color.x *= 0.5; color.y *= 0.5; color.z *= 0.5;
 			std::vector<WALL_SEGMENT> vecSegs(2);
-			vecSegs[0] = WALL_SEGMENT(m_vecAgentSS[i].lineSource[0], m_vecAgentSS[i].lineSource[1]);
-			vecSegs[1] = WALL_SEGMENT(m_vecAgentSS[i].lineSink[0], m_vecAgentSS[i].lineSink[1]);
+			vecSegs[0] = WALL_SEGMENT(m_pCourse->m_vecAgentSS[i].lineSource[0], m_pCourse->m_vecAgentSS[i].lineSource[1]);
+			vecSegs[1] = WALL_SEGMENT(m_pCourse->m_vecAgentSS[i].lineSink[0], m_pCourse->m_vecAgentSS[i].lineSink[1]);
 			MakeSegmentVertices(vecWVerts, vecWInds, vecSegs, color);
 		}
 
@@ -444,11 +443,12 @@ void CAgentCourse::SpawnAgent(ComPtr<ID3D11DeviceContext>& pD3DContext, float T)
 {
 	size_t iIndex;
 	XMFLOAT2 ptSpawn = GetSpawnPoint(iIndex);
-	XMFLOAT2 ptVelocity = XMFLOAT2(m_sWorldPhysics.g_fIdealSpeed, 0.0f);
+	XMFLOAT2 ptVelocity = XMFLOAT2(m_sWorldPhysics.g_fIdealSpeed * m_pCourse->m_vecAgentSS[iIndex].velDir.x, 
+		m_sWorldPhysics.g_fIdealSpeed * m_pCourse->m_vecAgentSS[iIndex].velDir.y);
 	ID3D11UnorderedAccessView* pUAVNULL[1] = { nullptr };
 
-	SPAWN_AGENT agent = { ptSpawn, m_vecAgentSS[iIndex].velStart, T, m_sWorldPhysics.g_fParticleRadius,
-		(int)iIndex, m_nMaxLiveAgents, MAX_AGENTS };
+	SPAWN_AGENT agent = { ptSpawn, ptVelocity, T, m_sWorldPhysics.g_fParticleRadius, (int)iIndex, 
+		m_nMaxLiveAgents, MAX_AGENTS };
 
 	// If spawning is over, we still call the spawn CS with a type of -1 so that 
 	// we can still collect dead scores. 
@@ -618,52 +618,15 @@ void CAgentCourse::RenderAgents(const ComPtr<ID3D11Buffer>& pCBFrameVariables, c
 	m_pD3DContext->PSSetShader(NULL, NULL, 0);
 }
 
-HRESULT CAgentCourse::InitializeHourglass()
-{
-	m_strName = _T("Hourglass");
-	m_sWorldPhysics.g_fCourseLength = 100.0f;
-
-	m_vecWalls.resize(2);
-
-	m_vecWalls[0].resize(3);
-	m_vecWalls[0][0] = XMFLOAT2(0.0f, -15.0f);
-	m_vecWalls[0][1] = XMFLOAT2(50.0f, -5.0f);
-	m_vecWalls[0][2] = XMFLOAT2(100.0f, -15.0f);
-
-	m_vecWalls[1].resize(3);
-	m_vecWalls[1][0] = XMFLOAT2(0.0f, 15.0f);
-	m_vecWalls[1][1] = XMFLOAT2(50.0f, 5.0f);
-	m_vecWalls[1][2] = XMFLOAT2(100.0f, 15.0f);
-
-	m_vecAgentSS.resize(1);
-	m_vecAgentSS[0].vColor = XMFLOAT3(0.5f, 0.5f, 1.0f);
-	m_vecAgentSS[0].randLimit = 1.0f;
-
-	m_vecAgentSS[0].lineSource.resize(2);
-	m_vecAgentSS[0].lineSource[0] = XMFLOAT2(0.0f, -13.5f);
-	m_vecAgentSS[0].lineSource[1] = XMFLOAT2(0.0f, 13.5f);
-	m_vecAgentSS[0].lenSource = m_vecAgentSS[0].lineSource[1].y - m_vecAgentSS[0].lineSource[0].y;
-
-	m_vecAgentSS[0].lineSink.resize(2);
-	m_vecAgentSS[0].lineSink[0] = XMFLOAT2(100.0f, -13.5f);
-	m_vecAgentSS[0].lineSink[1] = XMFLOAT2(100.0f, 13.5f);
-
-	m_vecAgentSS[0].velStart = XMFLOAT2(m_sWorldPhysics.g_fIdealSpeed, 0.0f);
-
-	m_fSpawnRate *= m_vecAgentSS[0].lenSource;
-
-	return S_OK;
-}
-
 XMFLOAT2 CAgentCourse::GetSpawnPoint(size_t &iIndex)
 {
 	iIndex = 0;
-	if (m_vecAgentSS.size() > 1)
+	if (m_pCourse->m_vecAgentSS.size() > 1)
 	{
 		float fi = frand();
-		for (size_t i = 0; i < m_vecAgentSS.size(); i++)
+		for (size_t i = 0; i < m_pCourse->m_vecAgentSS.size(); i++)
 		{
-			if (fi < m_vecAgentSS[i].randLimit)
+			if (fi < m_pCourse->m_vecAgentSS[i].randLimit)
 			{
 				iIndex = i;
 				break;
@@ -674,6 +637,6 @@ XMFLOAT2 CAgentCourse::GetSpawnPoint(size_t &iIndex)
 	float f1 = frand();
 	float f2 = 1.0f - f1;
 	return XMFLOAT2(
-		f1 * m_vecAgentSS[iIndex].lineSource[0].x + f2 * m_vecAgentSS[iIndex].lineSource[1].x,
-		f1 * m_vecAgentSS[iIndex].lineSource[0].y + f2 * m_vecAgentSS[iIndex].lineSource[1].y);
+		f1 * m_pCourse->m_vecAgentSS[iIndex].lineSource[0].x + f2 * m_pCourse->m_vecAgentSS[iIndex].lineSource[1].x,
+		f1 * m_pCourse->m_vecAgentSS[iIndex].lineSource[0].y + f2 * m_pCourse->m_vecAgentSS[iIndex].lineSource[1].y);
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Course.h"
+
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 
@@ -22,11 +24,10 @@ class CAgentCourse
 public:
 	CAgentCourse(bool bVisualize, CRunStatistics *pRunStats = NULL);
 
-	HRESULT Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11DeviceContext>& pD3DContext, const CString &strJsonFile);
-	HRESULT LoadShaders();
+	HRESULT Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11DeviceContext>& pD3DContext, CCourse *pCourse);
 	BOOL UpdateAgents(const ComPtr<ID3D11Buffer>& pCBFrameVariables, float dt, float T);
 
-	CString GetName() { return m_strName; }
+	CString GetName() { return m_pCourse->m_strName; }
 	float GetCourseLength() { return m_sWorldPhysics.g_fCourseLength; }
 	UINT GetMaxAlive() { return m_nMaxLiveAgents; }
 	UINT GetNumSpawned() { return m_nSpawned; }
@@ -38,17 +39,6 @@ public:
 		const ComPtr<ID3D11SamplerState>& pTextureSampler);
 
 protected:
-	typedef std::vector<XMFLOAT2> XMPOLYLINE;
-	struct AGENT_SOURCE_SINK {
-		AGENT_SOURCE_SINK() : vColor(0.0f, 0.0f, 0.0f) {}
-		XMFLOAT3 vColor;
-		XMPOLYLINE lineSource;
-		XMPOLYLINE lineSink;
-		XMFLOAT2 velStart;
-		float randLimit;
-		float lenSource;
-	};
-
 	struct WORLD_PHYSICS
 	{
 		WORLD_PHYSICS() : g_fCourseLength(100.0f), g_fParticleRadius(0.5f), g_fIdealSpeed(10.0f), g_fMaxAcceleration(50.0f), 
@@ -144,7 +134,7 @@ protected:
 	};
 	const XMFLOAT3 colorWall = XMFLOAT3(0.75f, 0.75f, 0.75f);
 
-	HRESULT InitializeHourglass();
+	HRESULT LoadShaders();
 	HRESULT InitializeAgentBuffers();
 	HRESULT InitializeWallBuffers();
 
@@ -156,15 +146,13 @@ protected:
 
 	bool m_bVisualize;
 	bool m_bSpawnActive;
-	CString m_strName;
 	float m_fNextSpawn;
 	float m_fSpawnRate;
-	std::vector<XMPOLYLINE> m_vecWalls;
-	std::vector<AGENT_SOURCE_SINK> m_vecAgentSS;
 	UINT m_iWallVertices;
 	UINT m_iWallIndices;
 
 	CRunStatistics* m_pRunStats;
+	CCourse* m_pCourse;
 
 	WORLD_PHYSICS m_sWorldPhysics;
 
