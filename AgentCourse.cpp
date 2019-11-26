@@ -36,8 +36,18 @@ HRESULT CAgentCourse::Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11
 
 	m_sWorldPhysics.g_fRepulseDist = 3.0f;
 	m_sWorldPhysics.g_fRepulseStrength = 10.0f;
+	
 	m_sWorldPhysics.g_fWallRepulseDist = 1.5f;
 	m_sWorldPhysics.g_fWallRepulseStrength = 10.0f;
+
+	m_sWorldPhysics.g_fMinAlignDist = 1.0f;
+	m_sWorldPhysics.g_fMaxAlignDist = 6.0f;
+	m_sWorldPhysics.g_fAlignAtMin = 1.0f;
+	m_sWorldPhysics.g_fAlignAtMax = 0.0f;
+	m_sWorldPhysics.g_fAlignAtRear = 0.5f;
+
+	m_sWorldPhysics.g_fWallAlignDist = 6.0f;
+	m_sWorldPhysics.g_fWallAlign = 1.5f;
 
 	// World physics is just set once and remains unchanged for the life of the saver
 	D3D11_SUBRESOURCE_DATA cbData;

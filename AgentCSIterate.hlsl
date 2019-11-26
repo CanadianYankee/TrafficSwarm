@@ -26,19 +26,19 @@ bool Calculate2Body(inout float2 accumVel, in uint id1, in uint id2)
 		return false;
 	float2 pos1 = oldAgentData[id1].pos.xy;
 	float2 pos2 = oldAgentData[id2].pos.xy;
+	float2 vel1 = oldAgentData[id1].velo.xy;
+	float2 vel2 = oldAgentData[id2].velo.xy;
 
+	float2 vecAxis = normalize(pos2 - pos1);
 	float dist = distance(pos1, pos2);
 
 	// Check for collision
 	bool bBounce = false;
 	if (dist <= g_fAgentRadius * 2.0f)
 	{
-		float2 vel1 = oldAgentData[id1].velo.xy;
-		float2 vel2 = oldAgentData[id2].velo.xy;
 		if (dot(vel2 - vel1, pos2 - pos1) < 0)
 		{
 			bBounce = true;
-			float2 vecAxis = normalize(pos2 - pos1);
 			accumVel = vel1 + dot(vel2 - vel1, vecAxis) * vecAxis;
 		}
 	}
@@ -46,9 +46,17 @@ bool Calculate2Body(inout float2 accumVel, in uint id1, in uint id2)
 	if (!bBounce)
 	{
 		// Short-range repulsion
-		if (dist < g_fRepulseDist)
+		if (dist <= g_fRepulseDist)
 		{
-			accumVel += g_fRepulseStrength * (dist - g_fRepulseDist) * normalize(pos2 - pos1);
+			accumVel += g_fRepulseStrength * (dist - g_fRepulseDist) * vecAxis;
+		}
+
+		// Velocity alignment
+		if (dist >= g_fMinAlignDist && dist <= g_fMaxAlignDist)
+		{
+			float attenuate = lerp(g_fAlignAtMin, g_fAlignAtMax, (dist - g_fMinAlignDist) / (g_fMaxAlignDist - g_fMinAlignDist));
+			attenuate *= lerp(1.0f, g_fAlignAtRear, 0.5f * (dot(normalize(vel1), vecAxis) + 1.0f));
+			accumVel += (vel2 - vel1) * attenuate;
 		}
 	}
 
@@ -59,25 +67,32 @@ bool CalculateBodyWall(inout float2 accumVel, in uint idB, in uint idW)
 {
 	float2 posB = oldAgentData[idB].pos.xy;
 	float2 posW = ClosestPoint(posB, segWallsSinks[idW].end1, segWallsSinks[idW].end2);
+	float2 vel = oldAgentData[idB].velo.xy;
 
 	float dist = distance(posB, posW);
+	float2 vecAxis = normalize(posB - posW);
 
 	bool bBounce = false;
 	if (dist <= g_fAgentRadius * 2.0f)
 	{
-		float2 vel = oldAgentData[idB].velo.xy;
 		if (dot(posB - posW, vel) < 0)
 		{
 			bBounce = true;
-			float2 vecAxis = normalize(posB - posW);
 			accumVel = (vel - 2.0f * dot(vel, vecAxis) * vecAxis);
 		}
 	}
 
 	// Short-range repulsion
-	if (dist < g_fWallRepulseDist)
+	if (dist < g_fWallRepulseDist && !bBounce)
 	{
 		accumVel += g_fWallRepulseStrength * (dist - g_fWallRepulseDist) * normalize(posW - posB);
+	}
+
+	// "Velocity alignment" with mirror image 
+	if (dist < g_fWallAlignDist && !bBounce)
+	{
+		float attenuate = lerp(1.0f, 0.0f, dist / g_fWallAlignDist);
+		accumVel += (vel - 2.0f * dot(vel, vecAxis) * vecAxis) * g_fWallAlign * attenuate;
 	}
 
 	return bBounce;

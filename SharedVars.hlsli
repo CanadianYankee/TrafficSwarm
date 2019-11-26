@@ -15,9 +15,18 @@ cbuffer cbWorldPhysics : register(b0)
 	float g_fWallRepulseDist;
 	float g_fWallRepulseStrength;
 
-	//float wpfDummy0;
-	//float wpfDummy1;
-	//float wpfDummy2;
+	float g_fMinAlignDist;
+	float g_fMaxAlignDist;
+	float g_fAlignAtMin;
+	float g_fAlignAtMax;
+	
+	float g_fAlignAtRear;
+	float g_fWallAlignDist;
+	float g_fWallAlign;
+	float wpfDummy0;
+
+//	float wpfDummy1;
+//	float wpfDummy2;
 };
 
 cbuffer cbFrameVariables : register(b1)
