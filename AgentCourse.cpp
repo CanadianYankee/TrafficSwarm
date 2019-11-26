@@ -1,14 +1,17 @@
 #include "pch.h"
 #include "AgentCourse.h"
 #include "DXUtils.h"
+#include "RunStatistics.h"
 
-CAgentCourse::CAgentCourse(bool bVisualize) :
+CAgentCourse::CAgentCourse(bool bVisualize, CRunStatistics *pRunStats) :
 	m_bVisualize(bVisualize),
 	m_fNextSpawn(0.0f),
 	m_fSpawnRate(2.0f),
+	m_bSpawnActive(true),
 	m_iWallVertices(0),
 	m_iWallIndices(0),
-	m_iMaxLiveAgents(0)
+	m_nMaxLiveAgents(0),
+	m_pRunStats(pRunStats)
 {
 }
 
@@ -34,7 +37,7 @@ HRESULT CAgentCourse::Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11
 		hr = InitializeWallBuffers();
 	}
 
-	m_sWorldPhysics.g_fRepulseDist = 3.0f;
+	m_sWorldPhysics.g_fRepulseDist = 2.0f;
 	m_sWorldPhysics.g_fRepulseStrength = 10.0f;
 	
 	m_sWorldPhysics.g_fWallRepulseDist = 1.5f;
@@ -166,7 +169,7 @@ HRESULT CAgentCourse::InitializeAgentBuffers()
 	HRESULT hr = S_OK;
 	D3D11_SUBRESOURCE_DATA vinitData = { 0 };
 
-	m_iMaxLiveAgents = 0;
+	m_nMaxLiveAgents = 0;
 	std::vector<AGENT_DATA> vecAgent(MAX_AGENTS);
 
 	// Create the agent data structured buffers for simulation; no data yet
@@ -427,8 +430,8 @@ BOOL CAgentCourse::UpdateAgents( const ComPtr<ID3D11Buffer>& pCBFrameVariables, 
 	ComputeAgents(m_pD3DContext, pCBFrameVariables);
 
 	// If total time exceeds the next scheduled spawn time, then 
-	// spawn a new agent.
-	if (T >= m_fNextSpawn && m_iMaxLiveAgents < MAX_AGENTS)
+	// spawn a new agent.  
+	if (T >= m_fNextSpawn && m_nMaxLiveAgents < MAX_AGENTS)
 	{
 		SpawnAgent(m_pD3DContext, T);
 		m_fNextSpawn = T - logf(1.0f - frand()) / m_fSpawnRate;
@@ -445,7 +448,14 @@ void CAgentCourse::SpawnAgent(ComPtr<ID3D11DeviceContext>& pD3DContext, float T)
 	ID3D11UnorderedAccessView* pUAVNULL[1] = { nullptr };
 
 	SPAWN_AGENT agent = { ptSpawn, m_vecAgentSS[iIndex].velStart, T, m_sWorldPhysics.g_fParticleRadius,
-		(int)iIndex, m_iMaxLiveAgents, MAX_AGENTS };
+		(int)iIndex, m_nMaxLiveAgents, MAX_AGENTS };
+
+	// If spawning is over, we still call the spawn CS with a type of -1 so that 
+	// we can still collect dead scores. 
+	if (!m_bSpawnActive)
+	{
+		agent.Type = -1;
+	}
 
 	// Select the compute shader that spawns new agents
 	pD3DContext->CSSetShader(m_pAgentCSSpawn.Get(), NULL, 0);
@@ -467,25 +477,33 @@ void CAgentCourse::SpawnAgent(ComPtr<ID3D11DeviceContext>& pD3DContext, float T)
 	hr = CDXUtils::MapDataFromBuffer(pD3DContext, (PVOID)iSpawnData, NUM_COMPUTE_OUT * sizeof(UINT), m_pSBCPUComputeOutput);
 	ASSERT(SUCCEEDED(hr));
 
-	m_iMaxLiveAgents++;
+	m_nMaxLiveAgents++;
+	if (iSpawnData[2]) m_nSpawned++;
 	UINT iNumDead = iSpawnData[1];
 	if (iNumDead > 0)
 	{
-		m_iMaxLiveAgents -= iNumDead;
+		m_nMaxLiveAgents -= iNumDead;
 		pD3DContext->CopyResource(m_pSBCPUScores.Get(), m_pSBFinalScores.Get());
 		float arrScores[MAX_DEAD_AGENTS];
 		hr = CDXUtils::MapDataFromBuffer(pD3DContext, (PVOID)arrScores, MAX_DEAD_AGENTS * sizeof(float), m_pSBCPUScores);
-		CString str;
-		str.Format(_T("Dead at %f: "), T);
-		OutputDebugString(str);
-		for (UINT i = 0; i < iNumDead; i++)
+
+		// Collect statistics if we have a watcher.
+		if (m_pRunStats)
 		{
-			str.Format(_T("%f "), arrScores[i]);
-			OutputDebugString(str);
+			for (UINT i = 0; i < iNumDead; i++)
+			{
+				if (arrScores[i] < 0)
+				{
+					if(m_bSpawnActive) m_pRunStats->LogSpawnFail(T);
+				} 
+				else
+				{
+					m_pRunStats->LogFinalScore(T, arrScores[i]);
+				}
+			}
 		}
-		OutputDebugString(_T("\n"));
 	}
-	ASSERT(m_iMaxLiveAgents == iSpawnData[0]);
+	ASSERT(m_nMaxLiveAgents == iSpawnData[0]);
 
 	// Unbind the resources
 	pD3DContext->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
@@ -513,7 +531,7 @@ void CAgentCourse::ComputeAgents(ComPtr<ID3D11DeviceContext>& pD3DContext, const
 	pD3DContext->CSSetUnorderedAccessViews(0, 1, m_pUAVAgentDataNext.GetAddressOf(), nullptr);
 
 	// Run the compute shader - acts on a 1D array of agents
-	UINT nBlocks = (UINT)ceil(((double)m_iMaxLiveAgents / 128.0));
+	UINT nBlocks = (UINT)ceil(((double)m_nMaxLiveAgents / 128.0));
 	pD3DContext->Dispatch(nBlocks, 1, 1);
 
 	// Unbind the resources
@@ -589,7 +607,7 @@ void CAgentCourse::RenderAgents(const ComPtr<ID3D11Buffer>& pCBFrameVariables, c
 	m_pD3DContext->PSSetConstantBuffers(0, 1, m_pCBWorldPhysics.GetAddressOf());
 
 	// Draw the agents
-	m_pD3DContext->Draw(m_iMaxLiveAgents, 0);
+	m_pD3DContext->Draw(m_nMaxLiveAgents, 0);
 
 	// Clear out the shaders
 	ID3D11ShaderResourceView* pSRVNULL[1] = { nullptr };

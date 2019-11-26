@@ -3,6 +3,8 @@
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 
+class CRunStatistics; 
+
 inline float frand()
 {
 	return (float)rand() / (float)RAND_MAX;
@@ -18,7 +20,7 @@ constexpr int MAX_DEAD_AGENTS = MAX_AGENTS >> 3;
 class CAgentCourse
 {
 public:
-	CAgentCourse(bool bVisualize);
+	CAgentCourse(bool bVisualize, CRunStatistics *pRunStats = NULL);
 
 	HRESULT Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11DeviceContext>& pD3DContext, const CString &strJsonFile);
 	HRESULT LoadShaders();
@@ -26,7 +28,10 @@ public:
 
 	CString GetName() { return m_strName; }
 	float GetCourseLength() { return m_sWorldPhysics.g_fCourseLength; }
-	UINT GetMaxAlive() { return m_iMaxLiveAgents; }
+	UINT GetMaxAlive() { return m_nMaxLiveAgents; }
+	UINT GetNumSpawned() { return m_nSpawned; }
+	bool GetSpawnActive() { return m_bSpawnActive; }
+	void SetSpawnActive(bool bSpawnActive) { m_bSpawnActive = bSpawnActive; }
 
 	void RenderWalls(const ComPtr<ID3D11Buffer>& pCBFrameVariables);
 	void RenderAgents(const ComPtr<ID3D11Buffer>& pCBFrameVariables, const ComPtr<ID3D11ShaderResourceView>& pSRVParticleDraw, 
@@ -150,6 +155,7 @@ protected:
 	XMFLOAT2 GetSpawnPoint(size_t& iIndex);
 
 	bool m_bVisualize;
+	bool m_bSpawnActive;
 	CString m_strName;
 	float m_fNextSpawn;
 	float m_fSpawnRate;
@@ -158,9 +164,12 @@ protected:
 	UINT m_iWallVertices;
 	UINT m_iWallIndices;
 
+	CRunStatistics* m_pRunStats;
+
 	WORLD_PHYSICS m_sWorldPhysics;
 
-	UINT m_iMaxLiveAgents;
+	UINT m_nSpawned;
+	UINT m_nMaxLiveAgents;
 
 	ComPtr<ID3D11Device> m_pD3DDevice;
 	ComPtr<ID3D11DeviceContext> m_pD3DContext;

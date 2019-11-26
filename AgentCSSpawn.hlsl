@@ -35,9 +35,16 @@ void AgentCSSpawn( uint3 DTid : SV_DispatchThreadID )
 
 	// Count up our dead and save the scores
 	// Suppress spawn if new agent collides with a live one
+	// Negative type suppresses spawn and just does dead processing.
 	uint nDeadCount = 0;
 	bool bSuppress = false;
 	uint nLiveAgents = maxLiveAgents;
+	if (newAgent.type < 0)
+	{
+		arrFinalScores[nDeadCount] = -1.0f;
+		nDeadCount++;
+		bSuppress = true;
+	}
 	for (int i = maxLiveAgents - 1; i >= 0; i--)
 	{
 		if (arrAgents[i].type < 0)
@@ -71,4 +78,5 @@ void AgentCSSpawn( uint3 DTid : SV_DispatchThreadID )
 	// For read by the CPU
 	arrComputeOutput[0] = nLiveAgents;
 	arrComputeOutput[1] = nDeadCount;
+	arrComputeOutput[2] = !bSuppress;
 }
