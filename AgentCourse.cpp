@@ -35,21 +35,21 @@ HRESULT CAgentCourse::Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11
 		hr = InitializeWallBuffers();
 	}
 
-	m_sWorldPhysics.g_fRepulseDist = cGenome.fRepulseDist;
-	m_sWorldPhysics.g_fRepulseStrength = cGenome.fRepulseStrength;
+	m_sWorldPhysics.g_fRepulseDist = cGenome.Gene(CAgentGenome::GENE::RepulseDist);
+	m_sWorldPhysics.g_fRepulseStrength = cGenome.Gene(CAgentGenome::GENE::RepulseStrength);
 	
-	m_sWorldPhysics.g_fWallRepulseDist = cGenome.fWallRepulseDist;
-	m_sWorldPhysics.g_fWallRepulseStrength = cGenome.fWallRepulseStrength;
+	m_sWorldPhysics.g_fWallRepulseDist = cGenome.Gene(CAgentGenome::GENE::WallRepulseDist);
+	m_sWorldPhysics.g_fWallRepulseStrength = cGenome.Gene(CAgentGenome::GENE::WallRepulseStrength);
 
-	m_sWorldPhysics.g_fMinAlignDist = cGenome.fMinAlignDist;
-	m_sWorldPhysics.g_fMaxAlignDist = cGenome.fMaxAlignDist;
-	m_sWorldPhysics.g_fAlignAtMin = cGenome.fAlignAtMin;
-	m_sWorldPhysics.g_fAlignAtMax = cGenome.fAlignAtMax;
-	m_sWorldPhysics.g_fAlignAtRear = cGenome.fAlignAtRear;
+	m_sWorldPhysics.g_fMinAlignDist = cGenome.Gene(CAgentGenome::GENE::MinAlignDist);
+	m_sWorldPhysics.g_fMaxAlignDist = cGenome.Gene(CAgentGenome::GENE::MaxAlignDist);
+	m_sWorldPhysics.g_fAlignAtMin = cGenome.Gene(CAgentGenome::GENE::AlignAtMin);
+	m_sWorldPhysics.g_fAlignAtMax = cGenome.Gene(CAgentGenome::GENE::AlignAtMax);
+	m_sWorldPhysics.g_fAlignAtRear = cGenome.Gene(CAgentGenome::GENE::AlignAtRear);
 
-	m_sWorldPhysics.g_fWallAlignDist = cGenome.fWallAlignDist;
-	m_sWorldPhysics.g_fWallAlign = cGenome.fWallAlign;
-	m_sWorldPhysics.g_fWallAlignAtRear = cGenome.fWallAlignAtRear;
+	m_sWorldPhysics.g_fWallAlignDist = cGenome.Gene(CAgentGenome::GENE::WallAlignDist);
+	m_sWorldPhysics.g_fWallAlign = cGenome.Gene(CAgentGenome::GENE::WallAlign);
+	m_sWorldPhysics.g_fWallAlignAtRear = cGenome.Gene(CAgentGenome::GENE::WallAlignAtRear);
 
 	// World physics is just set once and remains unchanged for the life of the saver
 	D3D11_SUBRESOURCE_DATA cbData;

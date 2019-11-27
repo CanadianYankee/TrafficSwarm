@@ -8,12 +8,7 @@ using namespace DirectX;
 class CRunStatistics; 
 class CAgentGenome;
 
-inline float frand()
-{
-	return (float)rand() / (float)RAND_MAX;
-}
-
-constexpr int MAX_AGENTS = 2048;
+constexpr int MAX_AGENTS = 4096;
 constexpr int MAX_DEAD_AGENTS = MAX_AGENTS >> 3;
 
 // This class defines the course that the agents must 

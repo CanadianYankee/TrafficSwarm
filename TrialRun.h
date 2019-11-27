@@ -40,7 +40,7 @@ protected:
 	HRESULT InitDirect3D();
 	HRESULT PrepareShaderConstants();
 
-	const float MAX_STOP_WAIT = 1000.0f;
+	const float MAX_RUN_TIME = 2000.0f;
 
 	struct FRAME_VARIABLES
 	{

@@ -96,7 +96,7 @@ BOOL CTrialRun::Run(RUN_RESULTS &results)
 	BOOL bSuccess = TRUE;
 	UINT nAgents = m_pRunStats->GetTotalRunSize();
 
-	for(T = dt; bSuccess; T+=dt)
+	for(T = dt; bSuccess && T < MAX_RUN_TIME; T+=dt)
 	{
 		m_sFrameVariables.g_fElapsedTime = dt;
 		m_sFrameVariables.g_fGlobalTime = T;
@@ -118,7 +118,7 @@ BOOL CTrialRun::Run(RUN_RESULTS &results)
 				m_pAgentCourse->SetSpawnActive(false);
 				Tstop = T;
 			}
-			if (m_pAgentCourse->GetMaxAlive() == 0 || T - Tstop > MAX_STOP_WAIT)
+			if (m_pAgentCourse->GetMaxAlive() == 0)
 			{
 				break;
 			}

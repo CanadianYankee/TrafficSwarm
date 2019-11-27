@@ -168,11 +168,11 @@ void CTrafficSwarmDlg::OnBnClickedButtonRunTrials()
 	pCourse->LoadHourglass();
 
 	CAgentGenome genome;
-	genome.MakeDefault();
+	genome.RandomizeAll(); //.MakeDefault();
 
 	CTrialRun trial;
 	CTrialRun::RUN_RESULTS results;
-	trial.Intialize(2048, pCourse, genome);
+	trial.Intialize(4096, pCourse, genome);
 	trial.Run(results);
 	CString str;
 	str.Format(_T("Run of \"%s\": %d/%d complete;\nAvg Life = %f  Avg AA = %f  Avg AW = %f\nSimulated %f seconds (%f FPS) in %f real seconds.\n"), 
@@ -188,7 +188,7 @@ void CTrafficSwarmDlg::OnBnClickedButtonRunsandbox()
 	pCourse->LoadHourglass();
 
 	CAgentGenome genome;
-	genome.MakeDefault();
+	genome.RandomizeAll(); // MakeDefault();
 
 	CSandboxWnd *pSandboxWnd = new CSandboxWnd(this, pCourse, genome);
 

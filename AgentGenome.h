@@ -1,23 +1,50 @@
 #pragma once
+
+inline float frand()
+{
+	return (float)rand() / (float)RAND_MAX;
+}
+
 class CAgentGenome
 {
 public:
-	float fRepulseDist;
-	float fRepulseStrength;
+	CAgentGenome();
 
-	float fWallRepulseDist;
-	float fWallRepulseStrength;
+	enum class GENE : UINT 
+	{
+		RepulseDist,
+		RepulseStrength,
 
-	float fMinAlignDist;
-	float fMaxAlignDist;
-	float fAlignAtMin;
-	float fAlignAtMax;
-	float fAlignAtRear;
+		WallRepulseDist,
+		WallRepulseStrength,
 
-	float fWallAlignDist;
-	float fWallAlign;
-	float fWallAlignAtRear;
+		MinAlignDist,
+		MaxAlignDist,
+		AlignAtMin,
+		AlignAtMax,
+		AlignAtRear,
+
+		WallAlignDist,
+		WallAlign,
+		WallAlignAtRear,
+
+		NUM_GENES
+	};
+
+	struct GENE_SPECIFICATION
+	{
+		const TCHAR* szName;
+		float fMin;
+		float fMax;
+	};
 
 	void MakeDefault();
+	float Gene(GENE geneId) const;
+	void RandomizeAll();
+	GENE RandomizeOne();
+	void RandomizeOne(GENE geneId);
+
+protected:
+	std::vector<float> m_vecGenes;
 };
 
