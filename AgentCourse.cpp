@@ -2,6 +2,7 @@
 #include "AgentCourse.h"
 #include "DXUtils.h"
 #include "RunStatistics.h"
+#include "AgentGenome.h"
 
 CAgentCourse::CAgentCourse(bool bVisualize, CRunStatistics *pRunStats) :
 	m_bVisualize(bVisualize),
@@ -17,7 +18,7 @@ CAgentCourse::CAgentCourse(bool bVisualize, CRunStatistics *pRunStats) :
 {
 }
 
-HRESULT CAgentCourse::Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11DeviceContext>& pD3DContext, CCourse *pCourse)
+HRESULT CAgentCourse::Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11DeviceContext>& pD3DContext, CCourse *pCourse, const CAgentGenome &cGenome)
 {
 	m_pD3DDevice = pD3DDevice;
 	m_pD3DContext = pD3DContext;
@@ -34,20 +35,21 @@ HRESULT CAgentCourse::Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11
 		hr = InitializeWallBuffers();
 	}
 
-	m_sWorldPhysics.g_fRepulseDist = 2.0f;
-	m_sWorldPhysics.g_fRepulseStrength = 10.0f;
+	m_sWorldPhysics.g_fRepulseDist = cGenome.fRepulseDist;
+	m_sWorldPhysics.g_fRepulseStrength = cGenome.fRepulseStrength;
 	
-	m_sWorldPhysics.g_fWallRepulseDist = 1.5f;
-	m_sWorldPhysics.g_fWallRepulseStrength = 10.0f;
+	m_sWorldPhysics.g_fWallRepulseDist = cGenome.fWallRepulseDist;
+	m_sWorldPhysics.g_fWallRepulseStrength = cGenome.fWallRepulseStrength;
 
-	m_sWorldPhysics.g_fMinAlignDist = 1.0f;
-	m_sWorldPhysics.g_fMaxAlignDist = 6.0f;
-	m_sWorldPhysics.g_fAlignAtMin = 1.0f;
-	m_sWorldPhysics.g_fAlignAtMax = 0.0f;
-	m_sWorldPhysics.g_fAlignAtRear = 0.5f;
+	m_sWorldPhysics.g_fMinAlignDist = cGenome.fMinAlignDist;
+	m_sWorldPhysics.g_fMaxAlignDist = cGenome.fMaxAlignDist;
+	m_sWorldPhysics.g_fAlignAtMin = cGenome.fAlignAtMin;
+	m_sWorldPhysics.g_fAlignAtMax = cGenome.fAlignAtMax;
+	m_sWorldPhysics.g_fAlignAtRear = cGenome.fAlignAtRear;
 
-	m_sWorldPhysics.g_fWallAlignDist = 6.0f;
-	m_sWorldPhysics.g_fWallAlign = 1.5f;
+	m_sWorldPhysics.g_fWallAlignDist = cGenome.fWallAlignDist;
+	m_sWorldPhysics.g_fWallAlign = cGenome.fWallAlign;
+	m_sWorldPhysics.g_fWallAlignAtRear = cGenome.fWallAlignAtRear;
 
 	// World physics is just set once and remains unchanged for the life of the saver
 	D3D11_SUBRESOURCE_DATA cbData;

@@ -6,6 +6,7 @@ using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 
 class CRunStatistics; 
+class CAgentGenome;
 
 inline float frand()
 {
@@ -24,7 +25,7 @@ class CAgentCourse
 public:
 	CAgentCourse(bool bVisualize, CRunStatistics *pRunStats);
 
-	HRESULT Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11DeviceContext>& pD3DContext, CCourse *pCourse);
+	HRESULT Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11DeviceContext>& pD3DContext, CCourse *pCourse, const CAgentGenome &cGenome);
 	BOOL UpdateAgents(const ComPtr<ID3D11Buffer>& pCBFrameVariables, float dt, float T);
 
 	CString GetName() { return m_pCourse->m_strName; }
@@ -42,11 +43,11 @@ protected:
 	struct WORLD_PHYSICS
 	{
 		WORLD_PHYSICS() : g_fCourseLength(100.0f), g_fParticleRadius(0.5f), g_fIdealSpeed(10.0f), g_fMaxAcceleration(50.0f), 
-			g_iMaxAgents(MAX_AGENTS), g_iNumWalls(0), g_iNumSinks(0), g_fCollisionPenalty(10.0f), 
+			g_iMaxAgents(MAX_AGENTS), g_iNumWalls(0), g_iNumSinks(0), wpiDummy0(0), 
 			g_fRepulseDist(0.0f), g_fRepulseStrength(0.0f),	g_fWallRepulseDist(0.0f), g_fWallRepulseStrength(0.0f),
 			g_fMinAlignDist(0.0f), g_fMaxAlignDist(0.0f), g_fAlignAtMin(0.0f), g_fAlignAtMax(0.0f), 
-			g_fAlignAtRear(0.0f), g_fWallAlignDist(0.0f), g_fWallAlign(0.0f),
-			wpfDummy0(0.0f) // , wpfDummy1(0.0f), wpfDummy2(0.0f)
+			g_fAlignAtRear(0.0f), g_fWallAlignDist(0.0f), g_fWallAlign(0.0f), g_fWallAlignAtRear(0.0f)
+			//wpfDummy0(0.0f) // , wpfDummy1(0.0f), wpfDummy2(0.0f)
 		{}
 		float g_fCourseLength;
 		float g_fParticleRadius;
@@ -56,7 +57,7 @@ protected:
 		UINT g_iMaxAgents;
 		UINT g_iNumWalls;
 		UINT g_iNumSinks;
-		float g_fCollisionPenalty;
+		UINT wpiDummy0;
 
 		float g_fRepulseDist;
 		float g_fRepulseStrength;
@@ -71,7 +72,7 @@ protected:
 		float g_fAlignAtRear;
 		float g_fWallAlignDist;
 		float g_fWallAlign;
-		float wpfDummy0;
+		float g_fWallAlignAtRear;
 
 //		float wpfDummy1;
 //		float wpfDummy2;

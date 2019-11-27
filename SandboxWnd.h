@@ -1,6 +1,7 @@
 #pragma once
 #include <afxwin.h>
 #include "DXSandbox.h"
+#include "AgentGenome.h"
 
 class CCourse;
 
@@ -8,7 +9,7 @@ class CSandboxWnd :
 	public CWnd
 {
 public:
-	CSandboxWnd(CWnd* pOwner, CCourse *pCourse);
+	CSandboxWnd(CWnd* pOwner, CCourse *pCourse, const CAgentGenome& cGenome);
 	~CSandboxWnd();
 	BOOL Create();
 
@@ -16,6 +17,7 @@ protected:
 	CWnd* m_pOwner;
 	CDXSandbox* m_pSandbox;
 	CCourse* m_pCourse;
+	CAgentGenome m_cGenome;
 
 private:
 	bool m_bSizing;

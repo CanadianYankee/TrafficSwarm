@@ -11,6 +11,7 @@
 #include "Course.h"
 #include "TrialRun.h"
 #include "RunStatistics.h"
+#include "AgentGenome.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -165,10 +166,13 @@ void CTrafficSwarmDlg::OnBnClickedButtonRunTrials()
 {
 	CCourse* pCourse = new CCourse();
 	pCourse->LoadHourglass();
-	
+
+	CAgentGenome genome;
+	genome.MakeDefault();
+
 	CTrialRun trial;
 	CTrialRun::RUN_RESULTS results;
-	trial.Intialize(2048, pCourse);
+	trial.Intialize(2048, pCourse, genome);
 	trial.Run(results);
 	CString str;
 	str.Format(_T("Run of \"%s\": %d/%d complete;\nAvg Life = %f  Avg AA = %f  Avg AW = %f\nSimulated %f seconds (%f FPS) in %f real seconds.\n"), 
@@ -182,7 +186,11 @@ void CTrafficSwarmDlg::OnBnClickedButtonRunsandbox()
 {
 	CCourse *pCourse = new CCourse();
 	pCourse->LoadHourglass();
-	CSandboxWnd *pSandboxWnd = new CSandboxWnd(this, pCourse);
+
+	CAgentGenome genome;
+	genome.MakeDefault();
+
+	CSandboxWnd *pSandboxWnd = new CSandboxWnd(this, pCourse, genome);
 
 	BOOL bSuccess = pSandboxWnd->Create();
 	ASSERT(bSuccess);

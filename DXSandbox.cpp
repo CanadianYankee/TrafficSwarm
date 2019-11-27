@@ -3,6 +3,7 @@
 #include "DXUtils.h"
 #include "AgentCourse.h"
 #include "RunStatistics.h"
+#include "AgentGenome.h"
 
 CDXSandbox::CDXSandbox(UINT nMaxRunAgents) :
 	m_pMyWindow(nullptr),
@@ -21,7 +22,7 @@ CDXSandbox::~CDXSandbox()
 	CleanUp();
 }
 
-BOOL CDXSandbox::Initialize(CWnd *pWnd, CCourse *pCourse)
+BOOL CDXSandbox::Initialize(CWnd *pWnd, CCourse *pCourse, const CAgentGenome &cGenome)
 {
 	HRESULT hr = S_OK;
 	BOOL bSuccess = TRUE;
@@ -51,7 +52,7 @@ BOOL CDXSandbox::Initialize(CWnd *pWnd, CCourse *pCourse)
 	m_pRunStats = new CRunStatistics(m_nMaxRunAgents);
 	m_pCourse = pCourse;
 	m_pAgentCourse = new CAgentCourse(true, m_pRunStats);
-	hr = m_pAgentCourse->Initialize(m_pD3DDevice, m_pD3DContext, m_pCourse);
+	hr = m_pAgentCourse->Initialize(m_pD3DDevice, m_pD3DContext, m_pCourse, cGenome);
 	if (FAILED(hr))
 	{
 		CleanUp();

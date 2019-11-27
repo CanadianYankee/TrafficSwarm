@@ -4,12 +4,13 @@
 
 CString g_szWndClass;
 
-CSandboxWnd::CSandboxWnd(CWnd* pOwner, CCourse *pCourse) :
+CSandboxWnd::CSandboxWnd(CWnd* pOwner, CCourse *pCourse, const CAgentGenome& cGenome) :
 	m_pOwner(pOwner),
 	m_pSandbox(nullptr),
 	m_bSizing(false),
 	m_pCourse(pCourse)
 {
+	m_cGenome = cGenome;
 	ASSERT(m_pOwner && m_pCourse);
 }
 
@@ -58,7 +59,7 @@ void CSandboxWnd::OnShowWindow(BOOL bShow, UINT nStatus)
 		if (!m_pSandbox)
 		{
 			m_pSandbox = new CDXSandbox();
-			bSuccess = m_pSandbox->Initialize((CWnd *)this, m_pCourse);
+			bSuccess = m_pSandbox->Initialize((CWnd *)this, m_pCourse, m_cGenome);
 			if (!bSuccess)
 			{
 				ASSERT(FALSE);

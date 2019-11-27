@@ -5,6 +5,7 @@
 #include "RunStatistics.h"
 #include "DXUtils.h"	
 #include "DrawTimer.h"
+#include "AgentGenome.h"
 
 CTrialRun::CTrialRun() :
 	m_pRunStats(nullptr),
@@ -13,7 +14,7 @@ CTrialRun::CTrialRun() :
 {
 }
 
-HRESULT CTrialRun::Intialize(UINT nAgents, CCourse *pCourse)
+HRESULT CTrialRun::Intialize(UINT nAgents, CCourse *pCourse, const CAgentGenome& cGenome)
 {
 	HRESULT hr = S_OK;
 	BOOL bSuccess = TRUE;
@@ -24,8 +25,9 @@ HRESULT CTrialRun::Intialize(UINT nAgents, CCourse *pCourse)
 
 	m_pRunStats = new CRunStatistics(nAgents);
 	m_pCourse = pCourse;
+	m_cGenome = cGenome;
 	m_pAgentCourse = new CAgentCourse(false, m_pRunStats);
-	hr = m_pAgentCourse->Initialize(m_pD3DDevice, m_pD3DContext, m_pCourse);
+	hr = m_pAgentCourse->Initialize(m_pD3DDevice, m_pD3DContext, m_pCourse, cGenome);
 	if (FAILED(hr))
 	{
 		CleanUp();
@@ -129,6 +131,7 @@ BOOL CTrialRun::Run(RUN_RESULTS &results)
 		float realTime = cTimer.DeltaTime();
 		m_pRunStats->RecordRunResults(results);
 		results.strCourseName = m_pCourse->m_strName;
+		results.genome = m_cGenome;
 		results.fRealTime = realTime;
 		results.fSimulatedTime = T;
 	}

@@ -228,6 +228,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AgentCourse.h" />
+    <ClInclude Include="AgentGenome.h" />
     <ClInclude Include="Course.h" />
     <ClInclude Include="TrialRun.h" />
     <ClInclude Include="DDSTextureLoader.h" />
@@ -245,6 +246,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AgentCourse.cpp" />
+    <ClCompile Include="AgentGenome.cpp" />
     <ClCompile Include="Course.cpp" />
     <ClCompile Include="TrialRun.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />

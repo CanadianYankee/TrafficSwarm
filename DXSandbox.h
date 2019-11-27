@@ -8,6 +8,7 @@ using namespace DirectX;
 class CAgentCourse;
 class CRunStatistics;
 class CCourse;
+class CAgentGenome;
 
 //
 // CDXSandbox does DirectX initialization and rendering. 
@@ -18,7 +19,7 @@ public:
 	CDXSandbox(UINT nMaxRunAgents = 0);
 	~CDXSandbox();
 
-	BOOL Initialize(CWnd *pWnd, CCourse *pCourse);
+	BOOL Initialize(CWnd *pWnd, CCourse *pCourse, const CAgentGenome& cGenome);
 	void CleanUp();
 	void Tick();
 	void Pause();

@@ -92,6 +92,7 @@ bool CalculateBodyWall(inout float2 accumVel, in uint idB, in uint idW)
 	if (g_fWallAlignDist > 0.0f && dist < g_fWallAlignDist && !bBounce)
 	{
 		float attenuate = lerp(1.0f, 0.0f, dist / g_fWallAlignDist);
+		attenuate *= lerp(1.0f, g_fWallAlignAtRear, 0.5f * (dot(normalize(vel), vecAxis) + 1.0f));
 		accumVel += (vel - 2.0f * dot(vel, vecAxis) * vecAxis) * g_fWallAlign * attenuate;
 	}
 

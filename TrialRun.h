@@ -1,5 +1,7 @@
 #pragma once
 
+#include "AgentGenome.h"
+
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 
@@ -16,6 +18,7 @@ public:
 	struct RUN_RESULTS
 	{
 		CString strCourseName;
+		CAgentGenome genome;
 		UINT nAgents;
 		UINT nComplete;
 		UINT nSpawnFails;
@@ -29,7 +32,7 @@ public:
 		float fAvgAWCollisions;
 	};
 
-	HRESULT Intialize(UINT nAgents, CCourse *pCourse);
+	HRESULT Intialize(UINT nAgents, CCourse *pCourse, const CAgentGenome& cGenome);
 	BOOL Run(RUN_RESULTS &results);
 	void CleanUp();
 
@@ -60,5 +63,6 @@ protected:
 	CRunStatistics* m_pRunStats;
 	CCourse* m_pCourse;
 	CAgentCourse* m_pAgentCourse;
+	CAgentGenome m_cGenome;
 };
 
