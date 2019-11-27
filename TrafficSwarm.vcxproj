@@ -230,6 +230,7 @@
     <ClInclude Include="AgentCourse.h" />
     <ClInclude Include="AgentGenome.h" />
     <ClInclude Include="Course.h" />
+    <ClInclude Include="EvolutionDlg.h" />
     <ClInclude Include="TrialRun.h" />
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="DXUtils.h" />
@@ -248,6 +249,7 @@
     <ClCompile Include="AgentCourse.cpp" />
     <ClCompile Include="AgentGenome.cpp" />
     <ClCompile Include="Course.cpp" />
+    <ClCompile Include="EvolutionDlg.cpp" />
     <ClCompile Include="TrialRun.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="DXUtils.cpp" />

@@ -71,6 +71,21 @@ void CAgentGenome::RandomizeAll()
 	}
 }
 
+CAgentGenome CAgentGenome::CrossBreed(const CAgentGenome& parent1, const CAgentGenome& parent2, float fMutateProb)
+{
+	CAgentGenome child;
+	for (size_t i = 0; i < (size_t)GENE::NUM_GENES; i++)
+	{
+		child.m_vecGenes[i] = rand() % 0x100 ? parent1.m_vecGenes[i] : parent2.m_vecGenes[i];
+	}
+
+	if (frand() < fMutateProb)
+		child.RandomizeOne();
+
+	return child;
+}
+
+
 void CAgentGenome::MakeDefault()
 {
 	m_vecGenes[(UINT)GENE::RepulseDist] = 2.0f;

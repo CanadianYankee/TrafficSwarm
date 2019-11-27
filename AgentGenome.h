@@ -43,6 +43,7 @@ public:
 	void RandomizeAll();
 	GENE RandomizeOne();
 	void RandomizeOne(GENE geneId);
+	static CAgentGenome CrossBreed(const CAgentGenome& parent1, const CAgentGenome& parent2, float fMutateProb = 0.2f);
 
 protected:
 	std::vector<float> m_vecGenes;
