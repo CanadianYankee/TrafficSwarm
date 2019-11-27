@@ -8,7 +8,7 @@ cbuffer cbWorldPhysics : register(b0)
 	uint g_iMaxAgents;
 	uint g_iNumWalls;
 	uint g_iNumSinks;
-	float g_fCollisionPenalty;
+	uint wpiDummy0;
 
 	float g_fRepulseDist;
 	float g_fRepulseStrength;
@@ -23,8 +23,9 @@ cbuffer cbWorldPhysics : register(b0)
 	float g_fAlignAtRear;
 	float g_fWallAlignDist;
 	float g_fWallAlign;
-	float wpfDummy0;
+	float g_fWallAlignAtRear;
 
+//	float wpfDummy0;
 //	float wpfDummy1;
 //	float wpfDummy2;
 };

@@ -7,6 +7,8 @@ using namespace DirectX;
 
 class CAgentCourse;
 class CRunStatistics;
+class CCourse;
+class CAgentGenome;
 
 //
 // CDXSandbox does DirectX initialization and rendering. 
@@ -14,10 +16,10 @@ class CRunStatistics;
 class CDXSandbox
 {
 public:
-	CDXSandbox();
+	CDXSandbox(UINT nMaxRunAgents = 0);
 	~CDXSandbox();
 
-	BOOL Initialize(CWnd *pWnd);
+	BOOL Initialize(CWnd *pWnd, CCourse *pCourse, const CAgentGenome& cGenome);
 	void CleanUp();
 	void Tick();
 	void Pause();
@@ -48,8 +50,10 @@ protected:
 	float m_fAspectRatio;
 	bool m_bRunning;
 	CDrawTimer m_Timer;
+	UINT m_nMaxRunAgents;
 
 	CAgentCourse* m_pAgentCourse;
+	CCourse* m_pCourse;
 	CRunStatistics* m_pRunStats;
 
 	FRAME_VARIABLES m_sFrameVariables;

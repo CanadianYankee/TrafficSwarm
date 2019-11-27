@@ -8,6 +8,10 @@
 #include "TrafficSwarmDlg.h"
 #include "afxdialogex.h"
 #include "SandboxWnd.h"
+#include "Course.h"
+#include "TrialRun.h"
+#include "RunStatistics.h"
+#include "AgentGenome.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -67,6 +71,7 @@ BEGIN_MESSAGE_MAP(CTrafficSwarmDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON_RUNSANDBOX, &CTrafficSwarmDlg::OnBnClickedButtonRunsandbox)
+	ON_BN_CLICKED(IDC_BUTTON_RUNTRIALS, &CTrafficSwarmDlg::OnBnClickedButtonRunTrials)
 	ON_MESSAGE(WM_CHILD_CLOSING, OnChildClosing)
 	ON_BN_CLICKED(IDCANCEL, &CTrafficSwarmDlg::OnBnClickedCancel)
 END_MESSAGE_MAP()
@@ -157,9 +162,35 @@ HCURSOR CTrafficSwarmDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+void CTrafficSwarmDlg::OnBnClickedButtonRunTrials()
+{
+	CCourse* pCourse = new CCourse();
+	pCourse->LoadHourglass();
+
+	CAgentGenome genome;
+	genome.MakeDefault();
+
+	CTrialRun trial;
+	CTrialRun::RUN_RESULTS results;
+	trial.Intialize(2048, pCourse, genome);
+	trial.Run(results);
+	CString str;
+	str.Format(_T("Run of \"%s\": %d/%d complete;\nAvg Life = %f  Avg AA = %f  Avg AW = %f\nSimulated %f seconds (%f FPS) in %f real seconds.\n"), 
+		results.strCourseName.GetBuffer(), results.nComplete, results.nAgents, results.fAvgLifetime, 
+		results.fAvgAACollisions, results.fAvgAWCollisions, results.fSimulatedTime, results.fFPS, results.fRealTime);
+	OutputDebugString(str);
+	MessageBox(str, _T("Trial Results"));
+}
+
 void CTrafficSwarmDlg::OnBnClickedButtonRunsandbox()
 {
-	CSandboxWnd *pSandboxWnd = new CSandboxWnd(this);
+	CCourse *pCourse = new CCourse();
+	pCourse->LoadHourglass();
+
+	CAgentGenome genome;
+	genome.MakeDefault();
+
+	CSandboxWnd *pSandboxWnd = new CSandboxWnd(this, pCourse, genome);
 
 	BOOL bSuccess = pSandboxWnd->Create();
 	ASSERT(bSuccess);

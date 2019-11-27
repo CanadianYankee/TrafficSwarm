@@ -3,15 +3,17 @@
 #include "DXUtils.h"
 #include "AgentCourse.h"
 #include "RunStatistics.h"
+#include "AgentGenome.h"
 
-CDXSandbox::CDXSandbox() :
+CDXSandbox::CDXSandbox(UINT nMaxRunAgents) :
 	m_pMyWindow(nullptr),
 	m_iClientWidth(0),
 	m_iClientHeight(0),
 	m_fAspectRatio(1.0),
 	m_bRunning(false),
 	m_pAgentCourse(nullptr),
-	m_pRunStats(nullptr)
+	m_pCourse(nullptr),
+	m_nMaxRunAgents(nMaxRunAgents)
 {
 }
 
@@ -20,12 +22,12 @@ CDXSandbox::~CDXSandbox()
 	CleanUp();
 }
 
-BOOL CDXSandbox::Initialize(CWnd *pWnd)
+BOOL CDXSandbox::Initialize(CWnd *pWnd, CCourse *pCourse, const CAgentGenome &cGenome)
 {
 	HRESULT hr = S_OK;
 	BOOL bSuccess = TRUE;
 
-	if (!pWnd)
+	if (!pWnd || !pCourse)
 	{
 		assert(false);
 		return FALSE;
@@ -47,16 +49,10 @@ BOOL CDXSandbox::Initialize(CWnd *pWnd)
 	bSuccess = SUCCEEDED(hr);
 	if (!bSuccess) return bSuccess;
 
-	m_pRunStats = new CRunStatistics();
+	m_pRunStats = new CRunStatistics(m_nMaxRunAgents);
+	m_pCourse = pCourse;
 	m_pAgentCourse = new CAgentCourse(true, m_pRunStats);
-	hr = m_pAgentCourse->Initialize(m_pD3DDevice, m_pD3DContext, _T(""));
-	if (FAILED(hr))
-	{
-		CleanUp();
-		return FALSE;
-	}
-
-	hr = m_pAgentCourse->LoadShaders();
+	hr = m_pAgentCourse->Initialize(m_pD3DDevice, m_pD3DContext, m_pCourse, cGenome);
 	if (FAILED(hr))
 	{
 		CleanUp();
@@ -327,17 +323,24 @@ BOOL CDXSandbox::UpdateScene(float dt, float T)
 
 	BOOL bSuccess = m_pAgentCourse->UpdateAgents(m_pCBFrameVariables, dt, T);
 
-	//if (m_pAgentCourse->GetNumSpawned() >= 2048)
-	//{
-	//	m_pAgentCourse->SetSpawnActive(false);
-	//	if (m_pAgentCourse->GetMaxAlive() == 0)
-	//	{
-	//		CString str;
-	//		str.Format(_T("Final average score = %f\n"), m_pRunStats->GetAverageScore());
-	//		OutputDebugString(str);
-	//		m_pMyWindow->PostMessage(WM_CLOSE);
-	//	}
-	//}
+	if (m_nMaxRunAgents && m_pAgentCourse->GetNumSpawned() >= m_nMaxRunAgents)
+	{
+		m_pAgentCourse->SetSpawnActive(false);
+		if (m_pAgentCourse->GetMaxAlive() == 0)
+		{
+			CTrialRun::RUN_RESULTS results;
+			m_pRunStats->RecordRunResults(results);
+			CString str;
+			results.fSimulatedTime = T;
+			results.strCourseName = m_pCourse->m_strName;
+			str.Format(_T("Run of \"%s\": %d/%d complete;\nAvg Life = %f  Avg AA = %f  Avg AW = %f\nSimulated %f seconds at %f FPS.\n"),
+				results.strCourseName.GetBuffer(), results.nComplete, results.nAgents, results.fAvgLifetime,
+				results.fAvgAACollisions, results.fAvgAWCollisions, results.fSimulatedTime, results.fFPS);
+			OutputDebugString(str);
+			MessageBox(NULL, str, _T("Trial Results"), MB_OK);
+			m_pMyWindow->PostMessage(WM_CLOSE);
+		}
+	}
 
 	return bSuccess;
 }
@@ -386,9 +389,8 @@ void CDXSandbox::CleanUp()
 		m_pAgentCourse = nullptr;
 	}
 
-	if (m_pRunStats)
+	if (m_pCourse)
 	{
-		delete m_pRunStats;
-		m_pRunStats = nullptr;
+		m_pCourse = nullptr;
 	}
 }
