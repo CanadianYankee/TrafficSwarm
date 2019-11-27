@@ -10,6 +10,7 @@
 #include "SandboxWnd.h"
 #include "Course.h"
 #include "TrialRun.h"
+#include "RunStatistics.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -167,12 +168,12 @@ void CTrafficSwarmDlg::OnBnClickedButtonRunTrials()
 	
 	CTrialRun trial;
 	CTrialRun::RUN_RESULTS results;
-	trial.Intialize(pCourse);
-	trial.Run(2048, results);
+	trial.Intialize(2048, pCourse);
+	trial.Run(results);
 	CString str;
-	str.Format(_T("Run of \"%s\": %d/%d complete; Score = %f\nSimulated %f seconds in %f real seconds.\n"), 
-		results.strCourseName.GetBuffer(), results.nComplete, results.nAgents, results.fAverageScore, 
-		results.fSimulatedTime, results.fRealTime);
+	str.Format(_T("Run of \"%s\": %d/%d complete;\nAvg Life = %f  Avg AA = %f  Avg AW = %f\nSimulated %f seconds in %f real seconds.\n"), 
+		results.strCourseName.GetBuffer(), results.nComplete, results.nAgents, results.fAvgLifetime, 
+		results.fAvgAACollisions, results.fAvgAWCollisions, results.fSimulatedTime, results.fRealTime);
 	OutputDebugString(str);
 	MessageBox(str, _T("Trial Results"));
 }

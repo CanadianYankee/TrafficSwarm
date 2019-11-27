@@ -119,12 +119,12 @@ void AgentCSIterate( uint3 DTid : SV_DispatchThreadID )
 		float2 velOthers = float2(0.0f, 0.0f);
 
 		// Interaction with other agents
-		bool bCollide = false;
+		bool bCollideAA = false;
 		float2 velBounce;
 		for (uint iOther = 0; iOther < g_iMaxAliveAgents; iOther++)
 		{
 			bool bColl = Calculate2Body(velOthers, iAgent, iOther);
-			bCollide = bCollide || bColl;
+			bCollideAA = bCollideAA || bColl;
 			if (bColl)
 			{
 				velBounce = velOthers;
@@ -133,11 +133,12 @@ void AgentCSIterate( uint3 DTid : SV_DispatchThreadID )
 		}
 
 		// Interaction with walls
+		bool bCollideAW = false;
 		float2 velWalls = float2(0.0f, 0.0f);
 		for (uint iWall = 0; iWall < g_iNumWalls; iWall++)
 		{
 			bool bColl = CalculateBodyWall(velWalls, iAgent, iWall);
-			bCollide = bCollide || bColl;
+			bCollideAW = bCollideAW || bColl;
 			if (bColl)
 			{
 				velBounce = velWalls;
@@ -145,8 +146,17 @@ void AgentCSIterate( uint3 DTid : SV_DispatchThreadID )
 			}
 		}
 
-		if (bCollide)
+		// Assess collision penalty
+		if (bCollideAW)
 		{
+			agent.nAWCollisions++;
+			agent.lastCollision = g_fGlobalTime;
+			vel = velBounce;
+		}
+		else if (bCollideAA)
+		{
+			agent.nAACollisions++;
+			agent.lastCollision = g_fGlobalTime;
 			vel = velBounce;
 		}
 		else
@@ -181,21 +191,15 @@ void AgentCSIterate( uint3 DTid : SV_DispatchThreadID )
 		if (distance(pos, ptSink) < g_fAgentRadius)
 		{
 			agent.type = -1;
-			agent.score += g_fGlobalTime - agent.birth;
-		}
-
-		// Assess collision penalty
-		if (bCollide)
-		{
-			agent.score += g_fCollisionPenalty;
-			agent.lastCollision = g_fGlobalTime;
+			agent.lifetime = g_fGlobalTime - agent.birth;
 		}
 
 		// Check for running off either end of the course
 		if (pos.x > g_fCourseLength || pos.x < 0.0f)
 		{
 			agent.type = -1;
-			agent.score += g_fGlobalTime - agent.birth + g_fCollisionPenalty;
+			agent.lifetime = g_fGlobalTime - agent.birth;
+			agent.offCourse = pos.x < 0.0f ? -1 : 1;
 		}
 	}
 	newAgentData[iAgent] = agent;

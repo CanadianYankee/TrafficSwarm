@@ -237,11 +237,10 @@ HRESULT CAgentCourse::InitializeAgentBuffers()
 	D3DDEBUGNAME(m_pSBCPUComputeOutput, "Spawn Ouput CPU");
 
 	// Create final scores for the CPU to read
-	std::vector<float> vecScores(MAX_DEAD_AGENTS);
-	std::fill(vecScores.begin(), vecScores.end(), 0.0f);
-	CD3D11_BUFFER_DESC vbdScores(MAX_DEAD_AGENTS * sizeof(float),
+	std::vector<CRunStatistics::DEAD_AGENT> vecScores(MAX_DEAD_AGENTS);
+	CD3D11_BUFFER_DESC vbdScores(MAX_DEAD_AGENTS * sizeof(CRunStatistics::DEAD_AGENT),
 		D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE, D3D11_USAGE_DEFAULT, 0,
-		D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, sizeof(float));
+		D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, sizeof(CRunStatistics::DEAD_AGENT));
 	vinitData.pSysMem = &vecScores.front();
 	hr = m_pD3DDevice->CreateBuffer(&vbdScores, &vinitData, &m_pSBFinalScores);
 	if (FAILED(hr)) return hr;
@@ -253,8 +252,8 @@ HRESULT CAgentCourse::InitializeAgentBuffers()
 	if (FAILED(hr)) return hr;
 	D3DDEBUGNAME(m_pUAVFinalScores, "Final Scores UAV");
 
-	CD3D11_BUFFER_DESC vbdCPUScores(MAX_DEAD_AGENTS * sizeof(float),
-		0, D3D11_USAGE_STAGING, D3D11_CPU_ACCESS_READ, 0, sizeof(float));
+	CD3D11_BUFFER_DESC vbdCPUScores(MAX_DEAD_AGENTS * sizeof(CRunStatistics::DEAD_AGENT),
+		0, D3D11_USAGE_STAGING, D3D11_CPU_ACCESS_READ, 0, sizeof(CRunStatistics::DEAD_AGENT));
 	hr = m_pD3DDevice->CreateBuffer(&vbdCPUScores, NULL, &m_pSBCPUScores);
 	assert(SUCCEEDED(hr));
 	D3DDEBUGNAME(m_pSBCPUScores, "Final Scores CPU");
@@ -484,22 +483,15 @@ void CAgentCourse::SpawnAgent(ComPtr<ID3D11DeviceContext>& pD3DContext, float T)
 	{
 		m_nMaxLiveAgents -= iNumDead;
 		pD3DContext->CopyResource(m_pSBCPUScores.Get(), m_pSBFinalScores.Get());
-		float arrScores[MAX_DEAD_AGENTS];
-		hr = CDXUtils::MapDataFromBuffer(pD3DContext, (PVOID)arrScores, MAX_DEAD_AGENTS * sizeof(float), m_pSBCPUScores);
+		CRunStatistics::DEAD_AGENT arrScores[MAX_DEAD_AGENTS];
+		hr = CDXUtils::MapDataFromBuffer(pD3DContext, (PVOID)arrScores, MAX_DEAD_AGENTS * sizeof(CRunStatistics::DEAD_AGENT), m_pSBCPUScores);
 
 		// Collect statistics if we have a watcher.
 		if (m_pRunStats)
 		{
 			for (UINT i = 0; i < iNumDead; i++)
 			{
-				if (arrScores[i] < 0)
-				{
-					if(m_bSpawnActive) m_pRunStats->LogSpawnFail(T);
-				} 
-				else
-				{
-					m_pRunStats->LogFinalScore(T, arrScores[i]);
-				}
+				m_pRunStats->LogDeadAgent(T, arrScores[i]);
 			}
 		}
 	}

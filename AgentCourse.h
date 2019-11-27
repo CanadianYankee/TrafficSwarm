@@ -87,8 +87,11 @@ protected:
 		XMFLOAT4 Position;
 		XMFLOAT4 Velocity;
 		float SpawnTime;
-		float Score;
+		float Lifetime;
 		float lastCollision;
+		UINT numAACollisions;
+		UINT numAWCollisions;
+		int offCourse;
 		int Type;
 	};
 

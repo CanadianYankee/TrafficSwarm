@@ -19,13 +19,17 @@ public:
 		UINT nAgents;
 		UINT nComplete;
 		UINT nSpawnFails;
+		UINT nLeftEscapes;
+		UINT nRightEscapes;
 		float fSimulatedTime;
 		float fRealTime;
-		float fAverageScore;
+		float fAvgLifetime;
+		float fAvgAACollisions;
+		float fAvgAWCollisions;
 	};
 
-	HRESULT Intialize(CCourse *pCourse);
-	BOOL Run(UINT nAgents, RUN_RESULTS &results);
+	HRESULT Intialize(UINT nAgents, CCourse *pCourse);
+	BOOL Run(RUN_RESULTS &results);
 	void CleanUp();
 
 protected:

@@ -3,13 +3,18 @@ struct AgentData
 	float4 pos;
 	float4 velo;
 	float birth;
-	float score;
+	float lifetime;
 	float lastCollision;
+	uint nAACollisions;
+	uint nAWCollisions;
+	int offCourse;
 	int type;
 };
 
 struct DeadAgent
 {
-	uint index;
-	float score;
+	float lifetime;
+	uint nAACollisions;
+	uint nAWCollisions;
+	int offCourse;
 };

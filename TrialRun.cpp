@@ -13,33 +13,33 @@ CTrialRun::CTrialRun() :
 {
 }
 
-HRESULT CTrialRun::Intialize(CCourse *pCourse)
+HRESULT CTrialRun::Intialize(UINT nAgents, CCourse *pCourse)
 {
 	HRESULT hr = S_OK;
 	BOOL bSuccess = TRUE;
 
 	hr = InitDirect3D();
 	bSuccess = SUCCEEDED(hr);
-	if (!bSuccess) return bSuccess;
+	if (!bSuccess) return E_FAIL;
 
-	m_pRunStats = new CRunStatistics();
+	m_pRunStats = new CRunStatistics(nAgents);
 	m_pCourse = pCourse;
 	m_pAgentCourse = new CAgentCourse(false, m_pRunStats);
 	hr = m_pAgentCourse->Initialize(m_pD3DDevice, m_pD3DContext, m_pCourse);
 	if (FAILED(hr))
 	{
 		CleanUp();
-		return FALSE;
+		return hr;
 	}
 
 	hr = PrepareShaderConstants();
 	if (FAILED(hr))
 	{
 		CleanUp();
-		return FALSE;
+		return hr;
 	}
 
-	return bSuccess;
+	return S_OK;
 }
 
 HRESULT CTrialRun::InitDirect3D()
@@ -83,7 +83,7 @@ HRESULT CTrialRun::PrepareShaderConstants()
 	return hr;
 }
 
-BOOL CTrialRun::Run(UINT nAgents, RUN_RESULTS &results)
+BOOL CTrialRun::Run(RUN_RESULTS &results)
 {
 	// Run the simulation as fast as possible, using artificial time increments
 	CDrawTimer cTimer;
@@ -92,6 +92,7 @@ BOOL CTrialRun::Run(UINT nAgents, RUN_RESULTS &results)
 	float T = 0.0f;
 	float Tstop = 0.0f;
 	BOOL bSuccess = TRUE;
+	UINT nAgents = m_pRunStats->GetTotalRunSize();
 
 	for(T = dt; bSuccess; T+=dt)
 	{
@@ -126,11 +127,8 @@ BOOL CTrialRun::Run(UINT nAgents, RUN_RESULTS &results)
 	{
 		cTimer.Tick();
 		float realTime = cTimer.DeltaTime();
+		m_pRunStats->RecordRunResults(results);
 		results.strCourseName = m_pCourse->m_strName;
-		results.nAgents = nAgents;
-		results.nComplete = m_pRunStats->GetNumComplete();
-		results.nSpawnFails = m_pRunStats->GetNumSpawnFails();
-		results.fAverageScore = m_pRunStats->GetAverageScore();
 		results.fRealTime = realTime;
 		results.fSimulatedTime = T;
 	}
