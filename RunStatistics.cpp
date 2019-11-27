@@ -16,7 +16,7 @@ CRunStatistics::CRunStatistics(UINT iTotalRunCount) :
 	}
 }
 
-UINT CRunStatistics::LogDeadAgent(float fTime, const DEAD_AGENT &deadAgent)
+UINT CRunStatistics::LogDeadAgent(float fTime, UINT nFrames, const DEAD_AGENT &deadAgent)
 {
 #ifdef DEBUG
 	CString str;
@@ -60,6 +60,7 @@ UINT CRunStatistics::LogDeadAgent(float fTime, const DEAD_AGENT &deadAgent)
 		OutputDebugString(str);
 #endif 
 		m_fLastTime = fTime;
+		m_nFrames = nFrames;
 		m_nAACollisions += deadAgent.nAACollisions;
 		m_nAWCollisions += deadAgent.nAWCollisions;
 		m_vecLifetimes.push_back(deadAgent.lifetime);
@@ -90,4 +91,5 @@ void CRunStatistics::RecordRunResults(CTrialRun::RUN_RESULTS &results)
 	results.fAvgAWCollisions = (float)m_nAWCollisions / fRunSize;
 	results.fAvgLifetime = fTotal / fRunSize;
 	results.fSimulatedTime = m_fLastTime;
+	results.fFPS = (float)m_nFrames / m_fLastTime;
 }

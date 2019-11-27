@@ -17,7 +17,7 @@ public:
 		int offCourse;
 	};
 
-	UINT LogDeadAgent(float fTime, const DEAD_AGENT &deadAgent);
+	UINT LogDeadAgent(float fTime, UINT nFrames, const DEAD_AGENT &deadAgent);
 	UINT GetTotalRunSize() { return m_nTotalRunSize; }
 	UINT GetNumComplete() { return (UINT)m_vecLifetimes.size();  }
 	float GetLastTime() { return m_fLastTime; }
@@ -30,6 +30,7 @@ protected:
 	UINT m_nRightEscapes;
 	UINT m_nAACollisions;
 	UINT m_nAWCollisions;
+	UINT m_nFrames;
 	float m_fLastTime;
 	std::vector<float> m_vecLifetimes;
 };

@@ -23,6 +23,7 @@ public:
 		UINT nRightEscapes;
 		float fSimulatedTime;
 		float fRealTime;
+		float fFPS;
 		float fAvgLifetime;
 		float fAvgAACollisions;
 		float fAvgAWCollisions;

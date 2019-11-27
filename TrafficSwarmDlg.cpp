@@ -171,9 +171,9 @@ void CTrafficSwarmDlg::OnBnClickedButtonRunTrials()
 	trial.Intialize(2048, pCourse);
 	trial.Run(results);
 	CString str;
-	str.Format(_T("Run of \"%s\": %d/%d complete;\nAvg Life = %f  Avg AA = %f  Avg AW = %f\nSimulated %f seconds in %f real seconds.\n"), 
+	str.Format(_T("Run of \"%s\": %d/%d complete;\nAvg Life = %f  Avg AA = %f  Avg AW = %f\nSimulated %f seconds (%f FPS) in %f real seconds.\n"), 
 		results.strCourseName.GetBuffer(), results.nComplete, results.nAgents, results.fAvgLifetime, 
-		results.fAvgAACollisions, results.fAvgAWCollisions, results.fSimulatedTime, results.fRealTime);
+		results.fAvgAACollisions, results.fAvgAWCollisions, results.fSimulatedTime, results.fFPS, results.fRealTime);
 	OutputDebugString(str);
 	MessageBox(str, _T("Trial Results"));
 }

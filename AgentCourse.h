@@ -22,7 +22,7 @@ constexpr int MAX_DEAD_AGENTS = MAX_AGENTS >> 3;
 class CAgentCourse
 {
 public:
-	CAgentCourse(bool bVisualize, CRunStatistics *pRunStats = NULL);
+	CAgentCourse(bool bVisualize, CRunStatistics *pRunStats);
 
 	HRESULT Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11DeviceContext>& pD3DContext, CCourse *pCourse);
 	BOOL UpdateAgents(const ComPtr<ID3D11Buffer>& pCBFrameVariables, float dt, float T);
@@ -161,6 +161,7 @@ protected:
 
 	UINT m_nSpawned;
 	UINT m_nMaxLiveAgents;
+	UINT m_nFrames;
 
 	ComPtr<ID3D11Device> m_pD3DDevice;
 	ComPtr<ID3D11DeviceContext> m_pD3DContext;

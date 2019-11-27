@@ -4,15 +4,15 @@
 #include "AgentCourse.h"
 #include "RunStatistics.h"
 
-CDXSandbox::CDXSandbox() :
+CDXSandbox::CDXSandbox(UINT nMaxRunAgents) :
 	m_pMyWindow(nullptr),
 	m_iClientWidth(0),
 	m_iClientHeight(0),
 	m_fAspectRatio(1.0),
 	m_bRunning(false),
 	m_pAgentCourse(nullptr),
-	m_pRunStats(nullptr), 
-	m_pCourse(nullptr)
+	m_pCourse(nullptr),
+	m_nMaxRunAgents(nMaxRunAgents)
 {
 }
 
@@ -48,7 +48,7 @@ BOOL CDXSandbox::Initialize(CWnd *pWnd, CCourse *pCourse)
 	bSuccess = SUCCEEDED(hr);
 	if (!bSuccess) return bSuccess;
 
-	m_pRunStats = new CRunStatistics();
+	m_pRunStats = new CRunStatistics(m_nMaxRunAgents);
 	m_pCourse = pCourse;
 	m_pAgentCourse = new CAgentCourse(true, m_pRunStats);
 	hr = m_pAgentCourse->Initialize(m_pD3DDevice, m_pD3DContext, m_pCourse);
@@ -322,6 +322,25 @@ BOOL CDXSandbox::UpdateScene(float dt, float T)
 
 	BOOL bSuccess = m_pAgentCourse->UpdateAgents(m_pCBFrameVariables, dt, T);
 
+	if (m_nMaxRunAgents && m_pAgentCourse->GetNumSpawned() >= m_nMaxRunAgents)
+	{
+		m_pAgentCourse->SetSpawnActive(false);
+		if (m_pAgentCourse->GetMaxAlive() == 0)
+		{
+			CTrialRun::RUN_RESULTS results;
+			m_pRunStats->RecordRunResults(results);
+			CString str;
+			results.fSimulatedTime = T;
+			results.strCourseName = m_pCourse->m_strName;
+			str.Format(_T("Run of \"%s\": %d/%d complete;\nAvg Life = %f  Avg AA = %f  Avg AW = %f\nSimulated %f seconds at %f FPS.\n"),
+				results.strCourseName.GetBuffer(), results.nComplete, results.nAgents, results.fAvgLifetime,
+				results.fAvgAACollisions, results.fAvgAWCollisions, results.fSimulatedTime, results.fFPS);
+			OutputDebugString(str);
+			MessageBox(NULL, str, _T("Trial Results"), MB_OK);
+			m_pMyWindow->PostMessage(WM_CLOSE);
+		}
+	}
+
 	return bSuccess;
 }
 
@@ -367,12 +386,6 @@ void CDXSandbox::CleanUp()
 	{
 		delete m_pAgentCourse;
 		m_pAgentCourse = nullptr;
-	}
-
-	if (m_pRunStats)
-	{
-		delete m_pRunStats;
-		m_pRunStats = nullptr;
 	}
 
 	if (m_pCourse)

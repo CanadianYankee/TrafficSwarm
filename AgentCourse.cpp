@@ -12,7 +12,8 @@ CAgentCourse::CAgentCourse(bool bVisualize, CRunStatistics *pRunStats) :
 	m_iWallIndices(0),
 	m_nMaxLiveAgents(0),
 	m_pCourse(nullptr),
-	m_pRunStats(pRunStats)
+	m_pRunStats(pRunStats),
+	m_nFrames(0)
 {
 }
 
@@ -36,7 +37,7 @@ HRESULT CAgentCourse::Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11
 	m_sWorldPhysics.g_fRepulseDist = 2.0f;
 	m_sWorldPhysics.g_fRepulseStrength = 10.0f;
 	
-	m_sWorldPhysics.g_fWallRepulseDist = 1.5f;
+	m_sWorldPhysics.g_fWallRepulseDist = 6.0f;
 	m_sWorldPhysics.g_fWallRepulseStrength = 10.0f;
 
 	m_sWorldPhysics.g_fMinAlignDist = 1.0f;
@@ -435,6 +436,8 @@ BOOL CAgentCourse::UpdateAgents( const ComPtr<ID3D11Buffer>& pCBFrameVariables, 
 		m_fNextSpawn = T - logf(1.0f - frand()) / m_fSpawnRate;
 	}
 
+	m_nFrames++;
+
 	return TRUE;
 }
 
@@ -491,7 +494,8 @@ void CAgentCourse::SpawnAgent(ComPtr<ID3D11DeviceContext>& pD3DContext, float T)
 		{
 			for (UINT i = 0; i < iNumDead; i++)
 			{
-				m_pRunStats->LogDeadAgent(T, arrScores[i]);
+				if(m_bSpawnActive || arrScores[i].lifetime > 0.0f)
+					m_pRunStats->LogDeadAgent(T, m_nFrames, arrScores[i]);
 			}
 		}
 	}

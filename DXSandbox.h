@@ -15,7 +15,7 @@ class CCourse;
 class CDXSandbox
 {
 public:
-	CDXSandbox();
+	CDXSandbox(UINT nMaxRunAgents = 0);
 	~CDXSandbox();
 
 	BOOL Initialize(CWnd *pWnd, CCourse *pCourse);
@@ -49,6 +49,7 @@ protected:
 	float m_fAspectRatio;
 	bool m_bRunning;
 	CDrawTimer m_Timer;
+	UINT m_nMaxRunAgents;
 
 	CAgentCourse* m_pAgentCourse;
 	CCourse* m_pCourse;
