@@ -12,6 +12,7 @@
 #include "TrialRun.h"
 #include "RunStatistics.h"
 #include "AgentGenome.h"
+#include "EvolutionDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -74,6 +75,7 @@ BEGIN_MESSAGE_MAP(CTrafficSwarmDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_RUNTRIALS, &CTrafficSwarmDlg::OnBnClickedButtonRunTrials)
 	ON_MESSAGE(WM_CHILD_CLOSING, OnChildClosing)
 	ON_BN_CLICKED(IDCANCEL, &CTrafficSwarmDlg::OnBnClickedCancel)
+	ON_BN_CLICKED(IDC_BUTTON_DOEVOLUTION, &CTrafficSwarmDlg::OnBnClickedButtonDoevolution)
 END_MESSAGE_MAP()
 
 
@@ -164,6 +166,7 @@ HCURSOR CTrafficSwarmDlg::OnQueryDragIcon()
 
 void CTrafficSwarmDlg::OnBnClickedButtonRunTrials()
 {
+	CWaitCursor();
 	CCourse* pCourse = new CCourse();
 	pCourse->LoadHourglass();
 
@@ -199,11 +202,27 @@ void CTrafficSwarmDlg::OnBnClickedButtonRunsandbox()
 	m_setChildren.insert((CWnd*)pSandboxWnd);
 }
 
+void CTrafficSwarmDlg::OnBnClickedButtonDoevolution()
+{
+	CCourse* pCourse = new CCourse();
+	pCourse->LoadHourglass();
+
+	CEvolutionDlg* pDialog = new CEvolutionDlg(this, pCourse);
+
+	BOOL bSuccess = pDialog->Create(IDD_DIALOG_EVOLVE, this);
+	ASSERT(bSuccess);
+	pDialog->ShowWindow(SW_SHOW);
+
+	m_setChildren.insert((CWnd*)pDialog);
+}
+
+
 LRESULT CTrafficSwarmDlg::OnChildClosing(WPARAM wParam, LPARAM lParam)
 {
 	auto iter = m_setChildren.find(reinterpret_cast<CWnd*>(wParam));
 	if (iter != m_setChildren.end())
 	{
+		(*iter)->DestroyWindow();
 		delete *iter;
 		m_setChildren.erase(iter);
 	}
@@ -220,3 +239,5 @@ void CTrafficSwarmDlg::OnBnClickedCancel()
 
 	CDialogEx::OnCancel();
 }
+
+

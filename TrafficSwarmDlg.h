@@ -37,4 +37,5 @@ public:
 	afx_msg void OnBnClickedButtonRunsandbox();
 	afx_msg void OnBnClickedButtonRunTrials();
 	afx_msg void OnBnClickedCancel();
+	afx_msg void OnBnClickedButtonDoevolution();
 };

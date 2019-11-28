@@ -15,8 +15,11 @@ IMPLEMENT_DYNAMIC(CEvolutionDlg, CDialogEx)
 CEvolutionDlg::CEvolutionDlg(CWnd* pParent, CCourse *pCourse)
 	: CDialogEx(IDD_DIALOG_EVOLVE, pParent)
 	, m_strCourseName(pCourse->m_strName)
+	, m_pCourse(pCourse)
 	, m_strRunCount(_T(""))
 	, m_strGeneration(_T(""))
+	, m_eStatus(NotRunning)
+	, m_strStatus(_T(""))
 {
 	
 }
@@ -32,14 +35,51 @@ void CEvolutionDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_STATIC_RUNCOUNT, m_strRunCount);
 	DDX_Control(pDX, IDC_LIST_RESULTS, m_listResults);
 	DDX_Text(pDX, IDC_STATIC_GENERATION, m_strGeneration);
+	DDX_Text(pDX, IDC_STATIC_STATUS, m_strStatus);
 }
 
 
 BEGIN_MESSAGE_MAP(CEvolutionDlg, CDialogEx)
+	ON_BN_CLICKED(IDCANCEL, &CEvolutionDlg::OnBnClickedCancel)
 END_MESSAGE_MAP()
 
 
 // CEvolutionDlg message handlers
+
+void CEvolutionDlg::SetStatus(STATUS eStatus)
+{
+	m_eStatus = eStatus;
+	switch (eStatus)
+	{
+	case NotRunning:
+		m_strStatus = _T("");
+		GetDlgItem(IDC_BUTTON_EVOLVE)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BUTTON_ENDGEN)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_ENDNOW)->EnableWindow(FALSE);
+		break;
+	case Running:
+		m_strStatus = _T("Evolving!");
+		GetDlgItem(IDC_BUTTON_EVOLVE)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_ENDGEN)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BUTTON_ENDNOW)->EnableWindow(TRUE);
+		break;
+	case EndGeneration:
+		m_strStatus = _T("Ending after current generation");
+		GetDlgItem(IDC_BUTTON_EVOLVE)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_ENDGEN)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_ENDNOW)->EnableWindow(TRUE);
+		break;
+	case Ending:
+		m_strStatus = _T("Ending after current run");
+		GetDlgItem(IDC_BUTTON_EVOLVE)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_ENDGEN)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_ENDNOW)->EnableWindow(FALSE);
+		break;
+	default:
+		ASSERT(FALSE);
+	}
+	UpdateData(FALSE);
+}
 
 void CEvolutionDlg::SeedGenomes(const std::vector<CAgentGenome>* pGenomes)
 {
@@ -89,4 +129,23 @@ void CEvolutionDlg::CreateGeneration()
 	{
 		m_vecChildren[iChild].RandomizeAll();
 	}
+}
+
+BOOL CEvolutionDlg::OnInitDialog()
+{
+	CDialogEx::OnInitDialog();
+
+	SetStatus(NotRunning);
+
+	return TRUE;  
+}
+
+
+void CEvolutionDlg::OnBnClickedCancel()
+{
+	delete m_pCourse;
+
+	GetParent()->PostMessage(WM_CHILD_CLOSING);
+
+	CDialogEx::OnCancel();
 }

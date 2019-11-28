@@ -391,6 +391,7 @@ void CDXSandbox::CleanUp()
 
 	if (m_pCourse)
 	{
+		delete m_pCourse;
 		m_pCourse = nullptr;
 	}
 }

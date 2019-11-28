@@ -2,6 +2,7 @@
 
 #include "resource.h"
 #include "TrialRun.h"
+#include "ResultListBox.h"
 
 class CCourse;
 class CAgentGenome;
@@ -30,15 +31,29 @@ protected:
 public:
 	CString m_strCourseName;
 	CString m_strRunCount;
-	CListBox m_listResults;
+	CResultListBox m_listResults;
 	CString m_strGeneration;
 
 	void SeedGenomes(const std::vector<CAgentGenome>* pGenomes);
 
 protected:
+	enum STATUS 
+	{
+		NotRunning,
+		Running,
+		Ending,
+		EndGeneration
+	};
 	void CreateGeneration();
+	void SetStatus(STATUS eStatus);
 
+	STATUS m_eStatus;
+	CCourse *m_pCourse;
 	std::vector<CAgentGenome> m_vecParents;
 	std::vector<CAgentGenome> m_vecChildren;
 	std::vector<CTrialRun::RUN_RESULTS> m_vecResults;
+public:
+	CString m_strStatus;
+	virtual BOOL OnInitDialog();
+	afx_msg void OnBnClickedCancel();
 };
