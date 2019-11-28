@@ -17,6 +17,10 @@ UINT RunThreadedTrial(LPVOID pParams)
 	return pOwner->RunThreadedTrial();
 }
 
+bool CompareResults(CTrialRun::RUN_RESULTS& r1, CTrialRun::RUN_RESULTS& r2)
+{
+	return r1.Score() < r2.Score();
+}
 
 IMPLEMENT_DYNAMIC(CEvolutionDlg, CDialogEx)
 
@@ -32,6 +36,7 @@ CEvolutionDlg::CEvolutionDlg(CWnd* pParent, std::shared_ptr<CCourse> pCourse)
 	, m_nTrials(100)
 	, m_strLastRun(_T(""))
 	, m_iCurrentChild(0)
+	, m_iCurrentGeneration(0)
 {
 	
 }
@@ -105,14 +110,14 @@ void CEvolutionDlg::SetStatus(STATUS eStatus)
 	UpdateData(FALSE);
 }
 
-void CEvolutionDlg::SeedGenomes(const std::vector<CAgentGenome>* pGenomes)
+void CEvolutionDlg::SeedGenomes(const std::vector<CAgentGenome>& pGenomes)
 {
-	ASSERT(pGenomes->size() <= m_nTrials);
+	ASSERT(pGenomes.size() <= m_nTrials);
 	m_vecParents.clear();
-	m_vecParents = *pGenomes;
+	m_vecParents = pGenomes;
 }
 
-void CEvolutionDlg::CreateGeneration()
+void CEvolutionDlg::SetupGeneration()
 {
 	size_t iRandStart = 0;
 	size_t nParents = m_vecParents.size();
@@ -134,7 +139,7 @@ void CEvolutionDlg::CreateGeneration()
 		{
 			m_vecChildren[iChild] = m_vecParents[iChild];
 		}
-		for (; iChild < (m_nTrials * 9) / 10; iChild)
+		for (; iChild < (m_nTrials * 9) / 10; iChild++)
 		{
 			size_t i = rand() % nParents;
 			size_t j = rand() % nParents;
@@ -153,6 +158,13 @@ void CEvolutionDlg::CreateGeneration()
 	{
 		m_vecChildren[iChild].RandomizeAll();
 	}
+
+	m_iCurrentChild = 0;
+	m_iCurrentGeneration++;
+	m_vecResults.clear();
+	m_vecResults.reserve(m_nTrials);
+	m_strRunCount.Format(_T("%d of %d"), 1, m_nTrials);
+	m_strGeneration.Format(_T("%d"), m_iCurrentGeneration);
 }
 
 BOOL CEvolutionDlg::OnInitDialog()
@@ -177,11 +189,7 @@ void CEvolutionDlg::OnBnClickedButtonEvolve()
 {
 	if (UpdateData(TRUE))
 	{
-		CreateGeneration();
-		m_iCurrentChild = 0;
-		m_vecResults.clear();
-		m_vecResults.reserve(m_nTrials);
-		m_strRunCount.Format(_T("%d of %d"), 1, m_nTrials);
+		SetupGeneration();
 		SetStatus(STATUS::Running);
 		AfxBeginThread(::RunThreadedTrial, (LPVOID)(this));
 	}
@@ -220,11 +228,12 @@ afx_msg LRESULT CEvolutionDlg::OnTrialEnded(WPARAM wParam, LPARAM lParam)
 
 	// Report results
 	CTrialRun::RUN_RESULTS& results = m_vecResults[m_iCurrentChild];
-	m_strLastRun.Format(_T("Child #%d: %d/%d complete;\r\nAvg Life = %.1f  Avg AA = %.2f  Avg AW = %.2f\r\nSimulated %.0f seconds (%.0f FPS) in %.1f real seconds."),
-		m_iCurrentChild+1, results.nComplete, results.nAgents, results.fAvgLifetime,
+	m_strLastRun.Format(_T("Child #%d: %d/%d complete; Score = %.1f\r\nAvg Life = %.1f  Avg AA = %.2f  Avg AW = %.2f\r\nSimulated %.0f seconds (%.0f FPS) in %.1f real seconds."),
+		m_iCurrentChild+1, results.nComplete, results.nAgents, results.Score(), results.fAvgLifetime,
 		results.fAvgAACollisions, results.fAvgAWCollisions, results.fSimulatedTime, results.fFPS, results.fRealTime);
 
-	// TODO: save scoring in list box
+	// Save full results in list box for breeding/saving/etc.
+	m_listResults.AddResult(m_iCurrentChild + 1, results);
 
 	// If we are still going, then launch the next child/trial
 	m_iCurrentChild++;
@@ -239,8 +248,19 @@ afx_msg LRESULT CEvolutionDlg::OnTrialEnded(WPARAM wParam, LPARAM lParam)
 		AfxBeginThread(::RunThreadedTrial, (LPVOID)(this));
 	}
 	else {
-		// TODO: launch the next generation
-		SetStatus(STATUS::NotRunning);
+		std::vector<CTrialRun::RUN_RESULTS> vecResults = m_listResults.m_vecResults;
+		m_listResults.ClearAll();
+		std::sort(vecResults.begin(), vecResults.end(), CompareResults);
+		int nParents = max(1, vecResults.size() / 10);
+		std::vector<CAgentGenome> vecParents(nParents);
+		for (int i = 0; i < nParents; i++)
+		{
+			vecParents[i] = vecResults[i].genome;
+		}
+		SeedGenomes(vecParents);
+		SetupGeneration();
+		SetStatus(STATUS::Running);
+		AfxBeginThread(::RunThreadedTrial, (LPVOID)(this));
 	}
 
 	return 0;

@@ -9,6 +9,13 @@ class CAgentCourse;
 class CRunStatistics;
 class CCourse;
 
+constexpr float AACollisionPenalty = 20.0f;
+constexpr float AWCollisionPenalty = 20.0f;
+constexpr float IncompletePenalty = 40.0f;
+constexpr float SpawnFailPenalty = 1.0f;
+constexpr float LeftEscapePenalty = 5.0f;
+constexpr float RightEscapePenalty = 5.0f;
+
 class CTrialRun
 {
 public:
@@ -29,6 +36,11 @@ public:
 		float fAvgLifetime;
 		float fAvgAACollisions;
 		float fAvgAWCollisions;
+		float Score() const {
+			return fSimulatedTime + IncompletePenalty * (nAgents - nComplete) + AACollisionPenalty * fAvgAACollisions + 
+				AWCollisionPenalty * fAvgAWCollisions + SpawnFailPenalty * nSpawnFails + LeftEscapePenalty * nLeftEscapes + 
+				RightEscapePenalty * nRightEscapes;
+		}
 	};
 
 	HRESULT Intialize(UINT nAgents, std::shared_ptr<CCourse> pCourse, const CAgentGenome& cGenome);

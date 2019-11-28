@@ -32,7 +32,7 @@ public:
 	CResultListBox m_listResults;
 	CString m_strGeneration;
 
-	void SeedGenomes(const std::vector<CAgentGenome>* pGenomes);
+	void SeedGenomes(const std::vector<CAgentGenome>& pGenomes);
 	UINT RunThreadedTrial();
 
 protected:
@@ -43,7 +43,7 @@ protected:
 		Ending,
 		EndGeneration
 	};
-	void CreateGeneration();
+	void SetupGeneration();
 	void SetStatus(STATUS eStatus);
 
 	STATUS m_eStatus;
@@ -53,6 +53,7 @@ protected:
 	std::vector<CTrialRun::RUN_RESULTS> m_vecResults;
 
 	UINT m_iCurrentChild;
+	UINT m_iCurrentGeneration;
 
 public:
 	CString m_strStatus;
