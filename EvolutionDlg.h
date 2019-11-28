@@ -9,8 +9,6 @@ class CAgentGenome;
 
 // CEvolutionDlg dialog
 
-constexpr auto GENERATION_SIZE = 100;
-
 class CEvolutionDlg : public CDialogEx
 {
 	DECLARE_DYNAMIC(CEvolutionDlg)
@@ -35,9 +33,10 @@ public:
 	CString m_strGeneration;
 
 	void SeedGenomes(const std::vector<CAgentGenome>* pGenomes);
+	UINT RunThreadedTrial();
 
 protected:
-	enum STATUS 
+	enum class STATUS 
 	{
 		NotRunning,
 		Running,
@@ -52,8 +51,19 @@ protected:
 	std::vector<CAgentGenome> m_vecParents;
 	std::vector<CAgentGenome> m_vecChildren;
 	std::vector<CTrialRun::RUN_RESULTS> m_vecResults;
+
+	UINT m_iCurrentChild;
+
 public:
 	CString m_strStatus;
 	virtual BOOL OnInitDialog();
 	afx_msg void OnBnClickedCancel();
+	afx_msg void OnBnClickedButtonEvolve();
+	int m_nAgents;
+	int m_nTrials;
+	CString m_strLastRun;
+protected:
+	afx_msg LRESULT OnTrialEnded(WPARAM wParam, LPARAM lParam);
+public:
+	afx_msg void OnBnClickedButtonEndnow();
 };

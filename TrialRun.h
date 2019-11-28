@@ -38,8 +38,6 @@ protected:
 	HRESULT InitDirect3D();
 	HRESULT PrepareShaderConstants();
 
-	const float MAX_RUN_TIME = 2000.0f;
-
 	struct FRAME_VARIABLES
 	{
 		FRAME_VARIABLES() : g_fGlobalTime(0.0f), g_fElapsedTime(0.0f), g_iMaxAliveAgents(0), fviDummy0(0) {}

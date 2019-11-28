@@ -21,5 +21,6 @@
 #include <afxcontrolbars.h>
 
 #define WM_CHILD_CLOSING WM_USER+10
+#define WM_TRIAL_ENDED WM_USER+11
 
 #endif //PCH_H

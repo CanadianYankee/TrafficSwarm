@@ -84,8 +84,9 @@ BOOL CTrialRun::Run(RUN_RESULTS &results)
 	float Tstop = 0.0f;
 	BOOL bSuccess = TRUE;
 	UINT nAgents = m_pRunStats->GetTotalRunSize();
+	float maxRunTime = (float)m_pRunStats->GetTotalRunSize() * m_pCourse->m_fCourseLength / 500.f;
 
-	for(T = dt; bSuccess && T < MAX_RUN_TIME; T+=dt)
+	for(T = dt; bSuccess && T < maxRunTime; T+=dt)
 	{
 		m_sFrameVariables.g_fElapsedTime = dt;
 		m_sFrameVariables.g_fGlobalTime = T;
