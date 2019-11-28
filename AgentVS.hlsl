@@ -48,7 +48,7 @@ AgentVSOut AgentVS(AgentVSIn input)
 		float2 velo = agent.velo.xy;
 		output.direction = any(velo) ? normalize(velo) : float2(1.0, 0.0);
 		output.color = (g_fGlobalTime - agent.lastCollision < 0.2f) ?
-			lerp(g_arrColors[agent.type], float4(1.0f, 0.5f, 0.75f, 1.0f), (g_fGlobalTime - agent.lastCollision) / 0.2f)
+			lerp(g_arrColors[agent.type], float4(1.0f, 0.0f, 0.0f, 1.0f), (g_fGlobalTime - agent.lastCollision) / 0.2f)
 			: g_arrColors[agent.type];
 		output.alive = true;
 	}

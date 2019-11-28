@@ -4,23 +4,13 @@
 
 CString g_szWndClass;
 
-CSandboxWnd::CSandboxWnd(CWnd* pOwner, CCourse *pCourse, const CAgentGenome& cGenome) :
+CSandboxWnd::CSandboxWnd(CWnd* pOwner, std::shared_ptr<CCourse> pCourse, const CAgentGenome& cGenome) :
 	m_pOwner(pOwner),
-	m_pSandbox(nullptr),
 	m_bSizing(false),
 	m_pCourse(pCourse)
 {
 	m_cGenome = cGenome;
 	ASSERT(m_pOwner && m_pCourse);
-}
-
-CSandboxWnd::~CSandboxWnd()
-{
-	if (m_pSandbox)
-	{
-		m_pSandbox->CleanUp();
-		delete m_pSandbox;
-	}
 }
 
 BOOL CSandboxWnd::Create()
@@ -58,7 +48,7 @@ void CSandboxWnd::OnShowWindow(BOOL bShow, UINT nStatus)
 	{
 		if (!m_pSandbox)
 		{
-			m_pSandbox = new CDXSandbox();
+			m_pSandbox = std::make_shared<CDXSandbox>();
 			bSuccess = m_pSandbox->Initialize((CWnd *)this, m_pCourse, m_cGenome);
 			if (!bSuccess)
 			{
@@ -95,13 +85,6 @@ BOOL CSandboxWnd::OnEraseBkgnd(CDC* pDC)
 
 void CSandboxWnd::OnClose()
 {
-	if (m_pSandbox)
-	{
-		m_pSandbox->CleanUp();
-		delete m_pSandbox;
-		m_pSandbox = nullptr;
-	}
-
 	CWnd::OnClose();
 	if (m_pOwner)
 		m_pOwner->PostMessage(WM_CHILD_CLOSING, (WPARAM)this);

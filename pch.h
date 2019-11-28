@@ -17,7 +17,11 @@
 #include <unordered_set>
 #include <vector>
 #include <fstream>
+#include <memory>
+#include <algorithm>
+#include <afxcontrolbars.h>
 
 #define WM_CHILD_CLOSING WM_USER+10
+#define WM_TRIAL_ENDED WM_USER+11
 
 #endif //PCH_H

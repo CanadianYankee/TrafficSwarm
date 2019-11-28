@@ -67,6 +67,12 @@
     <ClInclude Include="AgentGenome.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="EvolutionDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ResultListBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TrafficSwarm.cpp">
@@ -106,6 +112,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AgentGenome.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EvolutionDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ResultListBox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

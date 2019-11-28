@@ -8,12 +8,7 @@ using namespace DirectX;
 class CRunStatistics; 
 class CAgentGenome;
 
-inline float frand()
-{
-	return (float)rand() / (float)RAND_MAX;
-}
-
-constexpr int MAX_AGENTS = 2048;
+constexpr int MAX_AGENTS = 4096;
 constexpr int MAX_DEAD_AGENTS = MAX_AGENTS >> 3;
 
 // This class defines the course that the agents must 
@@ -23,9 +18,9 @@ constexpr int MAX_DEAD_AGENTS = MAX_AGENTS >> 3;
 class CAgentCourse
 {
 public:
-	CAgentCourse(bool bVisualize, CRunStatistics *pRunStats);
+	CAgentCourse(bool bVisualize, std::shared_ptr<CRunStatistics> pRunStats);
 
-	HRESULT Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11DeviceContext>& pD3DContext, CCourse *pCourse, const CAgentGenome &cGenome);
+	HRESULT Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11DeviceContext>& pD3DContext, std::shared_ptr<CCourse> pCourse, const CAgentGenome &cGenome);
 	BOOL UpdateAgents(const ComPtr<ID3D11Buffer>& pCBFrameVariables, float dt, float T);
 
 	CString GetName() { return m_pCourse->m_strName; }
@@ -75,6 +70,7 @@ protected:
 		float g_fWallAlignAtRear;
 
 //		float wpfDummy1;
+//		float wpfDummy1;
 //		float wpfDummy2;
 	};
 
@@ -113,10 +109,6 @@ protected:
 	};
 
 	typedef int AGENT_VERTEX;
-//	struct AGENT_VERTEX
-//	{
-//		int Dummy;
-//	};
 
 	struct WALL_SEGMENT
 	{
@@ -155,8 +147,8 @@ protected:
 	UINT m_iWallVertices;
 	UINT m_iWallIndices;
 
-	CRunStatistics* m_pRunStats;
-	CCourse* m_pCourse;
+	std::shared_ptr<CRunStatistics> m_pRunStats;
+	std::shared_ptr<CCourse> m_pCourse;
 
 	WORLD_PHYSICS m_sWorldPhysics;
 

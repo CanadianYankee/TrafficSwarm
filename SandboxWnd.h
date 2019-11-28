@@ -9,14 +9,13 @@ class CSandboxWnd :
 	public CWnd
 {
 public:
-	CSandboxWnd(CWnd* pOwner, CCourse *pCourse, const CAgentGenome& cGenome);
-	~CSandboxWnd();
+	CSandboxWnd(CWnd* pOwner, std::shared_ptr<CCourse> pCourse, const CAgentGenome& cGenome);
 	BOOL Create();
 
 protected:
 	CWnd* m_pOwner;
-	CDXSandbox* m_pSandbox;
-	CCourse* m_pCourse;
+	std::shared_ptr<CDXSandbox> m_pSandbox;
+	std::shared_ptr<CCourse>  m_pCourse;
 	CAgentGenome m_cGenome;
 
 private:

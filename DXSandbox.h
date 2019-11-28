@@ -17,10 +17,8 @@ class CDXSandbox
 {
 public:
 	CDXSandbox(UINT nMaxRunAgents = 0);
-	~CDXSandbox();
 
-	BOOL Initialize(CWnd *pWnd, CCourse *pCourse, const CAgentGenome& cGenome);
-	void CleanUp();
+	BOOL Initialize(CWnd *pWnd, std::shared_ptr<CCourse> pCourse, const CAgentGenome& cGenome);
 	void Tick();
 	void Pause();
 	void Resume(LPRECT pNewSize = NULL);
@@ -52,9 +50,9 @@ protected:
 	CDrawTimer m_Timer;
 	UINT m_nMaxRunAgents;
 
-	CAgentCourse* m_pAgentCourse;
-	CCourse* m_pCourse;
-	CRunStatistics* m_pRunStats;
+	std::shared_ptr<CAgentCourse> m_pAgentCourse;
+	std::shared_ptr<CCourse> m_pCourse;
+	std::shared_ptr<CRunStatistics> m_pRunStats;
 
 	FRAME_VARIABLES m_sFrameVariables;
 

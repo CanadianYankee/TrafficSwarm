@@ -12,6 +12,7 @@
 #include "TrialRun.h"
 #include "RunStatistics.h"
 #include "AgentGenome.h"
+#include "EvolutionDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -74,6 +75,7 @@ BEGIN_MESSAGE_MAP(CTrafficSwarmDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_RUNTRIALS, &CTrafficSwarmDlg::OnBnClickedButtonRunTrials)
 	ON_MESSAGE(WM_CHILD_CLOSING, OnChildClosing)
 	ON_BN_CLICKED(IDCANCEL, &CTrafficSwarmDlg::OnBnClickedCancel)
+	ON_BN_CLICKED(IDC_BUTTON_DOEVOLUTION, &CTrafficSwarmDlg::OnBnClickedButtonDoevolution)
 END_MESSAGE_MAP()
 
 
@@ -164,15 +166,16 @@ HCURSOR CTrafficSwarmDlg::OnQueryDragIcon()
 
 void CTrafficSwarmDlg::OnBnClickedButtonRunTrials()
 {
-	CCourse* pCourse = new CCourse();
+	CWaitCursor();
+	std::shared_ptr<CCourse> pCourse = std::make_shared<CCourse>();
 	pCourse->LoadHourglass();
 
 	CAgentGenome genome;
-	genome.MakeDefault();
+	genome.RandomizeAll(); //.MakeDefault();
 
 	CTrialRun trial;
 	CTrialRun::RUN_RESULTS results;
-	trial.Intialize(2048, pCourse, genome);
+	trial.Intialize(4096, pCourse, genome);
 	trial.Run(results);
 	CString str;
 	str.Format(_T("Run of \"%s\": %d/%d complete;\nAvg Life = %f  Avg AA = %f  Avg AW = %f\nSimulated %f seconds (%f FPS) in %f real seconds.\n"), 
@@ -184,11 +187,11 @@ void CTrafficSwarmDlg::OnBnClickedButtonRunTrials()
 
 void CTrafficSwarmDlg::OnBnClickedButtonRunsandbox()
 {
-	CCourse *pCourse = new CCourse();
+	std::shared_ptr<CCourse> pCourse = std::make_shared<CCourse>();
 	pCourse->LoadHourglass();
 
 	CAgentGenome genome;
-	genome.MakeDefault();
+	genome.RandomizeAll(); // MakeDefault();
 
 	CSandboxWnd *pSandboxWnd = new CSandboxWnd(this, pCourse, genome);
 
@@ -199,11 +202,27 @@ void CTrafficSwarmDlg::OnBnClickedButtonRunsandbox()
 	m_setChildren.insert((CWnd*)pSandboxWnd);
 }
 
+void CTrafficSwarmDlg::OnBnClickedButtonDoevolution()
+{
+	std::shared_ptr<CCourse> pCourse = std::make_shared<CCourse>();
+	pCourse->LoadHourglass();
+
+	CEvolutionDlg* pDialog = new CEvolutionDlg(this, pCourse);
+
+	BOOL bSuccess = pDialog->Create(IDD_DIALOG_EVOLVE, this);
+	ASSERT(bSuccess);
+	pDialog->ShowWindow(SW_SHOW);
+
+	m_setChildren.insert((CWnd*)pDialog);
+}
+
+
 LRESULT CTrafficSwarmDlg::OnChildClosing(WPARAM wParam, LPARAM lParam)
 {
 	auto iter = m_setChildren.find(reinterpret_cast<CWnd*>(wParam));
 	if (iter != m_setChildren.end())
 	{
+		(*iter)->DestroyWindow();
 		delete *iter;
 		m_setChildren.erase(iter);
 	}
@@ -220,3 +239,5 @@ void CTrafficSwarmDlg::OnBnClickedCancel()
 
 	CDialogEx::OnCancel();
 }
+
+

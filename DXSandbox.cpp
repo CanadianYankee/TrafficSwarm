@@ -11,18 +11,11 @@ CDXSandbox::CDXSandbox(UINT nMaxRunAgents) :
 	m_iClientHeight(0),
 	m_fAspectRatio(1.0),
 	m_bRunning(false),
-	m_pAgentCourse(nullptr),
-	m_pCourse(nullptr),
 	m_nMaxRunAgents(nMaxRunAgents)
 {
 }
 
-CDXSandbox::~CDXSandbox()
-{
-	CleanUp();
-}
-
-BOOL CDXSandbox::Initialize(CWnd *pWnd, CCourse *pCourse, const CAgentGenome &cGenome)
+BOOL CDXSandbox::Initialize(CWnd *pWnd, std::shared_ptr<CCourse> pCourse, const CAgentGenome &cGenome)
 {
 	HRESULT hr = S_OK;
 	BOOL bSuccess = TRUE;
@@ -49,22 +42,14 @@ BOOL CDXSandbox::Initialize(CWnd *pWnd, CCourse *pCourse, const CAgentGenome &cG
 	bSuccess = SUCCEEDED(hr);
 	if (!bSuccess) return bSuccess;
 
-	m_pRunStats = new CRunStatistics(m_nMaxRunAgents);
+	m_pRunStats = std::make_shared<CRunStatistics>(m_nMaxRunAgents);
 	m_pCourse = pCourse;
-	m_pAgentCourse = new CAgentCourse(true, m_pRunStats);
+	m_pAgentCourse = std::make_shared<CAgentCourse>(true, m_pRunStats);
 	hr = m_pAgentCourse->Initialize(m_pD3DDevice, m_pD3DContext, m_pCourse, cGenome);
-	if (FAILED(hr))
-	{
-		CleanUp();
-		return FALSE;
-	}
+	if (FAILED(hr))	return FALSE;
 
 	hr = PrepareShaderConstants();
-	if (FAILED(hr))
-	{
-		CleanUp();
-		return FALSE;
-	}
+	if (FAILED(hr))	return FALSE;
 
 	bSuccess = OnResize();
 	if(bSuccess)
@@ -379,18 +364,4 @@ BOOL CDXSandbox::RenderScene()
 	HRESULT hr = m_pSwapChain->Present(1, 0);
 
 	return SUCCEEDED(hr);
-}
-
-void CDXSandbox::CleanUp()
-{
-	if (m_pAgentCourse)
-	{
-		delete m_pAgentCourse;
-		m_pAgentCourse = nullptr;
-	}
-
-	if (m_pCourse)
-	{
-		m_pCourse = nullptr;
-	}
 }

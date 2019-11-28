@@ -9,11 +9,17 @@ class CAgentCourse;
 class CRunStatistics;
 class CCourse;
 
+constexpr float AACollisionPenalty = 20.0f;
+constexpr float AWCollisionPenalty = 20.0f;
+constexpr float IncompletePenalty = 40.0f;
+constexpr float SpawnFailPenalty = 1.0f;
+constexpr float LeftEscapePenalty = 5.0f;
+constexpr float RightEscapePenalty = 5.0f;
+
 class CTrialRun
 {
 public:
 	CTrialRun();
-	~CTrialRun() { CleanUp(); }
 
 	struct RUN_RESULTS
 	{
@@ -30,17 +36,19 @@ public:
 		float fAvgLifetime;
 		float fAvgAACollisions;
 		float fAvgAWCollisions;
+		float Score() const {
+			return fSimulatedTime + IncompletePenalty * (nAgents - nComplete) + AACollisionPenalty * fAvgAACollisions + 
+				AWCollisionPenalty * fAvgAWCollisions + SpawnFailPenalty * nSpawnFails + LeftEscapePenalty * nLeftEscapes + 
+				RightEscapePenalty * nRightEscapes;
+		}
 	};
 
-	HRESULT Intialize(UINT nAgents, CCourse *pCourse, const CAgentGenome& cGenome);
+	HRESULT Intialize(UINT nAgents, std::shared_ptr<CCourse> pCourse, const CAgentGenome& cGenome);
 	BOOL Run(RUN_RESULTS &results);
-	void CleanUp();
 
 protected:
 	HRESULT InitDirect3D();
 	HRESULT PrepareShaderConstants();
-
-	const float MAX_STOP_WAIT = 1000.0f;
 
 	struct FRAME_VARIABLES
 	{
@@ -60,9 +68,9 @@ protected:
 	ComPtr<ID3D11DeviceContext> m_pD3DContext;
 	ComPtr<ID3D11Buffer> m_pCBFrameVariables;
 
-	CRunStatistics* m_pRunStats;
-	CCourse* m_pCourse;
-	CAgentCourse* m_pAgentCourse;
+	std::shared_ptr<CRunStatistics> m_pRunStats;
+	std::shared_ptr<CCourse> m_pCourse;
+	std::shared_ptr<CAgentCourse> m_pAgentCourse;
 	CAgentGenome m_cGenome;
 };
 
