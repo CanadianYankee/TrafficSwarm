@@ -67,4 +67,9 @@ protected:
 	afx_msg LRESULT OnTrialEnded(WPARAM wParam, LPARAM lParam);
 public:
 	afx_msg void OnBnClickedButtonEndnow();
+protected:
+	afx_msg LRESULT OnUserResultsSelected(WPARAM wParam, LPARAM lParam);
+public:
+	CString m_strSelGenome;
+	CString m_strSelScores;
 };

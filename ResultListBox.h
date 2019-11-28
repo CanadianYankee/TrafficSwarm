@@ -14,5 +14,7 @@ public:
 public:
 //	virtual int CompareItem(LPCOMPAREITEMSTRUCT /*lpCompareItemStruct*/);
 //	virtual void DrawItem(LPDRAWITEMSTRUCT /*lpDrawItemStruct*/);
+	DECLARE_MESSAGE_MAP()
+	afx_msg void OnLbnSelchange();
 };
 

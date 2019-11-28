@@ -36,3 +36,15 @@ void CResultListBox::ClearAll()
 //
 //	// TODO:  Add your code to draw the specified item
 //}
+BEGIN_MESSAGE_MAP(CResultListBox, CListBox)
+	ON_CONTROL_REFLECT(LBN_SELCHANGE, &CResultListBox::OnLbnSelchange)
+	ON_CONTROL_REFLECT(LBN_SELCANCEL, &CResultListBox::OnLbnSelchange)
+END_MESSAGE_MAP()
+
+
+void CResultListBox::OnLbnSelchange()
+{
+	int nIndex = GetCurSel();
+	auto pResults = nIndex >= 0 ? &(m_vecResults[nIndex]) : nullptr;
+	GetParent()->PostMessage(WM_USER_RESULTS_SELECTED, (WPARAM)pResults);
+}

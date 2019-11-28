@@ -85,6 +85,23 @@ CAgentGenome CAgentGenome::CrossBreed(const CAgentGenome& parent1, const CAgentG
 	return child;
 }
 
+CString CAgentGenome::ToString(const CString &strSeparator)
+{
+	CString strOut;
+
+	for (size_t i = 0; i < m_vecGenes.size(); i++)
+	{
+		CString strLine;
+		strLine.Format(_T(" = %.3f "), m_vecGenes[i]);
+		strLine = GeneSpecs[i].szName + strLine;
+		if (i < m_vecGenes.size() - 1)
+			strLine += strSeparator;
+		strOut += strLine;
+	}
+
+	return strOut;
+}
+
 
 void CAgentGenome::MakeDefault()
 {

@@ -21,7 +21,8 @@
 #include <algorithm>
 #include <afxcontrolbars.h>
 
-#define WM_CHILD_CLOSING WM_USER+10
-#define WM_TRIAL_ENDED WM_USER+11
+#define WM_USER_CHILD_CLOSING WM_USER+10
+#define WM_USER_TRIAL_ENDED WM_USER+11
+#define WM_USER_RESULTS_SELECTED WM_USER+12
 
 #endif //PCH_H

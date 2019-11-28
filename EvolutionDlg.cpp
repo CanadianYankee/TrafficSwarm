@@ -37,6 +37,8 @@ CEvolutionDlg::CEvolutionDlg(CWnd* pParent, std::shared_ptr<CCourse> pCourse)
 	, m_strLastRun(_T(""))
 	, m_iCurrentChild(0)
 	, m_iCurrentGeneration(0)
+	, m_strSelGenome(_T(""))
+	, m_strSelScores(_T(""))
 {
 	
 }
@@ -58,14 +60,17 @@ void CEvolutionDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_TRIALS, m_nTrials);
 	DDV_MinMaxInt(pDX, m_nTrials, 0, INT_MAX);
 	DDX_Text(pDX, IDC_EDIT_LASTRUN, m_strLastRun);
+	DDX_Text(pDX, IDC_EDIT_SELGENOME, m_strSelGenome);
+	DDX_Text(pDX, IDC_EDIT_SELSCORES, m_strSelScores);
 }
 
 
 BEGIN_MESSAGE_MAP(CEvolutionDlg, CDialogEx)
 	ON_BN_CLICKED(IDCANCEL, &CEvolutionDlg::OnBnClickedCancel)
 	ON_BN_CLICKED(IDC_BUTTON_EVOLVE, &CEvolutionDlg::OnBnClickedButtonEvolve)
-	ON_MESSAGE(WM_TRIAL_ENDED, &CEvolutionDlg::OnTrialEnded)
+	ON_MESSAGE(WM_USER_TRIAL_ENDED, &CEvolutionDlg::OnTrialEnded)
 	ON_BN_CLICKED(IDC_BUTTON_ENDNOW, &CEvolutionDlg::OnBnClickedButtonEndnow)
+	ON_MESSAGE(WM_USER_RESULTS_SELECTED, &CEvolutionDlg::OnUserResultsSelected)
 END_MESSAGE_MAP()
 
 
@@ -179,7 +184,7 @@ BOOL CEvolutionDlg::OnInitDialog()
 
 void CEvolutionDlg::OnBnClickedCancel()
 {
-	GetParent()->PostMessage(WM_CHILD_CLOSING);
+	GetParent()->PostMessage(WM_USER_CHILD_CLOSING);
 
 	CDialogEx::OnCancel();
 }
@@ -210,7 +215,7 @@ UINT CEvolutionDlg::RunThreadedTrial()
 
 		bResult = cTrial.Run(m_vecResults[m_iCurrentChild]);
 	}
-	::PostMessage(this->GetSafeHwnd(), WM_TRIAL_ENDED, (WPARAM)bResult, 0);
+	::PostMessage(this->GetSafeHwnd(), WM_USER_TRIAL_ENDED, (WPARAM)bResult, 0);
 
 	return 0;
 }
@@ -251,7 +256,7 @@ afx_msg LRESULT CEvolutionDlg::OnTrialEnded(WPARAM wParam, LPARAM lParam)
 		std::vector<CTrialRun::RUN_RESULTS> vecResults = m_listResults.m_vecResults;
 		m_listResults.ClearAll();
 		std::sort(vecResults.begin(), vecResults.end(), CompareResults);
-		int nParents = max(1, vecResults.size() / 10);
+		int nParents = max(1, (int)vecResults.size() / 10);
 		std::vector<CAgentGenome> vecParents(nParents);
 		for (int i = 0; i < nParents; i++)
 		{
@@ -270,4 +275,22 @@ afx_msg LRESULT CEvolutionDlg::OnTrialEnded(WPARAM wParam, LPARAM lParam)
 void CEvolutionDlg::OnBnClickedButtonEndnow()
 {
 	SetStatus(STATUS::Ending);
+}
+
+
+afx_msg LRESULT CEvolutionDlg::OnUserResultsSelected(WPARAM wParam, LPARAM lParam)
+{
+	if (wParam)
+	{
+		auto pResults = (CTrialRun::RUN_RESULTS*)wParam;
+		m_strSelGenome = pResults->genome.ToString(_T("\r\n"));
+		m_strSelScores.Format(_T(""));
+	}
+	else
+	{
+		m_strSelGenome.Empty();
+		m_strSelScores.Empty();
+	}
+	UpdateData(FALSE);
+	return 0;
 }
