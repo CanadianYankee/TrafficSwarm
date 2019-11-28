@@ -148,17 +148,31 @@ void CEvolutionDlg::SetupGeneration()
 		}
 		for (; iChild < (m_nTrials * 9) / 10; iChild++)
 		{
-			size_t i = rand() % nParents;
-			size_t j = rand() % nParents;
-			if (i == j)
+			bool bRepeat = false;
+			do
 			{
-				m_vecChildren[iChild] = m_vecParents[i];
-				m_vecChildren[iChild].RandomizeOne();
-			}
-			else
-			{
-				m_vecChildren[iChild] = CAgentGenome::CrossBreed(m_vecParents[i], m_vecParents[j]);
-			}
+				bRepeat = false;
+				size_t i = rand() % nParents;
+				size_t j = rand() % nParents;
+				if (i == j)
+				{
+					m_vecChildren[iChild] = m_vecParents[i];
+					m_vecChildren[iChild].RandomizeOne();
+				}
+				else
+				{
+					m_vecChildren[iChild] = CAgentGenome::CrossBreed(m_vecParents[i], m_vecParents[j]);
+				}
+				for (size_t n = 0; n < iChild; n++)
+				{
+					// Don't create identical children - preserve genetic diversity
+					if (m_vecChildren[n] == m_vecChildren[iChild])
+					{
+						bRepeat = true;
+						break;
+					}
+				}
+			} while (bRepeat);
 		}
 	}
 	for (; iChild < m_nTrials; iChild++)

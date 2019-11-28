@@ -43,8 +43,10 @@ public:
 	void RandomizeAll();
 	GENE RandomizeOne();
 	void RandomizeOne(GENE geneId);
-	static CAgentGenome CrossBreed(const CAgentGenome& parent1, const CAgentGenome& parent2, float fMutateProb = 0.8f);
+	static CAgentGenome CrossBreed(const CAgentGenome& parent1, const CAgentGenome& parent2, float fMutateProb = 0.2f);
 	CString ToString(const CString& strSeparator);
+	bool operator==(const CAgentGenome& other) const { return m_vecGenes == other.m_vecGenes; }
+	bool operator!=(const CAgentGenome& other) const { return m_vecGenes != other.m_vecGenes; }
 
 protected:
 	std::vector<float> m_vecGenes;

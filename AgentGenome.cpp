@@ -76,7 +76,7 @@ CAgentGenome CAgentGenome::CrossBreed(const CAgentGenome& parent1, const CAgentG
 	CAgentGenome child;
 	for (size_t i = 0; i < (size_t)GENE::NUM_GENES; i++)
 	{
-		child.m_vecGenes[i] = rand() % 0x100 ? parent1.m_vecGenes[i] : parent2.m_vecGenes[i];
+		child.m_vecGenes[i] = frand() < 0.5f ? parent1.m_vecGenes[i] : parent2.m_vecGenes[i];
 	}
 
 	if (frand() < fMutateProb)
