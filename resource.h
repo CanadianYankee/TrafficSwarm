@@ -25,6 +25,8 @@
 #define IDC_EDIT_TRIALS                 1010
 #define IDC_EDIT_AGENTS                 1011
 #define IDC_EDIT_SELGENOME              1012
+#define IDC_EDIT_AGENTS2                1013
+#define IDC_EDIT_GENERATIONS            1013
 #define IDC_EDIT_SELGENOME2             1014
 #define IDC_EDIT_SELSCORES              1014
 

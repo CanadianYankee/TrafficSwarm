@@ -128,3 +128,32 @@ BOOL CTrialRun::Run(RUN_RESULTS &results)
 
 	return bSuccess;
 }
+
+CString CTrialRun::RUN_RESULTS::ToListString(const CString &strSeparator) const
+{
+	CString strOut, str;
+	str.Format(_T("Score = %.1f "), Score()); strOut += str + strSeparator;
+	str.Format(_T("%d / %d complete "), nComplete, nAgents); strOut += str + strSeparator;
+	str.Format(_T("Avg Life = %.1f "), fAvgLifetime); strOut += str + strSeparator;
+	str.Format(_T("Avg agent-agent = %.2f "), fAvgAACollisions); strOut += str + strSeparator;
+	str.Format(_T("Avg agent-wall = %.2f "), fAvgAWCollisions); strOut += str + strSeparator;
+	str.Format(_T("Failed spawns = %d "), nSpawnFails); strOut += str + strSeparator;
+	str.Format(_T("Left escapes = %d "), nLeftEscapes); strOut += str + strSeparator;
+	str.Format(_T("Right escapes = %d "), nRightEscapes); strOut += str + strSeparator;
+	str.Format(_T("Simulated %.0f sec in %.1f real sec"), fSimulatedTime, fRealTime); strOut += str;
+
+	return strOut;
+}
+
+CString CTrialRun::RUN_RESULTS::ToParagraphString(const CString& strSeparator) const
+{
+	CString strOut, str;
+	str.Format(_T("Score = %.1f ; %d / %d complete "), Score(),nComplete, nAgents); strOut += str + strSeparator;
+	str.Format(_T("Avg Life = %.1f ; Avg agent-agent = %.2f ; Avg agent-wall = %.2f "), 
+		fAvgLifetime, fAvgAACollisions, fAvgAWCollisions); strOut += str + strSeparator;
+	str.Format(_T("Failed spawns = %d ; Left escapes = %d ; Right escapes = %d "), 
+		nSpawnFails, nLeftEscapes, nRightEscapes); strOut += str + strSeparator;
+	str.Format(_T("Simulated %.0f sec in %.1f real sec"), fSimulatedTime, fRealTime); strOut += str;
+
+	return strOut;
+}

@@ -41,6 +41,8 @@ public:
 				AWCollisionPenalty * fAvgAWCollisions + SpawnFailPenalty * nSpawnFails + LeftEscapePenalty * nLeftEscapes + 
 				RightEscapePenalty * nRightEscapes;
 		}
+		CString ToListString(const CString &strSeparator) const;
+		CString ToParagraphString(const CString& strSeparator) const;
 	};
 
 	HRESULT Intialize(UINT nAgents, std::shared_ptr<CCourse> pCourse, const CAgentGenome& cGenome);

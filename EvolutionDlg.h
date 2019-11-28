@@ -34,6 +34,7 @@ public:
 
 	void SeedGenomes(const std::vector<CAgentGenome>& pGenomes);
 	UINT RunThreadedTrial();
+	BOOL Complete() { return m_iCurrentGeneration >= m_nGenerations && m_iCurrentChild >= m_nTrials; }
 
 protected:
 	enum class STATUS 
@@ -72,4 +73,5 @@ protected:
 public:
 	CString m_strSelGenome;
 	CString m_strSelScores;
+	int m_nGenerations;
 };

@@ -39,6 +39,7 @@ CEvolutionDlg::CEvolutionDlg(CWnd* pParent, std::shared_ptr<CCourse> pCourse)
 	, m_iCurrentGeneration(0)
 	, m_strSelGenome(_T(""))
 	, m_strSelScores(_T(""))
+	, m_nGenerations(10)
 {
 	
 }
@@ -62,6 +63,7 @@ void CEvolutionDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_LASTRUN, m_strLastRun);
 	DDX_Text(pDX, IDC_EDIT_SELGENOME, m_strSelGenome);
 	DDX_Text(pDX, IDC_EDIT_SELSCORES, m_strSelScores);
+	DDX_Text(pDX, IDC_EDIT_GENERATIONS, m_nGenerations);
 }
 
 
@@ -82,7 +84,7 @@ void CEvolutionDlg::SetStatus(STATUS eStatus)
 	switch (eStatus)
 	{
 	case STATUS::NotRunning:
-		m_strStatus = _T("");
+		m_strStatus = _T("Stopped");
 		GetDlgItem(IDC_BUTTON_EVOLVE)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BUTTON_ENDGEN)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_ENDNOW)->EnableWindow(FALSE);
@@ -96,14 +98,14 @@ void CEvolutionDlg::SetStatus(STATUS eStatus)
 		GetDlgItem(IDCANCEL)->EnableWindow(FALSE);
 		break;
 	case STATUS::EndGeneration:
-		m_strStatus = _T("Ending after current generation");
+		m_strStatus = _T("Stopping after current generation");
 		GetDlgItem(IDC_BUTTON_EVOLVE)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_ENDGEN)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_ENDNOW)->EnableWindow(TRUE);
 		GetDlgItem(IDCANCEL)->EnableWindow(FALSE);
 		break;
 	case STATUS::Ending:
-		m_strStatus = _T("Ending after current run");
+		m_strStatus = _T("Stopping after current run");
 		GetDlgItem(IDC_BUTTON_EVOLVE)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_ENDGEN)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_ENDNOW)->EnableWindow(FALSE);
@@ -168,8 +170,12 @@ void CEvolutionDlg::SetupGeneration()
 	m_iCurrentGeneration++;
 	m_vecResults.clear();
 	m_vecResults.reserve(m_nTrials);
+	m_listResults.ClearAll();
+	m_strLastRun.Empty();
+	m_strSelGenome.Empty();
+	m_strSelScores.Empty();
 	m_strRunCount.Format(_T("%d of %d"), 1, m_nTrials);
-	m_strGeneration.Format(_T("%d"), m_iCurrentGeneration);
+	m_strGeneration.Format(_T("%d of %d"), m_iCurrentGeneration, m_nGenerations);
 }
 
 BOOL CEvolutionDlg::OnInitDialog()
@@ -177,6 +183,7 @@ BOOL CEvolutionDlg::OnInitDialog()
 	CDialogEx::OnInitDialog();
 
 	SetStatus(STATUS::NotRunning);
+	m_listResults.m_bAutoSort = TRUE;
 
 	return TRUE;  
 }
@@ -194,7 +201,23 @@ void CEvolutionDlg::OnBnClickedButtonEvolve()
 {
 	if (UpdateData(TRUE))
 	{
-		SetupGeneration();
+		bool bSetup = true;
+		if (m_iCurrentGeneration > 0 && !Complete())
+		{
+			switch (MessageBox(_T("Would you like to continue the current evolution?\nChoosing 'No' will restart with a new random population."), _T("Evolve"), MB_YESNOCANCEL))
+			{
+			case IDYES:
+				bSetup = false;
+				break;
+			case IDNO:
+				m_vecParents.clear();
+				m_iCurrentGeneration = 0;
+				break;
+			case IDCANCEL:
+				return;
+			}
+		}
+		if (bSetup) SetupGeneration();
 		SetStatus(STATUS::Running);
 		AfxBeginThread(::RunThreadedTrial, (LPVOID)(this));
 	}
@@ -233,9 +256,8 @@ afx_msg LRESULT CEvolutionDlg::OnTrialEnded(WPARAM wParam, LPARAM lParam)
 
 	// Report results
 	CTrialRun::RUN_RESULTS& results = m_vecResults[m_iCurrentChild];
-	m_strLastRun.Format(_T("Child #%d: %d/%d complete; Score = %.1f\r\nAvg Life = %.1f  Avg AA = %.2f  Avg AW = %.2f\r\nSimulated %.0f seconds (%.0f FPS) in %.1f real seconds."),
-		m_iCurrentChild+1, results.nComplete, results.nAgents, results.Score(), results.fAvgLifetime,
-		results.fAvgAACollisions, results.fAvgAWCollisions, results.fSimulatedTime, results.fFPS, results.fRealTime);
+	m_strLastRun.Format(_T("Child #%d: "), m_iCurrentChild + 1);
+	m_strLastRun += results.ToParagraphString(_T("\r\n"));
 
 	// Save full results in list box for breeding/saving/etc.
 	m_listResults.AddResult(m_iCurrentChild + 1, results);
@@ -252,7 +274,13 @@ afx_msg LRESULT CEvolutionDlg::OnTrialEnded(WPARAM wParam, LPARAM lParam)
 		SetStatus(STATUS::Running);
 		AfxBeginThread(::RunThreadedTrial, (LPVOID)(this));
 	}
-	else {
+	else if (Complete())
+	{
+		SetStatus(STATUS::NotRunning);
+		// TODO: save results
+	}
+	else
+	{
 		std::vector<CTrialRun::RUN_RESULTS> vecResults = m_listResults.m_vecResults;
 		m_listResults.ClearAll();
 		std::sort(vecResults.begin(), vecResults.end(), CompareResults);
@@ -284,7 +312,7 @@ afx_msg LRESULT CEvolutionDlg::OnUserResultsSelected(WPARAM wParam, LPARAM lPara
 	{
 		auto pResults = (CTrialRun::RUN_RESULTS*)wParam;
 		m_strSelGenome = pResults->genome.ToString(_T("\r\n"));
-		m_strSelScores.Format(_T(""));
+		m_strSelScores = pResults->ToListString(_T("\r\n"));
 	}
 	else
 	{

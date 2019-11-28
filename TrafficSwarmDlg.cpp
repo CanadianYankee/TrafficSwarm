@@ -209,7 +209,7 @@ void CTrafficSwarmDlg::OnBnClickedButtonDoevolution()
 
 	CEvolutionDlg* pDialog = new CEvolutionDlg(this, pCourse);
 
-	BOOL bSuccess = pDialog->Create(IDD_DIALOG_EVOLVE, this);
+	BOOL bSuccess = pDialog->Create(IDD_DIALOG_EVOLVE);
 	ASSERT(bSuccess);
 	pDialog->ShowWindow(SW_SHOW);
 

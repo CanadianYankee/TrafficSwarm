@@ -11,9 +11,9 @@ public:
 	void ClearAll();
 
 	std::vector<CTrialRun::RUN_RESULTS> m_vecResults;
+	BOOL m_bAutoSort = FALSE;
+
 public:
-//	virtual int CompareItem(LPCOMPAREITEMSTRUCT /*lpCompareItemStruct*/);
-//	virtual void DrawItem(LPDRAWITEMSTRUCT /*lpDrawItemStruct*/);
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnLbnSelchange();
 };
