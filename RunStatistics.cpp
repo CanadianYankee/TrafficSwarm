@@ -1,13 +1,14 @@
 #include "pch.h"
 #include "RunStatistics.h"
 
-CRunStatistics::CRunStatistics(UINT iTotalRunCount) : 
-	m_nTotalRunSize(iTotalRunCount), 
+CRunStatistics::CRunStatistics(UINT iTotalRunCount) :
+	m_nTotalRunSize(iTotalRunCount),
 	m_nSpawnFails(0),
 	m_nLeftEscapes(0),
 	m_nRightEscapes(0),
 	m_nAACollisions(0),
 	m_nAWCollisions(0),
+	m_nFrames(0),
 	m_fLastTime(0.0f)
 {
 	if (m_nTotalRunSize)

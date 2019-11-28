@@ -12,7 +12,7 @@
 
 IMPLEMENT_DYNAMIC(CEvolutionDlg, CDialogEx)
 
-CEvolutionDlg::CEvolutionDlg(CWnd* pParent, CCourse *pCourse)
+CEvolutionDlg::CEvolutionDlg(CWnd* pParent, std::shared_ptr<CCourse> pCourse)
 	: CDialogEx(IDD_DIALOG_EVOLVE, pParent)
 	, m_strCourseName(pCourse->m_strName)
 	, m_pCourse(pCourse)
@@ -143,8 +143,6 @@ BOOL CEvolutionDlg::OnInitDialog()
 
 void CEvolutionDlg::OnBnClickedCancel()
 {
-	delete m_pCourse;
-
 	GetParent()->PostMessage(WM_CHILD_CLOSING);
 
 	CDialogEx::OnCancel();

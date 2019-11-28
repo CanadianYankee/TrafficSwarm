@@ -4,7 +4,7 @@
 #include "RunStatistics.h"
 #include "AgentGenome.h"
 
-CAgentCourse::CAgentCourse(bool bVisualize, CRunStatistics *pRunStats) :
+CAgentCourse::CAgentCourse(bool bVisualize, std::shared_ptr<CRunStatistics> pRunStats) :
 	m_bVisualize(bVisualize),
 	m_fNextSpawn(0.0f),
 	m_fSpawnRate(2.0f),
@@ -12,13 +12,13 @@ CAgentCourse::CAgentCourse(bool bVisualize, CRunStatistics *pRunStats) :
 	m_iWallVertices(0),
 	m_iWallIndices(0),
 	m_nMaxLiveAgents(0),
-	m_pCourse(nullptr),
+	m_nSpawned(0),
 	m_pRunStats(pRunStats),
 	m_nFrames(0)
 {
 }
 
-HRESULT CAgentCourse::Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11DeviceContext>& pD3DContext, CCourse *pCourse, const CAgentGenome &cGenome)
+HRESULT CAgentCourse::Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11DeviceContext>& pD3DContext, std::shared_ptr<CCourse> pCourse, const CAgentGenome &cGenome)
 {
 	m_pD3DDevice = pD3DDevice;
 	m_pD3DContext = pD3DContext;

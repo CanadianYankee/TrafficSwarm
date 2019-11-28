@@ -13,7 +13,6 @@ class CTrialRun
 {
 public:
 	CTrialRun();
-	~CTrialRun() { CleanUp(); }
 
 	struct RUN_RESULTS
 	{
@@ -32,9 +31,8 @@ public:
 		float fAvgAWCollisions;
 	};
 
-	HRESULT Intialize(UINT nAgents, CCourse *pCourse, const CAgentGenome& cGenome);
+	HRESULT Intialize(UINT nAgents, std::shared_ptr<CCourse> pCourse, const CAgentGenome& cGenome);
 	BOOL Run(RUN_RESULTS &results);
-	void CleanUp();
 
 protected:
 	HRESULT InitDirect3D();
@@ -60,9 +58,9 @@ protected:
 	ComPtr<ID3D11DeviceContext> m_pD3DContext;
 	ComPtr<ID3D11Buffer> m_pCBFrameVariables;
 
-	CRunStatistics* m_pRunStats;
-	CCourse* m_pCourse;
-	CAgentCourse* m_pAgentCourse;
+	std::shared_ptr<CRunStatistics> m_pRunStats;
+	std::shared_ptr<CCourse> m_pCourse;
+	std::shared_ptr<CAgentCourse> m_pAgentCourse;
 	CAgentGenome m_cGenome;
 };
 

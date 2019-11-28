@@ -167,7 +167,7 @@ HCURSOR CTrafficSwarmDlg::OnQueryDragIcon()
 void CTrafficSwarmDlg::OnBnClickedButtonRunTrials()
 {
 	CWaitCursor();
-	CCourse* pCourse = new CCourse();
+	std::shared_ptr<CCourse> pCourse = std::make_shared<CCourse>();
 	pCourse->LoadHourglass();
 
 	CAgentGenome genome;
@@ -187,7 +187,7 @@ void CTrafficSwarmDlg::OnBnClickedButtonRunTrials()
 
 void CTrafficSwarmDlg::OnBnClickedButtonRunsandbox()
 {
-	CCourse *pCourse = new CCourse();
+	std::shared_ptr<CCourse> pCourse = std::make_shared<CCourse>();
 	pCourse->LoadHourglass();
 
 	CAgentGenome genome;
@@ -204,7 +204,7 @@ void CTrafficSwarmDlg::OnBnClickedButtonRunsandbox()
 
 void CTrafficSwarmDlg::OnBnClickedButtonDoevolution()
 {
-	CCourse* pCourse = new CCourse();
+	std::shared_ptr<CCourse> pCourse = std::make_shared<CCourse>();
 	pCourse->LoadHourglass();
 
 	CEvolutionDlg* pDialog = new CEvolutionDlg(this, pCourse);

@@ -17,6 +17,7 @@
 #include <unordered_set>
 #include <vector>
 #include <fstream>
+#include <memory>
 #include <afxcontrolbars.h>
 
 #define WM_CHILD_CLOSING WM_USER+10

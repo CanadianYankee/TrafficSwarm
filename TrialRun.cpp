@@ -7,14 +7,11 @@
 #include "DrawTimer.h"
 #include "AgentGenome.h"
 
-CTrialRun::CTrialRun() :
-	m_pRunStats(nullptr),
-	m_pCourse(nullptr),
-	m_pAgentCourse(nullptr)
+CTrialRun::CTrialRun()
 {
 }
 
-HRESULT CTrialRun::Intialize(UINT nAgents, CCourse *pCourse, const CAgentGenome& cGenome)
+HRESULT CTrialRun::Intialize(UINT nAgents, std::shared_ptr<CCourse> pCourse, const CAgentGenome& cGenome)
 {
 	HRESULT hr = S_OK;
 	BOOL bSuccess = TRUE;
@@ -23,23 +20,15 @@ HRESULT CTrialRun::Intialize(UINT nAgents, CCourse *pCourse, const CAgentGenome&
 	bSuccess = SUCCEEDED(hr);
 	if (!bSuccess) return E_FAIL;
 
-	m_pRunStats = new CRunStatistics(nAgents);
+	m_pRunStats = std::make_shared<CRunStatistics>(nAgents);
 	m_pCourse = pCourse;
 	m_cGenome = cGenome;
-	m_pAgentCourse = new CAgentCourse(false, m_pRunStats);
+	m_pAgentCourse = std::make_shared<CAgentCourse>(false, m_pRunStats);
 	hr = m_pAgentCourse->Initialize(m_pD3DDevice, m_pD3DContext, m_pCourse, cGenome);
-	if (FAILED(hr))
-	{
-		CleanUp();
-		return hr;
-	}
+	if (FAILED(hr))	return hr;
 
 	hr = PrepareShaderConstants();
-	if (FAILED(hr))
-	{
-		CleanUp();
-		return hr;
-	}
+	if (FAILED(hr)) return hr;
 
 	return S_OK;
 }
@@ -137,24 +126,4 @@ BOOL CTrialRun::Run(RUN_RESULTS &results)
 	}
 
 	return bSuccess;
-}
-
-void CTrialRun::CleanUp()
-{
-	if (m_pAgentCourse)
-	{
-		delete m_pAgentCourse;
-		m_pAgentCourse = nullptr;
-	}
-
-	if (m_pRunStats)
-	{
-		delete m_pRunStats;
-		m_pRunStats = nullptr;
-	}
-
-	if (m_pCourse)
-	{
-		m_pCourse = nullptr;
-	}
 }
