@@ -24,8 +24,10 @@ public:
 		AlignAtMax,
 		AlignAtRear,
 
-		WallAlignDist,
-		WallAlign,
+		MinWallAlignDist,
+		MaxWallAlignDist,
+		WallAlignAtMin,
+		WallAlignAtMax,
 		WallAlignAtRear,
 
 		NUM_GENES

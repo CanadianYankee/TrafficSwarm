@@ -109,7 +109,7 @@ std::istream& operator >> (std::istream& in, CResultListBox& lb)
 	{
 		CTrialRun::RUN_RESULTS result;
 		in >> result;
-		lb.AddResult(i + 1, result);
+		lb.AddResult((UINT)i + 1, result);
 	}
 
 	return in;

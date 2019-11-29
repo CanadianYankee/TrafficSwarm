@@ -12,7 +12,7 @@ class CCourse;
 constexpr float AACollisionPenalty = 20.0f;
 constexpr float AWCollisionPenalty = 20.0f;
 constexpr float IncompletePenalty = 40.0f;
-constexpr float SpawnFailPenalty = 1.0f;
+constexpr float SpawnFailPenalty = 0.0f; ///1.0f;
 constexpr float LeftEscapePenalty = 5.0f;
 constexpr float RightEscapePenalty = 5.0f;
 

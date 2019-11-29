@@ -41,8 +41,9 @@ protected:
 			g_iMaxAgents(MAX_AGENTS), g_iNumWalls(0), g_iNumSinks(0), wpiDummy0(0), 
 			g_fRepulseDist(0.0f), g_fRepulseStrength(0.0f),	g_fWallRepulseDist(0.0f), g_fWallRepulseStrength(0.0f),
 			g_fMinAlignDist(0.0f), g_fMaxAlignDist(0.0f), g_fAlignAtMin(0.0f), g_fAlignAtMax(0.0f), 
-			g_fAlignAtRear(0.0f), g_fWallAlignDist(0.0f), g_fWallAlign(0.0f), g_fWallAlignAtRear(0.0f)
-			//wpfDummy0(0.0f) // , wpfDummy1(0.0f), wpfDummy2(0.0f)
+			g_fAlignAtRear(0.0f), g_fMinWallAlignDist(0.0f), g_fMaxWallAlignDist(0.0f), g_fWallAlignAtMin(0.0f), 
+			g_fWallAlignAtMax(0.0f), g_fWallAlignAtRear(0.0f)
+			, wpfDummy0(0.0f) , wpfDummy1(0.0f) //, wpfDummy2(0.0f)
 		{}
 		float g_fCourseLength;
 		float g_fParticleRadius;
@@ -65,12 +66,15 @@ protected:
 		float g_fAlignAtMax;
 
 		float g_fAlignAtRear;
-		float g_fWallAlignDist;
-		float g_fWallAlign;
-		float g_fWallAlignAtRear;
+		float g_fMinWallAlignDist;
+		float g_fMaxWallAlignDist;
+		float g_fWallAlignAtMin;
 
-//		float wpfDummy1;
-//		float wpfDummy1;
+		float g_fWallAlignAtMax;
+		float g_fWallAlignAtRear;
+		float wpfDummy0;
+		float wpfDummy1;
+
 //		float wpfDummy2;
 	};
 

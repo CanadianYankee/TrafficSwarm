@@ -15,8 +15,10 @@ static CAgentGenome::GENE_SPECIFICATION GeneSpecs[(UINT)CAgentGenome::GENE::NUM_
 	{ _T("AlignAtMax"), 0.0f, 2.0f},
 	{ _T("AlignAtRear"), 0.0f, 2.0f},
 
-	{ _T("WallAlignDist"), 0.0f, 20.0f},
-	{ _T("WallAlign"), 0.0f, 2.0f},
+	{ _T("MinWallAlignDist"), 0.0f, 20.0f},
+	{ _T("MaxWallAlignDist"), 0.0f, 20.0f},
+	{ _T("WallAlignAtMin"), 0.0f, 2.0f},
+	{ _T("WallAlignAtMax"), 0.0f, 2.0f},
 	{ _T("WallAlignAtRear"), 0.0f, 2.0f}
 };
 
@@ -37,6 +39,14 @@ float CAgentGenome::Gene(GENE geneId) const
 
 	case GENE::MinAlignDist:
 		fRet = fmin(m_vecGenes[(UINT)GENE::MaxAlignDist], m_vecGenes[(UINT)GENE::MinAlignDist]);
+		break;
+
+	case GENE::MaxWallAlignDist:
+		fRet = fmax(m_vecGenes[(UINT)GENE::MaxWallAlignDist], m_vecGenes[(UINT)GENE::MinWallAlignDist]);
+		break;
+
+	case GENE::MinWallAlignDist:
+		fRet = fmin(m_vecGenes[(UINT)GENE::MaxWallAlignDist], m_vecGenes[(UINT)GENE::MinWallAlignDist]);
 		break;
 
 	default:
@@ -97,7 +107,7 @@ CString CAgentGenome::ToString(const CString &strSeparator)
 	for (size_t i = 0; i < m_vecGenes.size(); i++)
 	{
 		CString strLine;
-		strLine.Format(_T(" = %.3f "), m_vecGenes[i]);
+		strLine.Format(_T(" = %.3f "), Gene((GENE)(i)));
 		strLine = GeneSpecs[i].szName + strLine;
 		if (i < m_vecGenes.size() - 1)
 			strLine += strSeparator;
@@ -122,8 +132,10 @@ void CAgentGenome::MakeDefault()
 	m_vecGenes[(UINT)GENE::AlignAtMax] = 0.0f;
 	m_vecGenes[(UINT)GENE::AlignAtRear] = 0.5f;
 
-	m_vecGenes[(UINT)GENE::WallAlignDist] = 6.0f;
-	m_vecGenes[(UINT)GENE::WallAlign] = 1.5f;
+	m_vecGenes[(UINT)GENE::MinWallAlignDist] = 3.0f;
+	m_vecGenes[(UINT)GENE::MaxWallAlignDist] = 6.0f;
+	m_vecGenes[(UINT)GENE::WallAlignAtMin] = 3.0f;
+	m_vecGenes[(UINT)GENE::WallAlignAtMax] = 1.5f;
 	m_vecGenes[(UINT)GENE::WallAlignAtRear] = 0.5f;
 }
 
