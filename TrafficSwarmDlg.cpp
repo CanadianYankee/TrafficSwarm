@@ -14,6 +14,9 @@
 #include "AgentGenome.h"
 #include "EvolutionDlg.h"
 
+// External json parser by Niels Lohmann from https://github.com/nlohmann/json
+#include "nlohmann/json.hpp"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -62,6 +65,7 @@ CTrafficSwarmDlg::CTrafficSwarmDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_TRAFFICSWARM_DIALOG, pParent)
 	, m_strSelScores(_T(""))
 	, m_strSelGenome(_T(""))
+	, m_strCourseName(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -72,6 +76,8 @@ void CTrafficSwarmDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LIST_RESULTS, m_listResults);
 	DDX_Text(pDX, IDC_EDIT_SELSCORES, m_strSelScores);
 	DDX_Text(pDX, IDC_EDIT_SELGENOME, m_strSelGenome);
+	DDX_Text(pDX, IDC_STATIC_COURSENAME, m_strCourseName);
+	DDX_Control(pDX, IDC_STATIC_COURSEDRAW, m_staticCourseDraw);
 }
 
 BEGIN_MESSAGE_MAP(CTrafficSwarmDlg, CDialogEx)
@@ -122,6 +128,11 @@ BOOL CTrafficSwarmDlg::OnInitDialog()
 
 	// TODO: Add extra initialization here
 	m_listResults.m_bAutoSort = TRUE;
+	m_pCourse = std::make_shared<CCourse>();
+	m_pCourse->LoadHourglass();
+	m_strCourseName = m_pCourse->m_strName;
+	GetDlgItem(IDC_STATIC_COURSENAME)->SetWindowTextW(m_strCourseName);
+	m_staticCourseDraw.SetCourse(m_pCourse);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -178,15 +189,13 @@ HCURSOR CTrafficSwarmDlg::OnQueryDragIcon()
 void CTrafficSwarmDlg::OnBnClickedButtonRunTrials()
 {
 	CWaitCursor();
-	std::shared_ptr<CCourse> pCourse = std::make_shared<CCourse>();
-	pCourse->LoadHourglass();
 
 	CAgentGenome genome;
 	genome.RandomizeAll(); //.MakeDefault();
 
 	CTrialRun trial;
 	CTrialRun::RUN_RESULTS results;
-	trial.Intialize(4096, pCourse, genome);
+	trial.Intialize(4096, m_pCourse, genome);
 	trial.Run(results);
 	CString str;
 	str.Format(_T("Run of \"%s\": %d/%d complete;\nAvg Life = %f  Avg AA = %f  Avg AW = %f\nSimulated %f seconds (%f FPS) in %f real seconds.\n"), 
@@ -198,9 +207,6 @@ void CTrafficSwarmDlg::OnBnClickedButtonRunTrials()
 
 void CTrafficSwarmDlg::OnBnClickedButtonRunsandbox()
 {
-	std::shared_ptr<CCourse> pCourse = std::make_shared<CCourse>();
-	pCourse->LoadHourglass();
-	
 	auto pResults = m_listResults.GetCurResults();
 	CAgentGenome genome;
 	if (pResults)
@@ -208,7 +214,7 @@ void CTrafficSwarmDlg::OnBnClickedButtonRunsandbox()
 	else
 		genome.RandomizeAll(); // MakeDefault();
 
-	CSandboxWnd *pSandboxWnd = new CSandboxWnd(this, pCourse, genome);
+	CSandboxWnd *pSandboxWnd = new CSandboxWnd(this, m_pCourse, genome);
 
 	BOOL bSuccess = pSandboxWnd->Create();
 	ASSERT(bSuccess);
@@ -219,10 +225,7 @@ void CTrafficSwarmDlg::OnBnClickedButtonRunsandbox()
 
 void CTrafficSwarmDlg::OnBnClickedButtonDoevolution()
 {
-	std::shared_ptr<CCourse> pCourse = std::make_shared<CCourse>();
-	pCourse->LoadHourglass();
-
-	CEvolutionDlg* pDialog = new CEvolutionDlg(this, pCourse);
+	CEvolutionDlg* pDialog = new CEvolutionDlg(this, m_pCourse);
 
 	BOOL bSuccess = pDialog->Create(IDD_DIALOG_EVOLVE);
 	ASSERT(bSuccess);
@@ -285,7 +288,6 @@ afx_msg LRESULT CTrafficSwarmDlg::OnUserResultsSelected(WPARAM wParam, LPARAM lP
 	UpdateData(FALSE);
 	return 0;
 }
-
 
 void CTrafficSwarmDlg::OnBnClickedButtonClearresults()
 {

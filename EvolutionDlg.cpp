@@ -95,6 +95,8 @@ void CEvolutionDlg::SetStatus(STATUS eStatus)
 		GetDlgItem(IDC_BUTTON_ENDGEN)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_ENDNOW)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_SAVERESULTS)->EnableWindow(m_listResults.m_vecResults.size() > 0);
+		GetDlgItem(IDC_BUTTON_LOADRESULTS)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BUTTON_LOADTWO)->EnableWindow(m_listResults.m_vecResults.size() > 0);
 		GetDlgItem(IDCANCEL)->EnableWindow(TRUE);
 		break;
 	case STATUS::Running:
@@ -103,6 +105,8 @@ void CEvolutionDlg::SetStatus(STATUS eStatus)
 		GetDlgItem(IDC_BUTTON_ENDGEN)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BUTTON_ENDNOW)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BUTTON_SAVERESULTS)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_LOADRESULTS)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_LOADTWO)->EnableWindow(FALSE);
 		GetDlgItem(IDCANCEL)->EnableWindow(FALSE);
 		break;
 	case STATUS::EndGeneration:
@@ -111,6 +115,8 @@ void CEvolutionDlg::SetStatus(STATUS eStatus)
 		GetDlgItem(IDC_BUTTON_ENDGEN)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_ENDNOW)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BUTTON_SAVERESULTS)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_LOADRESULTS)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_LOADTWO)->EnableWindow(FALSE);
 		GetDlgItem(IDCANCEL)->EnableWindow(FALSE);
 		break;
 	case STATUS::Ending:
@@ -119,6 +125,8 @@ void CEvolutionDlg::SetStatus(STATUS eStatus)
 		GetDlgItem(IDC_BUTTON_ENDGEN)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_ENDNOW)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_SAVERESULTS)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_LOADRESULTS)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_LOADTWO)->EnableWindow(FALSE);
 		GetDlgItem(IDCANCEL)->EnableWindow(FALSE);
 		break;
 	default:
@@ -290,7 +298,7 @@ UINT CEvolutionDlg::RunThreadedTrial()
 	bResult = SUCCEEDED(hr);
 	if (bResult)
 	{
-		m_vecResults.resize(m_iCurrentChild + 1);
+		m_vecResults.resize((size_t)m_iCurrentChild + 1);
 
 		bResult = cTrial.Run(m_vecResults[m_iCurrentChild]);
 	}
