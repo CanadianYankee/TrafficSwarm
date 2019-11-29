@@ -74,4 +74,5 @@ public:
 	CString m_strSelGenome;
 	CString m_strSelScores;
 	int m_nGenerations;
+	afx_msg void OnBnClickedButtonSaveresults();
 };

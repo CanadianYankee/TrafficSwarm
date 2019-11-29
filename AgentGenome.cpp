@@ -47,6 +47,11 @@ float CAgentGenome::Gene(GENE geneId) const
 	return fRet;
 }
 
+void CAgentGenome::SetGene(GENE geneId, float fVal)
+{
+	m_vecGenes[(size_t)geneId] = fVal;
+}
+
 void CAgentGenome::RandomizeOne(GENE geneId)
 {
 	ASSERT(geneId < GENE::NUM_GENES);

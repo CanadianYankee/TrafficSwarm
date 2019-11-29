@@ -9,6 +9,8 @@
 #include "AgentGenome.h"
 #include "TrialRun.h"
 
+std::ostream& operator << (std::ostream& out, const CResultListBox& lb);
+
 // CEvolutionDlg dialog
 
 UINT RunThreadedTrial(LPVOID pParams)
@@ -73,6 +75,7 @@ BEGIN_MESSAGE_MAP(CEvolutionDlg, CDialogEx)
 	ON_MESSAGE(WM_USER_TRIAL_ENDED, &CEvolutionDlg::OnTrialEnded)
 	ON_BN_CLICKED(IDC_BUTTON_ENDNOW, &CEvolutionDlg::OnBnClickedButtonEndnow)
 	ON_MESSAGE(WM_USER_RESULTS_SELECTED, &CEvolutionDlg::OnUserResultsSelected)
+	ON_BN_CLICKED(IDC_BUTTON_SAVERESULTS, &CEvolutionDlg::OnBnClickedButtonSaveresults)
 END_MESSAGE_MAP()
 
 
@@ -88,6 +91,7 @@ void CEvolutionDlg::SetStatus(STATUS eStatus)
 		GetDlgItem(IDC_BUTTON_EVOLVE)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BUTTON_ENDGEN)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_ENDNOW)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_SAVERESULTS)->EnableWindow(m_listResults.m_vecResults.size() > 0);
 		GetDlgItem(IDCANCEL)->EnableWindow(TRUE);
 		break;
 	case STATUS::Running:
@@ -95,6 +99,7 @@ void CEvolutionDlg::SetStatus(STATUS eStatus)
 		GetDlgItem(IDC_BUTTON_EVOLVE)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_ENDGEN)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BUTTON_ENDNOW)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BUTTON_SAVERESULTS)->EnableWindow(FALSE);
 		GetDlgItem(IDCANCEL)->EnableWindow(FALSE);
 		break;
 	case STATUS::EndGeneration:
@@ -102,6 +107,7 @@ void CEvolutionDlg::SetStatus(STATUS eStatus)
 		GetDlgItem(IDC_BUTTON_EVOLVE)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_ENDGEN)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_ENDNOW)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BUTTON_SAVERESULTS)->EnableWindow(FALSE);
 		GetDlgItem(IDCANCEL)->EnableWindow(FALSE);
 		break;
 	case STATUS::Ending:
@@ -109,6 +115,7 @@ void CEvolutionDlg::SetStatus(STATUS eStatus)
 		GetDlgItem(IDC_BUTTON_EVOLVE)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_ENDGEN)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_ENDNOW)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_SAVERESULTS)->EnableWindow(FALSE);
 		GetDlgItem(IDCANCEL)->EnableWindow(FALSE);
 		break;
 	default:
@@ -335,4 +342,23 @@ afx_msg LRESULT CEvolutionDlg::OnUserResultsSelected(WPARAM wParam, LPARAM lPara
 	}
 	UpdateData(FALSE);
 	return 0;
+}
+
+
+void CEvolutionDlg::OnBnClickedButtonSaveresults()
+{
+	CTime time = CTime::GetCurrentTime();
+	CString strName = m_strCourseName + time.Format(_T("_%F_%H-%M-%S.txt"));
+
+	CFileDialog dlgSaveAs(FALSE, _T(".txt"), strName.GetBuffer());
+
+	if (dlgSaveAs.DoModal() == IDOK)
+	{
+		strName = dlgSaveAs.GetPathName();
+
+		std::ofstream file;
+		file.open(strName.GetBuffer(), std::ios_base::out | std::ios_base::trunc);
+		file << m_listResults;
+		file.close();
+	}
 }

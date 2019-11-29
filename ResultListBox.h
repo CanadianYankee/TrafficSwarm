@@ -9,6 +9,8 @@ class CResultListBox :
 public:
 	void AddResult(UINT iChild, const CTrialRun::RUN_RESULTS& results);
 	void ClearAll();
+	friend std::ostream& operator << (std::ostream& out, const CResultListBox& lb);
+	friend std::ostream& operator >> (std::ostream& in, CResultListBox& lb);
 
 	std::vector<CTrialRun::RUN_RESULTS> m_vecResults;
 	BOOL m_bAutoSort = FALSE;

@@ -19,6 +19,9 @@
 #include <fstream>
 #include <memory>
 #include <algorithm>
+#include <iostream>
+#include <fstream>
+
 #include <afxcontrolbars.h>
 
 #define WM_USER_CHILD_CLOSING WM_USER+10

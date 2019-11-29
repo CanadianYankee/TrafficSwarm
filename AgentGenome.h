@@ -40,6 +40,7 @@ public:
 
 	void MakeDefault();
 	float Gene(GENE geneId) const;
+	void SetGene(GENE geneId, float fVal);
 	void RandomizeAll();
 	GENE RandomizeOne();
 	void RandomizeOne(GENE geneId);
@@ -51,4 +52,3 @@ public:
 protected:
 	std::vector<float> m_vecGenes;
 };
-
