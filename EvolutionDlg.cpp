@@ -154,14 +154,11 @@ void CEvolutionDlg::PullParents(const std::vector<CTrialRun::RUN_RESULTS>& vecRu
 	std::sort(vec2.begin(), vec2.end(), CompareResults);
 	int nParents1 = min(max(1, m_nChildren / 10), (int)vec1.size());
 	int nParents2 = min(max(1, m_nChildren / 10), (int)vec2.size());
-	std::vector<CAgentGenome> vecParents(nParents1 + nParents2);
-	for (int i = 0; i < nParents1; i++)
+	int nParents = min(nParents1, nParents2);
+	std::vector<CAgentGenome> vecParents(nParents);
+	for (int i = 0; i < nParents; i++)
 	{
-		vecParents[i] = vec1[i].genome;
-	}
-	for (int i = 0; i < nParents2; i++)
-	{
-		vecParents[i + nParents1] = vec2[i].genome;
+		vecParents[i] = CAgentGenome::CrossBreed(vec1[rand() % nParents1].genome, vec2[rand() % nParents2].genome);
 	}
 	SeedGenomes(vecParents);
 }
@@ -199,7 +196,10 @@ void CEvolutionDlg::SetupGeneration()
 				if (i == j)
 				{
 					m_vecChildren[iChild] = m_vecParents[i];
-					m_vecChildren[iChild].RandomizeOne();
+					do
+					{
+						m_vecChildren[iChild].RandomizeOne();
+					} while (frand() < 0.2);
 				}
 				else
 				{
@@ -407,7 +407,6 @@ void CEvolutionDlg::OnBnClickedButtonLoad()
 			PullParents(m_listResults.m_vecResults);
 			m_iCurrentGeneration = 0;
 			m_iCurrentChild = 0;
-			OnBnClickedButtonEvolve();
 		}
 	}
 }
@@ -439,6 +438,7 @@ void CEvolutionDlg::OnBnClickedButtonLoadtwo()
 			m_iCurrentGeneration = 0;
 			m_iCurrentChild = 0;
 			UpdateData();
+			OnBnClickedButtonEvolve();
 		}
 	}
 }
