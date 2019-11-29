@@ -167,11 +167,11 @@ void AgentCSIterate( uint3 DTid : SV_DispatchThreadID )
 
 			// Limit acceleration
 			float2 acc = (velIdeal - vel);
-			float accMag = length(acc);
-			if (accMag > g_fMaxAcceleration)
-			{
-				acc *= g_fMaxAcceleration / accMag;
-			}
+//			float accMag = length(acc);
+//			if (accMag > g_fMaxAcceleration)
+//			{
+//				acc *= g_fMaxAcceleration / accMag;
+//			}
 
 			// Calculate the new velocity
 			vel += g_fElapsedTime * acc;
@@ -179,7 +179,7 @@ void AgentCSIterate( uint3 DTid : SV_DispatchThreadID )
 
 		if (length(vel) > g_fIdealSpeed)
 		{
-			vel = g_fIdealSpeed * normalize(vel);
+			vel /= sqrt(length(vel)/g_fIdealSpeed);
 		}
 
 		// Calculate new position

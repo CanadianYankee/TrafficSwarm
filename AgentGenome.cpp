@@ -94,7 +94,7 @@ CAgentGenome CAgentGenome::CrossBreed(const CAgentGenome& parent1, const CAgentG
 		child.m_vecGenes[i] = frand() < 0.5f ? parent1.m_vecGenes[i] : parent2.m_vecGenes[i];
 	}
 
-	if (frand() < fMutateProb)
+	while (frand() < fMutateProb)
 		child.RandomizeOne();
 
 	return child;
