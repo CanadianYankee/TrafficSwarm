@@ -10,6 +10,7 @@
 #include "TrialRun.h"
 
 std::ostream& operator << (std::ostream& out, const CResultListBox& lb);
+std::istream& operator >> (std::istream& in, CResultListBox& lb);
 
 // CEvolutionDlg dialog
 
@@ -35,7 +36,7 @@ CEvolutionDlg::CEvolutionDlg(CWnd* pParent, std::shared_ptr<CCourse> pCourse)
 	, m_eStatus(STATUS::NotRunning)
 	, m_strStatus(_T(""))
 	, m_nAgents(2048)
-	, m_nTrials(100)
+	, m_nChildren(100)
 	, m_strLastRun(_T(""))
 	, m_iCurrentChild(0)
 	, m_iCurrentGeneration(0)
@@ -60,8 +61,8 @@ void CEvolutionDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_STATIC_STATUS, m_strStatus);
 	DDX_Text(pDX, IDC_EDIT_AGENTS, m_nAgents);
 	DDV_MinMaxInt(pDX, m_nAgents, 0, INT_MAX);
-	DDX_Text(pDX, IDC_EDIT_TRIALS, m_nTrials);
-	DDV_MinMaxInt(pDX, m_nTrials, 0, INT_MAX);
+	DDX_Text(pDX, IDC_EDIT_TRIALS, m_nChildren);
+	DDV_MinMaxInt(pDX, m_nChildren, 0, INT_MAX);
 	DDX_Text(pDX, IDC_EDIT_LASTRUN, m_strLastRun);
 	DDX_Text(pDX, IDC_EDIT_SELGENOME, m_strSelGenome);
 	DDX_Text(pDX, IDC_EDIT_SELSCORES, m_strSelScores);
@@ -76,6 +77,8 @@ BEGIN_MESSAGE_MAP(CEvolutionDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_ENDNOW, &CEvolutionDlg::OnBnClickedButtonEndnow)
 	ON_MESSAGE(WM_USER_RESULTS_SELECTED, &CEvolutionDlg::OnUserResultsSelected)
 	ON_BN_CLICKED(IDC_BUTTON_SAVERESULTS, &CEvolutionDlg::OnBnClickedButtonSaveresults)
+	ON_BN_CLICKED(IDC_BUTTON_LOAD, &CEvolutionDlg::OnBnClickedButtonLoad)
+	ON_BN_CLICKED(IDC_BUTTON_LOADTWO, &CEvolutionDlg::OnBnClickedButtonLoadtwo)
 END_MESSAGE_MAP()
 
 
@@ -95,7 +98,7 @@ void CEvolutionDlg::SetStatus(STATUS eStatus)
 		GetDlgItem(IDCANCEL)->EnableWindow(TRUE);
 		break;
 	case STATUS::Running:
-		m_strStatus = _T("Evolving!");
+		m_strStatus.Format(_T("Evolving - generation with %d parents"), (int)m_vecParents.size());
 		GetDlgItem(IDC_BUTTON_EVOLVE)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_ENDGEN)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BUTTON_ENDNOW)->EnableWindow(TRUE);
@@ -124,11 +127,43 @@ void CEvolutionDlg::SetStatus(STATUS eStatus)
 	UpdateData(FALSE);
 }
 
-void CEvolutionDlg::SeedGenomes(const std::vector<CAgentGenome>& pGenomes)
+void CEvolutionDlg::SeedGenomes(const std::vector<CAgentGenome>& vecGenomes)
 {
-	ASSERT(pGenomes.size() <= m_nTrials);
+	ASSERT(vecGenomes.size() <= m_nChildren);
 	m_vecParents.clear();
-	m_vecParents = pGenomes;
+	m_vecParents = vecGenomes;
+}
+
+void CEvolutionDlg::PullParents(const std::vector<CTrialRun::RUN_RESULTS> &vecResults)
+{
+	std::vector<CTrialRun::RUN_RESULTS> vec(vecResults);
+	std::sort(vec.begin(), vec.end(), CompareResults);
+	int nParents = min(max(1, m_nChildren / 10), (int)vec.size());
+	std::vector<CAgentGenome> vecParents(nParents);
+	for (int i = 0; i < nParents; i++)
+	{
+		vecParents[i] = vec[i].genome;
+	}
+	SeedGenomes(vecParents);
+}
+
+void CEvolutionDlg::PullParents(const std::vector<CTrialRun::RUN_RESULTS>& vecRuns1, const std::vector<CTrialRun::RUN_RESULTS>& vecRuns2)
+{
+	std::vector<CTrialRun::RUN_RESULTS> vec1(vecRuns1), vec2(vecRuns2);
+	std::sort(vec1.begin(), vec1.end(), CompareResults);
+	std::sort(vec2.begin(), vec2.end(), CompareResults);
+	int nParents1 = min(max(1, m_nChildren / 10), (int)vec1.size());
+	int nParents2 = min(max(1, m_nChildren / 10), (int)vec2.size());
+	std::vector<CAgentGenome> vecParents(nParents1 + nParents2);
+	for (int i = 0; i < nParents1; i++)
+	{
+		vecParents[i] = vec1[i].genome;
+	}
+	for (int i = 0; i < nParents2; i++)
+	{
+		vecParents[i + nParents1] = vec2[i].genome;
+	}
+	SeedGenomes(vecParents);
 }
 
 void CEvolutionDlg::SetupGeneration()
@@ -137,12 +172,12 @@ void CEvolutionDlg::SetupGeneration()
 	size_t nParents = m_vecParents.size();
 	size_t iChild = 0;
 	m_vecChildren.clear();
-	m_vecChildren.resize(m_nTrials);
+	m_vecChildren.resize(m_nChildren);
 
 	if (nParents == 1)
 	{
 		m_vecChildren[0] = m_vecParents[0];
-		for (iChild = 1; iChild < m_nTrials / 5; iChild++)
+		for (iChild = 1; iChild < m_nChildren / 5; iChild++)
 		{
 			m_vecChildren[iChild] = m_vecParents[0];
 			m_vecChildren[iChild].RandomizeOne();
@@ -153,7 +188,7 @@ void CEvolutionDlg::SetupGeneration()
 		{
 			m_vecChildren[iChild] = m_vecParents[iChild];
 		}
-		for (; iChild < (m_nTrials * 9) / 10; iChild++)
+		for (; iChild < (m_nChildren * 9) / 10; iChild++)
 		{
 			bool bRepeat = false;
 			do
@@ -182,7 +217,7 @@ void CEvolutionDlg::SetupGeneration()
 			} while (bRepeat);
 		}
 	}
-	for (; iChild < m_nTrials; iChild++)
+	for (; iChild < m_nChildren; iChild++)
 	{
 		m_vecChildren[iChild].RandomizeAll();
 	}
@@ -190,12 +225,12 @@ void CEvolutionDlg::SetupGeneration()
 	m_iCurrentChild = 0;
 	m_iCurrentGeneration++;
 	m_vecResults.clear();
-	m_vecResults.reserve(m_nTrials);
+	m_vecResults.reserve(m_nChildren);
 	m_listResults.ClearAll();
 	m_strLastRun.Empty();
 	m_strSelGenome.Empty();
 	m_strSelScores.Empty();
-	m_strRunCount.Format(_T("%d of %d"), 1, m_nTrials);
+	m_strRunCount.Format(_T("%d of %d"), 1, m_nChildren);
 	m_strGeneration.Format(_T("%d of %d"), m_iCurrentGeneration, m_nGenerations);
 }
 
@@ -289,9 +324,9 @@ afx_msg LRESULT CEvolutionDlg::OnTrialEnded(WPARAM wParam, LPARAM lParam)
 	{
 		SetStatus(STATUS::NotRunning);
 	}
-	else if (m_iCurrentChild < (UINT)m_nTrials)
+	else if (m_iCurrentChild < (UINT)m_nChildren)
 	{
-		m_strRunCount.Format(_T("%d of %d"), m_iCurrentChild + 1, m_nTrials);
+		m_strRunCount.Format(_T("%d of %d"), m_iCurrentChild + 1, m_nChildren);
 		SetStatus(STATUS::Running);
 		AfxBeginThread(::RunThreadedTrial, (LPVOID)(this));
 	}
@@ -302,16 +337,8 @@ afx_msg LRESULT CEvolutionDlg::OnTrialEnded(WPARAM wParam, LPARAM lParam)
 	}
 	else
 	{
-		std::vector<CTrialRun::RUN_RESULTS> vecResults = m_listResults.m_vecResults;
+		PullParents(m_listResults.m_vecResults);
 		m_listResults.ClearAll();
-		std::sort(vecResults.begin(), vecResults.end(), CompareResults);
-		int nParents = max(1, (int)vecResults.size() / 10);
-		std::vector<CAgentGenome> vecParents(nParents);
-		for (int i = 0; i < nParents; i++)
-		{
-			vecParents[i] = vecResults[i].genome;
-		}
-		SeedGenomes(vecParents);
 		SetupGeneration();
 		SetStatus(STATUS::Running);
 		AfxBeginThread(::RunThreadedTrial, (LPVOID)(this));
@@ -360,5 +387,58 @@ void CEvolutionDlg::OnBnClickedButtonSaveresults()
 		file.open(strName.GetBuffer(), std::ios_base::out | std::ios_base::trunc);
 		file << m_listResults;
 		file.close();
+	}
+}
+
+
+void CEvolutionDlg::OnBnClickedButtonLoad()
+{
+	if (UpdateData(TRUE))
+	{
+		CFileDialog dlgFile(TRUE, _T(".txt"));
+		if (dlgFile.DoModal() == IDOK)
+		{
+			CString strFile = dlgFile.GetPathName();
+			std::ifstream file;
+			file.open(strFile.GetBuffer(), std::ios_base::in);
+			file >> m_listResults;
+			file.close();
+
+			PullParents(m_listResults.m_vecResults);
+			m_iCurrentGeneration = 0;
+			m_iCurrentChild = 0;
+			OnBnClickedButtonEvolve();
+		}
+	}
+}
+
+
+void CEvolutionDlg::OnBnClickedButtonLoadtwo()
+{
+	if (UpdateData(TRUE))
+	{
+		if (m_listResults.m_vecResults.empty())
+		{
+			MessageBox(_T("There must be results to cross-breed with.  Either do an evolution run or load some previous results to cross-breed."),
+				_T("Cross-breed error."), MB_OK);
+			return;
+		}
+		CFileDialog dlgFile(TRUE, _T(".txt"));
+		if (dlgFile.DoModal() == IDOK)
+		{
+			std::vector<CTrialRun::RUN_RESULTS> vecOld = m_listResults.m_vecResults;
+			m_listResults.ClearAll();
+			CString strFile = dlgFile.GetPathName();
+			std::ifstream file;
+			file.open(strFile.GetBuffer(), std::ios_base::in);
+			file >> m_listResults;
+			file.close();
+
+			PullParents(vecOld, m_listResults.m_vecResults);
+			m_listResults.ClearAll();
+			m_iCurrentGeneration = 0;
+			m_iCurrentChild = 0;
+			UpdateData();
+		}
 	}
 }

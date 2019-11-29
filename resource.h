@@ -32,6 +32,9 @@
 #define IDC_EDIT_SELGENOME2             1014
 #define IDC_EDIT_SELSCORES              1014
 #define IDC_BUTTON_SAVERESULTS          1015
+#define IDC_BUTTON_LOAD                 1016
+#define IDC_BUTTON_LOAD2                1017
+#define IDC_BUTTON_LOADTWO              1017
 
 // Next default values for new objects
 // 
