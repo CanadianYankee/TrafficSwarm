@@ -42,10 +42,15 @@ END_MESSAGE_MAP()
 
 void CResultListBox::OnLbnSelchange()
 {
-	int nIndex = GetCurSel();
-	auto pResults = nIndex >= 0 ? &(m_vecResults[GetItemData(nIndex)]) : nullptr;
-	GetParent()->PostMessage(WM_USER_RESULTS_SELECTED, (WPARAM)pResults);
+	GetParent()->PostMessage(WM_USER_RESULTS_SELECTED, (WPARAM)GetCurResults());
 }
+
+CTrialRun::RUN_RESULTS* CResultListBox::GetCurResults()
+{
+	int nIndex = GetCurSel();
+	return nIndex >= 0 ? &(m_vecResults[GetItemData(nIndex)]) : nullptr;
+}
+
 
 std::ostream& operator << (std::ostream& out, const CAgentGenome& g)
 {
@@ -97,13 +102,14 @@ std::ostream& operator << (std::ostream& out, const CResultListBox& lb)
 
 std::istream& operator >> (std::istream& in, CResultListBox& lb)
 {
-	lb.m_vecResults.clear();
+	lb.ClearAll();
 	size_t n;
 	in >> n;
-	lb.m_vecResults.reserve(n);
 	for (size_t i = 0; i < n; i++)
 	{
-		in >> lb.m_vecResults[i];
+		CTrialRun::RUN_RESULTS result;
+		in >> result;
+		lb.AddResult(i + 1, result);
 	}
 
 	return in;

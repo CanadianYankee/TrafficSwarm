@@ -2,6 +2,8 @@
 // TrafficSwarmDlg.h : header file
 //
 
+#include "ResultListBox.h"
+
 #pragma once
 class CSandboxWnd;
 
@@ -38,4 +40,12 @@ public:
 	afx_msg void OnBnClickedButtonRunTrials();
 	afx_msg void OnBnClickedCancel();
 	afx_msg void OnBnClickedButtonDoevolution();
+	afx_msg void OnBnClickedButtonLoadresults();
+	CResultListBox m_listResults;
+	CString m_strSelScores;
+	CString m_strSelGenome;
+protected:
+	afx_msg LRESULT OnUserResultsSelected(WPARAM wParam, LPARAM lParam);
+public:
+	afx_msg void OnBnClickedButtonClearresults();
 };

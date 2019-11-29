@@ -15,8 +15,10 @@
 #define IDC_STATIC_COURSE               1002
 #define IDC_BUTTON_DOEVOLUTION          1002
 #define IDC_EDIT_LASTRUN                1003
+#define IDC_BUTTON_LOADRESULTS          1003
 #define IDC_LIST_RESULTS                1004
 #define IDC_STATIC_RUNCOUNT             1005
+#define IDC_BUTTON_CLEARRESULTS         1005
 #define IDC_STATIC_RUNCOUNT2            1006
 #define IDC_STATIC_GENERATION           1006
 #define IDC_BUTTON_ENDGEN               1007
@@ -29,7 +31,6 @@
 #define IDC_EDIT_GENERATIONS            1013
 #define IDC_EDIT_SELGENOME2             1014
 #define IDC_EDIT_SELSCORES              1014
-#define IDC_BUTTON_RESULTS              1015
 #define IDC_BUTTON_SAVERESULTS          1015
 
 // Next default values for new objects

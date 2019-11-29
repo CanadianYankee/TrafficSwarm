@@ -9,6 +9,7 @@ class CResultListBox :
 public:
 	void AddResult(UINT iChild, const CTrialRun::RUN_RESULTS& results);
 	void ClearAll();
+	CTrialRun::RUN_RESULTS* GetCurResults();
 	friend std::ostream& operator << (std::ostream& out, const CResultListBox& lb);
 	friend std::ostream& operator >> (std::ostream& in, CResultListBox& lb);
 

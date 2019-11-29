@@ -18,6 +18,8 @@
 #define new DEBUG_NEW
 #endif
 
+std::istream& operator >> (std::istream& in, CResultListBox& lb);
+
 
 // CAboutDlg dialog used for App About
 
@@ -58,6 +60,8 @@ END_MESSAGE_MAP()
 
 CTrafficSwarmDlg::CTrafficSwarmDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_TRAFFICSWARM_DIALOG, pParent)
+	, m_strSelScores(_T(""))
+	, m_strSelGenome(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -65,6 +69,9 @@ CTrafficSwarmDlg::CTrafficSwarmDlg(CWnd* pParent /*=nullptr*/)
 void CTrafficSwarmDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_LIST_RESULTS, m_listResults);
+	DDX_Text(pDX, IDC_EDIT_SELSCORES, m_strSelScores);
+	DDX_Text(pDX, IDC_EDIT_SELGENOME, m_strSelGenome);
 }
 
 BEGIN_MESSAGE_MAP(CTrafficSwarmDlg, CDialogEx)
@@ -76,6 +83,9 @@ BEGIN_MESSAGE_MAP(CTrafficSwarmDlg, CDialogEx)
 	ON_MESSAGE(WM_USER_CHILD_CLOSING, OnChildClosing)
 	ON_BN_CLICKED(IDCANCEL, &CTrafficSwarmDlg::OnBnClickedCancel)
 	ON_BN_CLICKED(IDC_BUTTON_DOEVOLUTION, &CTrafficSwarmDlg::OnBnClickedButtonDoevolution)
+	ON_BN_CLICKED(IDC_BUTTON_LOADRESULTS, &CTrafficSwarmDlg::OnBnClickedButtonLoadresults)
+	ON_MESSAGE(WM_USER_RESULTS_SELECTED, &CTrafficSwarmDlg::OnUserResultsSelected)
+	ON_BN_CLICKED(IDC_BUTTON_CLEARRESULTS, &CTrafficSwarmDlg::OnBnClickedButtonClearresults)
 END_MESSAGE_MAP()
 
 
@@ -111,6 +121,7 @@ BOOL CTrafficSwarmDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
+	m_listResults.m_bAutoSort = TRUE;
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -189,9 +200,13 @@ void CTrafficSwarmDlg::OnBnClickedButtonRunsandbox()
 {
 	std::shared_ptr<CCourse> pCourse = std::make_shared<CCourse>();
 	pCourse->LoadHourglass();
-
+	
+	auto pResults = m_listResults.GetCurResults();
 	CAgentGenome genome;
-	genome.RandomizeAll(); // MakeDefault();
+	if (pResults)
+		genome = pResults->genome;
+	else
+		genome.RandomizeAll(); // MakeDefault();
 
 	CSandboxWnd *pSandboxWnd = new CSandboxWnd(this, pCourse, genome);
 
@@ -240,4 +255,42 @@ void CTrafficSwarmDlg::OnBnClickedCancel()
 	CDialogEx::OnCancel();
 }
 
+void CTrafficSwarmDlg::OnBnClickedButtonLoadresults()
+{ 
+	CFileDialog dlgFile(TRUE, _T(".txt"));
+	if (dlgFile.DoModal() == IDOK)
+	{
+		CString strFile = dlgFile.GetPathName();
+		std::ifstream file;
+		file.open(strFile.GetBuffer(), std::ios_base::in);
+		file >> m_listResults;
+		file.close();
+	}
+}
 
+
+afx_msg LRESULT CTrafficSwarmDlg::OnUserResultsSelected(WPARAM wParam, LPARAM lParam)
+{
+	if (wParam)
+	{
+		auto pResults = (CTrialRun::RUN_RESULTS*)wParam;
+		m_strSelGenome = pResults->genome.ToString(_T("\r\n"));
+		m_strSelScores = pResults->ToListString(_T("\r\n"));
+	}
+	else
+	{
+		m_strSelGenome.Empty();
+		m_strSelScores.Empty();
+	}
+	UpdateData(FALSE);
+	return 0;
+}
+
+
+void CTrafficSwarmDlg::OnBnClickedButtonClearresults()
+{
+	m_listResults.ClearAll();
+	m_strSelGenome.Empty();
+	m_strSelScores.Empty();
+	UpdateData(FALSE);
+}
