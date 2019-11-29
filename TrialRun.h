@@ -12,7 +12,7 @@ class CCourse;
 constexpr float AACollisionPenalty = 20.0f;
 constexpr float AWCollisionPenalty = 20.0f;
 constexpr float IncompletePenalty = 40.0f;
-constexpr float SpawnFailPenalty = 1.0f;
+constexpr float SpawnFailPenalty = 0.0f; ///1.0f;
 constexpr float LeftEscapePenalty = 5.0f;
 constexpr float RightEscapePenalty = 5.0f;
 
@@ -41,6 +41,8 @@ public:
 				AWCollisionPenalty * fAvgAWCollisions + SpawnFailPenalty * nSpawnFails + LeftEscapePenalty * nLeftEscapes + 
 				RightEscapePenalty * nRightEscapes;
 		}
+		CString ToListString(const CString &strSeparator) const;
+		CString ToParagraphString(const CString& strSeparator) const;
 	};
 
 	HRESULT Intialize(UINT nAgents, std::shared_ptr<CCourse> pCourse, const CAgentGenome& cGenome);

@@ -4,9 +4,24 @@
 void CResultListBox::AddResult(UINT iChild, const CTrialRun::RUN_RESULTS& results)
 {
 	CString str; 
-	str.Format(_T("Child #%d: Score = %0.1f"), iChild, results.Score()); 
+	float fScore = results.Score();
+	str.Format(_T("Child #%d: Score = %0.1f"), iChild, fScore); 
 	m_vecResults.push_back(results);
-	int nIndex = AddString(str);
+	int nIndex = -1;
+	if (m_bAutoSort)
+	{
+		for (nIndex = 0; nIndex < GetCount(); nIndex++)
+		{
+			float fOther = m_vecResults[GetItemData(nIndex)].Score();
+			if (fScore <= fOther)
+				break;
+		}
+		InsertString(nIndex, str);
+	}
+	else
+	{
+		nIndex = AddString(str);
+	}
 	SetItemData(nIndex, (DWORD_PTR)(m_vecResults.size() - 1));
 }
 
@@ -19,20 +34,84 @@ void CResultListBox::ClearAll()
 	}
 }
 
-//int CResultListBox::CompareItem(LPCOMPAREITEMSTRUCT lpCompareItemStruct)
-//{
-//	float s1 = m_vecResults[(size_t)(lpCompareItemStruct->itemData1)].Score();
-//	float s2 = m_vecResults[(size_t)(lpCompareItemStruct->itemData2)].Score();
-//	
-//	if (s1 < s2) return -1;
-//	if (s2 > s1) return 1;
-//
-//	return 0;
-//}
+BEGIN_MESSAGE_MAP(CResultListBox, CListBox)
+	ON_CONTROL_REFLECT(LBN_SELCHANGE, &CResultListBox::OnLbnSelchange)
+	ON_CONTROL_REFLECT(LBN_SELCANCEL, &CResultListBox::OnLbnSelchange)
+END_MESSAGE_MAP()
 
 
-//void CResultListBox::DrawItem(LPDRAWITEMSTRUCT /*lpDrawItemStruct*/)
-//{
-//
-//	// TODO:  Add your code to draw the specified item
-//}
+void CResultListBox::OnLbnSelchange()
+{
+	GetParent()->PostMessage(WM_USER_RESULTS_SELECTED, (WPARAM)GetCurResults());
+}
+
+CTrialRun::RUN_RESULTS* CResultListBox::GetCurResults()
+{
+	int nIndex = GetCurSel();
+	return nIndex >= 0 ? &(m_vecResults[GetItemData(nIndex)]) : nullptr;
+}
+
+
+std::ostream& operator << (std::ostream& out, const CAgentGenome& g)
+{
+	for (size_t i = 0; i < (size_t)CAgentGenome::GENE::NUM_GENES; i++)
+	{
+		out << g.Gene((CAgentGenome::GENE)i) << " ";
+	}
+	return out;
+}
+
+std::istream& operator >> (std::istream& in, CAgentGenome& g)
+{
+	for (size_t i = 0; i < (size_t)CAgentGenome::GENE::NUM_GENES; i++)
+	{
+		float f;
+		in >> f;
+		g.SetGene((CAgentGenome::GENE)i, f);
+	}
+	return in;
+}
+
+std::ostream& operator << (std::ostream& out, const CTrialRun::RUN_RESULTS& rr)
+{
+	out << rr.genome;
+	out << " " << rr.nAgents << " " << rr.nComplete << " " << rr.nSpawnFails << " " << rr.nLeftEscapes << " " << rr.nRightEscapes << " " <<
+		rr.fSimulatedTime << " " << rr.fRealTime << " " << rr.fFPS << " " << rr.fAvgLifetime << " " << rr.fAvgAACollisions << " " << rr.fAvgAWCollisions;
+	return out;
+}
+
+std::istream& operator >> (std::istream& in, CTrialRun::RUN_RESULTS& rr)
+{
+	in >> rr.genome;
+	in >> rr.nAgents >> rr.nComplete >> rr.nSpawnFails >> rr.nLeftEscapes >> rr.nRightEscapes >>
+		rr.fSimulatedTime >> rr.fRealTime >> rr.fFPS >> rr.fAvgLifetime >> rr.fAvgAACollisions >> rr.fAvgAWCollisions;
+
+	return in;
+}
+
+std::ostream& operator << (std::ostream& out, const CResultListBox& lb)
+{
+	out << lb.m_vecResults.size() << "\n";
+	for (size_t i = 0; i < lb.m_vecResults.size(); i++)
+	{
+		out << lb.m_vecResults[i];
+		out << "\n";
+	}
+	return out;
+}
+
+std::istream& operator >> (std::istream& in, CResultListBox& lb)
+{
+	lb.ClearAll();
+	size_t n;
+	in >> n;
+	for (size_t i = 0; i < n; i++)
+	{
+		CTrialRun::RUN_RESULTS result;
+		in >> result;
+		lb.AddResult((UINT)i + 1, result);
+	}
+
+	return in;
+}
+

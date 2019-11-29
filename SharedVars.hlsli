@@ -21,13 +21,16 @@ cbuffer cbWorldPhysics : register(b0)
 	float g_fAlignAtMax;
 	
 	float g_fAlignAtRear;
-	float g_fWallAlignDist;
-	float g_fWallAlign;
-	float g_fWallAlignAtRear;
+	float g_fMinWallAlignDist;
+	float g_fMaxWallAlignDist;
+	float g_fWallAlignAtMin;
 
-//	float wpfDummy0;
-//	float wpfDummy1;
-//	float wpfDummy2;
+	float g_fWallAlignAtMax;
+	float g_fWallAlignAtRear;
+	float wpfDummy0;
+	float wpfDummy1;
+
+	//	float wpfDummy2;
 };
 
 cbuffer cbFrameVariables : register(b1)

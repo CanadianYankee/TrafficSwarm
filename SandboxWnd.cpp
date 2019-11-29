@@ -87,7 +87,7 @@ void CSandboxWnd::OnClose()
 {
 	CWnd::OnClose();
 	if (m_pOwner)
-		m_pOwner->PostMessage(WM_CHILD_CLOSING, (WPARAM)this);
+		m_pOwner->PostMessage(WM_USER_CHILD_CLOSING, (WPARAM)this);
 }
 
 void CSandboxWnd::OnEnterSizeMove()

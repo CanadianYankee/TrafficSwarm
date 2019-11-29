@@ -32,8 +32,11 @@ public:
 	CResultListBox m_listResults;
 	CString m_strGeneration;
 
-	void SeedGenomes(const std::vector<CAgentGenome>& pGenomes);
+	void SeedGenomes(const std::vector<CAgentGenome>& vecGenomes);
+	void PullParents(const std::vector<CTrialRun::RUN_RESULTS>& vecRuns);
+	void PullParents(const std::vector<CTrialRun::RUN_RESULTS>& vecRuns1, const std::vector<CTrialRun::RUN_RESULTS>& vecRuns2);
 	UINT RunThreadedTrial();
+	BOOL Complete() { return m_iCurrentGeneration >= (UINT)m_nGenerations && m_iCurrentChild >= (UINT)m_nChildren; }
 
 protected:
 	enum class STATUS 
@@ -61,10 +64,19 @@ public:
 	afx_msg void OnBnClickedCancel();
 	afx_msg void OnBnClickedButtonEvolve();
 	int m_nAgents;
-	int m_nTrials;
+	int m_nChildren;
 	CString m_strLastRun;
 protected:
 	afx_msg LRESULT OnTrialEnded(WPARAM wParam, LPARAM lParam);
 public:
 	afx_msg void OnBnClickedButtonEndnow();
+protected:
+	afx_msg LRESULT OnUserResultsSelected(WPARAM wParam, LPARAM lParam);
+public:
+	CString m_strSelGenome;
+	CString m_strSelScores;
+	int m_nGenerations;
+	afx_msg void OnBnClickedButtonSaveresults();
+	afx_msg void OnBnClickedButtonLoad();
+	afx_msg void OnBnClickedButtonLoadtwo();
 };
