@@ -60,7 +60,7 @@ void CCourseDraw::DrawPolyline(CPaintDC &dc, const CCourse::XMPOLYLINE& polyline
 	for (size_t i = 0; i < polyline.size(); i++)
 	{
 		pts[i].x = (LONG)(polyline[i].x * fScale + 0.5f) + offset.x;
-		pts[i].y = (LONG)(polyline[i].y * fScale + 0.5f) + offset.y;
+		pts[i].y = -(LONG)(polyline[i].y * fScale + 0.5f) + offset.y;
 	}
 	dc.Polyline(&pts.front(), (int)pts.size());
 }
