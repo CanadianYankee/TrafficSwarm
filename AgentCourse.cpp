@@ -18,16 +18,15 @@ CAgentCourse::CAgentCourse(bool bVisualize, std::shared_ptr<CRunStatistics> pRun
 {
 }
 
-HRESULT CAgentCourse::Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11DeviceContext>& pD3DContext, std::shared_ptr<CCourse> pCourse, const CAgentGenome &cGenome)
+HRESULT CAgentCourse::Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11DeviceContext>& pD3DContext, const CCourse& cCourse, const CAgentGenome &cGenome)
 {
 	m_pD3DDevice = pD3DDevice;
 	m_pD3DContext = pD3DContext;
 	HRESULT hr = S_OK;
 
-	ASSERT(pCourse);
-	m_pCourse = pCourse;
-	m_sWorldPhysics.g_fCourseLength = pCourse->m_fCourseLength;
-	m_fSpawnRate *= pCourse->GetTotalSourceLength();
+	m_cCourse = cCourse;
+	m_sWorldPhysics.g_fCourseLength = cCourse.m_fCourseLength;
+	m_fSpawnRate *= cCourse.GetTotalSourceLength();
 
 	hr = InitializeAgentBuffers();
 	if (SUCCEEDED(hr))
@@ -267,10 +266,10 @@ HRESULT CAgentCourse::InitializeAgentBuffers()
 	if (m_bVisualize)
 	{
 		RENDER_VARIABLES rVar;
-		for (auto i = 0; i < m_pCourse->m_vecAgentSS.size(); i++)
+		for (auto i = 0; i < m_cCourse.m_vecAgentSS.size(); i++)
 		{
 
-			XMFLOAT3 clr = m_pCourse->m_vecAgentSS[i].vColor;
+			XMFLOAT3 clr = m_cCourse.m_vecAgentSS[i].vColor;
 			rVar.g_arrColors[i] = XMFLOAT4(clr.x, clr.y, clr.z, 1.0f);
 		}
 
@@ -311,23 +310,23 @@ HRESULT CAgentCourse::InitializeWallBuffers()
 	D3D11_SUBRESOURCE_DATA vinitData = { 0 };
 
 	std::vector<WALL_SEGMENT> vecSegments;
-	for (size_t i = 0; i < m_pCourse->m_vecWalls.size(); i++)
+	for (size_t i = 0; i < m_cCourse.m_vecWalls.size(); i++)
 	{
-		for (size_t j = 0; j < m_pCourse->m_vecWalls[i].size() - 1; j++)
+		for (size_t j = 0; j < m_cCourse.m_vecWalls[i].size() - 1; j++)
 		{
-			vecSegments.push_back(WALL_SEGMENT(m_pCourse->m_vecWalls[i][j], m_pCourse->m_vecWalls[i][j + 1]));
+			vecSegments.push_back(WALL_SEGMENT(m_cCourse.m_vecWalls[i][j], m_cCourse.m_vecWalls[i][j + 1]));
 		}
 	}
 
 	m_sWorldPhysics.g_iNumWalls = (UINT)vecSegments.size();
 
 	// Also need the sinks for simulation
-	for (size_t i = 0; i < m_pCourse->m_vecAgentSS.size(); i++)
+	for (size_t i = 0; i < m_cCourse.m_vecAgentSS.size(); i++)
 	{
-		vecSegments.push_back(WALL_SEGMENT(m_pCourse->m_vecAgentSS[i].lineSink[0], m_pCourse->m_vecAgentSS[i].lineSink[1]));
+		vecSegments.push_back(WALL_SEGMENT(m_cCourse.m_vecAgentSS[i].lineSink[0], m_cCourse.m_vecAgentSS[i].lineSink[1]));
 	}
 
-	m_sWorldPhysics.g_iNumSinks = (UINT)m_pCourse->m_vecAgentSS.size();
+	m_sWorldPhysics.g_iNumSinks = (UINT)m_cCourse.m_vecAgentSS.size();
 
 	UINT nWallsSinks = m_sWorldPhysics.g_iNumWalls + m_sWorldPhysics.g_iNumSinks;
 
@@ -359,13 +358,13 @@ HRESULT CAgentCourse::InitializeWallBuffers()
 		MakeSegmentVertices(vecWVerts, vecWInds, vecSegments, colorWall);
 
 		// Draw sources and sinks
-		for (size_t i = 0; i < m_pCourse->m_vecAgentSS.size(); i++)
+		for (size_t i = 0; i < m_cCourse.m_vecAgentSS.size(); i++)
 		{
-			XMFLOAT3 color = m_pCourse->m_vecAgentSS[i].vColor;
+			XMFLOAT3 color = m_cCourse.m_vecAgentSS[i].vColor;
 			color.x *= 0.5; color.y *= 0.5; color.z *= 0.5;
 			std::vector<WALL_SEGMENT> vecSegs(2);
-			vecSegs[0] = WALL_SEGMENT(m_pCourse->m_vecAgentSS[i].lineSource[0], m_pCourse->m_vecAgentSS[i].lineSource[1]);
-			vecSegs[1] = WALL_SEGMENT(m_pCourse->m_vecAgentSS[i].lineSink[0], m_pCourse->m_vecAgentSS[i].lineSink[1]);
+			vecSegs[0] = WALL_SEGMENT(m_cCourse.m_vecAgentSS[i].lineSource[0], m_cCourse.m_vecAgentSS[i].lineSource[1]);
+			vecSegs[1] = WALL_SEGMENT(m_cCourse.m_vecAgentSS[i].lineSink[0], m_cCourse.m_vecAgentSS[i].lineSink[1]);
 			MakeSegmentVertices(vecWVerts, vecWInds, vecSegs, color);
 		}
 
@@ -449,8 +448,8 @@ void CAgentCourse::SpawnAgent(ComPtr<ID3D11DeviceContext>& pD3DContext, float T)
 {
 	size_t iIndex;
 	XMFLOAT2 ptSpawn = GetSpawnPoint(iIndex);
-	XMFLOAT2 ptVelocity = XMFLOAT2(m_sWorldPhysics.g_fIdealSpeed * m_pCourse->m_vecAgentSS[iIndex].velDir.x, 
-		m_sWorldPhysics.g_fIdealSpeed * m_pCourse->m_vecAgentSS[iIndex].velDir.y);
+	XMFLOAT2 ptVelocity = XMFLOAT2(m_sWorldPhysics.g_fIdealSpeed * m_cCourse.m_vecAgentSS[iIndex].velDir.x, 
+		m_sWorldPhysics.g_fIdealSpeed * m_cCourse.m_vecAgentSS[iIndex].velDir.y);
 	ID3D11UnorderedAccessView* pUAVNULL[1] = { nullptr };
 
 	SPAWN_AGENT agent = { ptSpawn, ptVelocity, T, m_sWorldPhysics.g_fParticleRadius, (int)iIndex, 
@@ -621,12 +620,12 @@ void CAgentCourse::RenderAgents(const ComPtr<ID3D11Buffer>& pCBFrameVariables, c
 XMFLOAT2 CAgentCourse::GetSpawnPoint(size_t &iIndex)
 {
 	iIndex = 0;
-	if (m_pCourse->m_vecAgentSS.size() > 1)
+	if (m_cCourse.m_vecAgentSS.size() > 1)
 	{
 		float fi = frand();
-		for (size_t i = 0; i < m_pCourse->m_vecAgentSS.size(); i++)
+		for (size_t i = 0; i < m_cCourse.m_vecAgentSS.size(); i++)
 		{
-			if (fi < m_pCourse->m_vecAgentSS[i].randLimit)
+			if (fi < m_cCourse.m_vecAgentSS[i].randLimit)
 			{
 				iIndex = i;
 				break;
@@ -637,6 +636,6 @@ XMFLOAT2 CAgentCourse::GetSpawnPoint(size_t &iIndex)
 	float f1 = frand();
 	float f2 = 1.0f - f1;
 	return XMFLOAT2(
-		f1 * m_pCourse->m_vecAgentSS[iIndex].lineSource[0].x + f2 * m_pCourse->m_vecAgentSS[iIndex].lineSource[1].x,
-		f1 * m_pCourse->m_vecAgentSS[iIndex].lineSource[0].y + f2 * m_pCourse->m_vecAgentSS[iIndex].lineSource[1].y);
+		f1 * m_cCourse.m_vecAgentSS[iIndex].lineSource[0].x + f2 * m_cCourse.m_vecAgentSS[iIndex].lineSource[1].x,
+		f1 * m_cCourse.m_vecAgentSS[iIndex].lineSource[0].y + f2 * m_cCourse.m_vecAgentSS[iIndex].lineSource[1].y);
 }

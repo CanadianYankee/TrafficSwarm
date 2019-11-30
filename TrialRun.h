@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AgentGenome.h"
+#include "Course.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -45,7 +46,7 @@ public:
 		CString ToParagraphString(const CString& strSeparator) const;
 	};
 
-	HRESULT Intialize(UINT nAgents, std::shared_ptr<CCourse> pCourse, const CAgentGenome& cGenome);
+	HRESULT Intialize(UINT nAgents, const CCourse &pCourse, const CAgentGenome& cGenome);
 	BOOL Run(RUN_RESULTS &results);
 
 protected:
@@ -71,8 +72,8 @@ protected:
 	ComPtr<ID3D11Buffer> m_pCBFrameVariables;
 
 	std::shared_ptr<CRunStatistics> m_pRunStats;
-	std::shared_ptr<CCourse> m_pCourse;
 	std::shared_ptr<CAgentCourse> m_pAgentCourse;
+	CCourse m_cCourse;
 	CAgentGenome m_cGenome;
 };
 

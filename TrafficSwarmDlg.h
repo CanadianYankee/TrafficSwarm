@@ -3,6 +3,8 @@
 //
 
 #include "ResultListBox.h"
+#include "Course.h"
+#include "CourseDraw.h"
 
 #pragma once
 class CSandboxWnd;
@@ -27,6 +29,7 @@ public:
 protected:
 	HICON m_hIcon;
 	std::unordered_set<CWnd *> m_setChildren;
+	CCourse m_cCourse;
 
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
@@ -48,4 +51,7 @@ protected:
 	afx_msg LRESULT OnUserResultsSelected(WPARAM wParam, LPARAM lParam);
 public:
 	afx_msg void OnBnClickedButtonClearresults();
+	CCourseDraw m_staticCourseDraw;
+	CString m_strCourseName;
+	afx_msg void OnBnClickedButtonLoadcourse();
 };

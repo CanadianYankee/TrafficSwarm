@@ -18,7 +18,8 @@ public:
 
 	BOOL LoadFromFile(const CString& strFile);
 	BOOL LoadHourglass();
-	float GetTotalSourceLength();
+	float GetTotalSourceLength() const;
+	void ClearAll();
 
 	CString m_strName;
 	float m_fCourseLength;

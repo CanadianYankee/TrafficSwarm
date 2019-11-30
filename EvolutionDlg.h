@@ -3,6 +3,7 @@
 #include "resource.h"
 #include "TrialRun.h"
 #include "ResultListBox.h"
+#include "Course.h"
 
 class CCourse;
 class CAgentGenome;
@@ -14,7 +15,7 @@ class CEvolutionDlg : public CDialogEx
 	DECLARE_DYNAMIC(CEvolutionDlg)
 
 public:
-	CEvolutionDlg(CWnd* pParent, std::shared_ptr<CCourse> pCourse);  
+	CEvolutionDlg(CWnd* pParent, const CCourse& cCourse);  
 	virtual ~CEvolutionDlg();
 
 // Dialog Data
@@ -50,7 +51,7 @@ protected:
 	void SetStatus(STATUS eStatus);
 
 	STATUS m_eStatus;
-	std::shared_ptr<CCourse> m_pCourse;
+	CCourse m_cCourse;
 	std::vector<CAgentGenome> m_vecParents;
 	std::vector<CAgentGenome> m_vecChildren;
 	std::vector<CTrialRun::RUN_RESULTS> m_vecResults;

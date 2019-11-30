@@ -27,10 +27,10 @@ bool CompareResults(CTrialRun::RUN_RESULTS& r1, CTrialRun::RUN_RESULTS& r2)
 
 IMPLEMENT_DYNAMIC(CEvolutionDlg, CDialogEx)
 
-CEvolutionDlg::CEvolutionDlg(CWnd* pParent, std::shared_ptr<CCourse> pCourse)
+CEvolutionDlg::CEvolutionDlg(CWnd* pParent, const CCourse& cCourse)
 	: CDialogEx(IDD_DIALOG_EVOLVE, pParent)
-	, m_strCourseName(pCourse->m_strName)
-	, m_pCourse(pCourse)
+	, m_strCourseName(cCourse.m_strName)
+	, m_cCourse(cCourse)
 	, m_strRunCount(_T(""))
 	, m_strGeneration(_T(""))
 	, m_eStatus(STATUS::NotRunning)
@@ -95,6 +95,8 @@ void CEvolutionDlg::SetStatus(STATUS eStatus)
 		GetDlgItem(IDC_BUTTON_ENDGEN)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_ENDNOW)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_SAVERESULTS)->EnableWindow(m_listResults.m_vecResults.size() > 0);
+		GetDlgItem(IDC_BUTTON_LOADRESULTS)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BUTTON_LOADTWO)->EnableWindow(m_listResults.m_vecResults.size() > 0);
 		GetDlgItem(IDCANCEL)->EnableWindow(TRUE);
 		break;
 	case STATUS::Running:
@@ -103,6 +105,8 @@ void CEvolutionDlg::SetStatus(STATUS eStatus)
 		GetDlgItem(IDC_BUTTON_ENDGEN)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BUTTON_ENDNOW)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BUTTON_SAVERESULTS)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_LOADRESULTS)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_LOADTWO)->EnableWindow(FALSE);
 		GetDlgItem(IDCANCEL)->EnableWindow(FALSE);
 		break;
 	case STATUS::EndGeneration:
@@ -111,6 +115,8 @@ void CEvolutionDlg::SetStatus(STATUS eStatus)
 		GetDlgItem(IDC_BUTTON_ENDGEN)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_ENDNOW)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BUTTON_SAVERESULTS)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_LOADRESULTS)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_LOADTWO)->EnableWindow(FALSE);
 		GetDlgItem(IDCANCEL)->EnableWindow(FALSE);
 		break;
 	case STATUS::Ending:
@@ -119,6 +125,8 @@ void CEvolutionDlg::SetStatus(STATUS eStatus)
 		GetDlgItem(IDC_BUTTON_ENDGEN)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_ENDNOW)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_SAVERESULTS)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_LOADRESULTS)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_LOADTWO)->EnableWindow(FALSE);
 		GetDlgItem(IDCANCEL)->EnableWindow(FALSE);
 		break;
 	default:
@@ -286,11 +294,11 @@ UINT CEvolutionDlg::RunThreadedTrial()
 	BOOL bResult = TRUE;
 	CTrialRun cTrial;
 
-	hr = cTrial.Intialize(m_nAgents, m_pCourse, m_vecChildren[m_iCurrentChild]);
+	hr = cTrial.Intialize(m_nAgents, m_cCourse, m_vecChildren[m_iCurrentChild]);
 	bResult = SUCCEEDED(hr);
 	if (bResult)
 	{
-		m_vecResults.resize(m_iCurrentChild + 1);
+		m_vecResults.resize((size_t)m_iCurrentChild + 1);
 
 		bResult = cTrial.Run(m_vecResults[m_iCurrentChild]);
 	}
@@ -395,7 +403,7 @@ void CEvolutionDlg::OnBnClickedButtonLoad()
 {
 	if (UpdateData(TRUE))
 	{
-		CFileDialog dlgFile(TRUE, _T(".txt"));
+		CFileDialog dlgFile(TRUE, _T(".txt"), 0, 0, _T("Text files (*.txt)|*.txt|All Files (*.*)|*.*||"));
 		if (dlgFile.DoModal() == IDOK)
 		{
 			CString strFile = dlgFile.GetPathName();
@@ -422,7 +430,7 @@ void CEvolutionDlg::OnBnClickedButtonLoadtwo()
 				_T("Cross-breed error."), MB_OK);
 			return;
 		}
-		CFileDialog dlgFile(TRUE, _T(".txt"));
+		CFileDialog dlgFile(TRUE, _T(".txt"), 0, 0, _T("Text files (*.txt)|*.txt|All Files (*.*)|*.*||"));
 		if (dlgFile.DoModal() == IDOK)
 		{
 			std::vector<CTrialRun::RUN_RESULTS> vecOld = m_listResults.m_vecResults;
