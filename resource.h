@@ -21,6 +21,8 @@
 #define IDC_BUTTON_CLEARRESULTS         1005
 #define IDC_STATIC_RUNCOUNT2            1006
 #define IDC_STATIC_GENERATION           1006
+#define IDC_BUTTON_CLEARRESULTS2        1006
+#define IDC_BUTTON_LOADCOURSE           1006
 #define IDC_BUTTON_ENDGEN               1007
 #define IDC_BUTTON_ENDNOW               1008
 #define IDC_STATIC_STATUS               1009

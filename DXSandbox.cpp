@@ -15,12 +15,12 @@ CDXSandbox::CDXSandbox(UINT nMaxRunAgents) :
 {
 }
 
-BOOL CDXSandbox::Initialize(CWnd *pWnd, std::shared_ptr<CCourse> pCourse, const CAgentGenome &cGenome)
+BOOL CDXSandbox::Initialize(CWnd *pWnd, const CCourse& cCourse, const CAgentGenome &cGenome)
 {
 	HRESULT hr = S_OK;
 	BOOL bSuccess = TRUE;
 
-	if (!pWnd || !pCourse)
+	if (!pWnd)
 	{
 		assert(false);
 		return FALSE;
@@ -43,9 +43,9 @@ BOOL CDXSandbox::Initialize(CWnd *pWnd, std::shared_ptr<CCourse> pCourse, const 
 	if (!bSuccess) return bSuccess;
 
 	m_pRunStats = std::make_shared<CRunStatistics>(m_nMaxRunAgents);
-	m_pCourse = pCourse;
+	m_cCourse = cCourse;
 	m_pAgentCourse = std::make_shared<CAgentCourse>(true, m_pRunStats);
-	hr = m_pAgentCourse->Initialize(m_pD3DDevice, m_pD3DContext, m_pCourse, cGenome);
+	hr = m_pAgentCourse->Initialize(m_pD3DDevice, m_pD3DContext, m_cCourse, cGenome);
 	if (FAILED(hr))	return FALSE;
 
 	hr = PrepareShaderConstants();
@@ -317,7 +317,7 @@ BOOL CDXSandbox::UpdateScene(float dt, float T)
 			m_pRunStats->RecordRunResults(results);
 			CString str;
 			results.fSimulatedTime = T;
-			results.strCourseName = m_pCourse->m_strName;
+			results.strCourseName = m_cCourse.m_strName;
 			str.Format(_T("Run of \"%s\": %d/%d complete;\nAvg Life = %f  Avg AA = %f  Avg AW = %f\nSimulated %f seconds at %f FPS.\n"),
 				results.strCourseName.GetBuffer(), results.nComplete, results.nAgents, results.fAvgLifetime,
 				results.fAvgAACollisions, results.fAvgAWCollisions, results.fSimulatedTime, results.fFPS);

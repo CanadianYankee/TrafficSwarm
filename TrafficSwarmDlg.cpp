@@ -8,14 +8,10 @@
 #include "TrafficSwarmDlg.h"
 #include "afxdialogex.h"
 #include "SandboxWnd.h"
-#include "Course.h"
 #include "TrialRun.h"
 #include "RunStatistics.h"
 #include "AgentGenome.h"
 #include "EvolutionDlg.h"
-
-// External json parser by Niels Lohmann from https://github.com/nlohmann/json
-#include "nlohmann/json.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -92,6 +88,7 @@ BEGIN_MESSAGE_MAP(CTrafficSwarmDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_LOADRESULTS, &CTrafficSwarmDlg::OnBnClickedButtonLoadresults)
 	ON_MESSAGE(WM_USER_RESULTS_SELECTED, &CTrafficSwarmDlg::OnUserResultsSelected)
 	ON_BN_CLICKED(IDC_BUTTON_CLEARRESULTS, &CTrafficSwarmDlg::OnBnClickedButtonClearresults)
+	ON_BN_CLICKED(IDC_BUTTON_LOADCOURSE, &CTrafficSwarmDlg::OnBnClickedButtonLoadcourse)
 END_MESSAGE_MAP()
 
 
@@ -128,11 +125,10 @@ BOOL CTrafficSwarmDlg::OnInitDialog()
 
 	// TODO: Add extra initialization here
 	m_listResults.m_bAutoSort = TRUE;
-	m_pCourse = std::make_shared<CCourse>();
-	m_pCourse->LoadHourglass();
-	m_strCourseName = m_pCourse->m_strName;
+	m_cCourse.LoadHourglass();
+	m_strCourseName = m_cCourse.m_strName;
 	GetDlgItem(IDC_STATIC_COURSENAME)->SetWindowTextW(m_strCourseName);
-	m_staticCourseDraw.SetCourse(m_pCourse);
+	m_staticCourseDraw.SetCourse(&m_cCourse);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -195,7 +191,7 @@ void CTrafficSwarmDlg::OnBnClickedButtonRunTrials()
 
 	CTrialRun trial;
 	CTrialRun::RUN_RESULTS results;
-	trial.Intialize(4096, m_pCourse, genome);
+	trial.Intialize(4096, m_cCourse, genome);
 	trial.Run(results);
 	CString str;
 	str.Format(_T("Run of \"%s\": %d/%d complete;\nAvg Life = %f  Avg AA = %f  Avg AW = %f\nSimulated %f seconds (%f FPS) in %f real seconds.\n"), 
@@ -214,7 +210,7 @@ void CTrafficSwarmDlg::OnBnClickedButtonRunsandbox()
 	else
 		genome.RandomizeAll(); // MakeDefault();
 
-	CSandboxWnd *pSandboxWnd = new CSandboxWnd(this, m_pCourse, genome);
+	CSandboxWnd *pSandboxWnd = new CSandboxWnd(this, m_cCourse, genome);
 
 	BOOL bSuccess = pSandboxWnd->Create();
 	ASSERT(bSuccess);
@@ -225,7 +221,7 @@ void CTrafficSwarmDlg::OnBnClickedButtonRunsandbox()
 
 void CTrafficSwarmDlg::OnBnClickedButtonDoevolution()
 {
-	CEvolutionDlg* pDialog = new CEvolutionDlg(this, m_pCourse);
+	CEvolutionDlg* pDialog = new CEvolutionDlg(this, m_cCourse);
 
 	BOOL bSuccess = pDialog->Create(IDD_DIALOG_EVOLVE);
 	ASSERT(bSuccess);
@@ -260,7 +256,7 @@ void CTrafficSwarmDlg::OnBnClickedCancel()
 
 void CTrafficSwarmDlg::OnBnClickedButtonLoadresults()
 { 
-	CFileDialog dlgFile(TRUE, _T(".txt"));
+	CFileDialog dlgFile(TRUE, _T(".txt"), NULL, 0, _T("Text files (*.txt)|*.txt|All Files (*.*)|*.*||"));
 	if (dlgFile.DoModal() == IDOK)
 	{
 		CString strFile = dlgFile.GetPathName();
@@ -295,4 +291,17 @@ void CTrafficSwarmDlg::OnBnClickedButtonClearresults()
 	m_strSelGenome.Empty();
 	m_strSelScores.Empty();
 	UpdateData(FALSE);
+}
+
+
+void CTrafficSwarmDlg::OnBnClickedButtonLoadcourse()
+{
+	CFileDialog dlgFile(TRUE, _T(".json"), NULL, 0, _T("Json files (*.json)|*.json|All Files (*.*)|*.*||"));
+	if (dlgFile.DoModal() == IDOK)
+	{
+		m_cCourse.LoadFromFile(dlgFile.GetPathName());
+		m_strCourseName = m_cCourse.m_strName;
+		GetDlgItem(IDC_STATIC_COURSENAME)->SetWindowText(m_strCourseName);
+		Invalidate();
+	}
 }

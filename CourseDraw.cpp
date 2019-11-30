@@ -3,7 +3,8 @@
 
 IMPLEMENT_DYNAMIC(CCourseDraw, CStatic)
 
-CCourseDraw::CCourseDraw()
+CCourseDraw::CCourseDraw() :
+	m_pCourse(nullptr)
 {
 	RegisterWindowClass();
 }
@@ -42,7 +43,7 @@ BOOL CCourseDraw::RegisterWindowClass(void)
 	return TRUE;
 }
 
-void CCourseDraw::SetCourse(std::shared_ptr<CCourse> &pCourse)
+void CCourseDraw::SetCourse(CCourse *pCourse)
 {
 	m_pCourse = pCourse;
 	Invalidate(FALSE);

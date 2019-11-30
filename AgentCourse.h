@@ -20,10 +20,10 @@ class CAgentCourse
 public:
 	CAgentCourse(bool bVisualize, std::shared_ptr<CRunStatistics> pRunStats);
 
-	HRESULT Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11DeviceContext>& pD3DContext, std::shared_ptr<CCourse> pCourse, const CAgentGenome &cGenome);
+	HRESULT Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11DeviceContext>& pD3DContext, const CCourse &cCourse, const CAgentGenome &cGenome);
 	BOOL UpdateAgents(const ComPtr<ID3D11Buffer>& pCBFrameVariables, float dt, float T);
 
-	CString GetName() { return m_pCourse->m_strName; }
+	CString GetName() { return m_cCourse.m_strName; }
 	float GetCourseLength() { return m_sWorldPhysics.g_fCourseLength; }
 	UINT GetMaxAlive() { return m_nMaxLiveAgents; }
 	UINT GetNumSpawned() { return m_nSpawned; }
@@ -152,7 +152,7 @@ protected:
 	UINT m_iWallIndices;
 
 	std::shared_ptr<CRunStatistics> m_pRunStats;
-	std::shared_ptr<CCourse> m_pCourse;
+	CCourse m_cCourse;
 
 	WORLD_PHYSICS m_sWorldPhysics;
 

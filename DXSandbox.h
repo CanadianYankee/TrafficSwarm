@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DrawTimer.h"
+#include "Course.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -18,7 +19,7 @@ class CDXSandbox
 public:
 	CDXSandbox(UINT nMaxRunAgents = 0);
 
-	BOOL Initialize(CWnd *pWnd, std::shared_ptr<CCourse> pCourse, const CAgentGenome& cGenome);
+	BOOL Initialize(CWnd *pWnd, const CCourse &cCourse, const CAgentGenome& cGenome);
 	void Tick();
 	void Pause();
 	void Resume(LPRECT pNewSize = NULL);
@@ -51,8 +52,8 @@ protected:
 	UINT m_nMaxRunAgents;
 
 	std::shared_ptr<CAgentCourse> m_pAgentCourse;
-	std::shared_ptr<CCourse> m_pCourse;
 	std::shared_ptr<CRunStatistics> m_pRunStats;
+	CCourse m_cCourse;
 
 	FRAME_VARIABLES m_sFrameVariables;
 

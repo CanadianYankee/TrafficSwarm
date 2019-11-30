@@ -11,7 +11,7 @@ CTrialRun::CTrialRun()
 {
 }
 
-HRESULT CTrialRun::Intialize(UINT nAgents, std::shared_ptr<CCourse> pCourse, const CAgentGenome& cGenome)
+HRESULT CTrialRun::Intialize(UINT nAgents, const CCourse& cCourse, const CAgentGenome& cGenome)
 {
 	HRESULT hr = S_OK;
 	BOOL bSuccess = TRUE;
@@ -21,10 +21,10 @@ HRESULT CTrialRun::Intialize(UINT nAgents, std::shared_ptr<CCourse> pCourse, con
 	if (!bSuccess) return E_FAIL;
 
 	m_pRunStats = std::make_shared<CRunStatistics>(nAgents);
-	m_pCourse = pCourse;
+	m_cCourse = cCourse;
 	m_cGenome = cGenome;
 	m_pAgentCourse = std::make_shared<CAgentCourse>(false, m_pRunStats);
-	hr = m_pAgentCourse->Initialize(m_pD3DDevice, m_pD3DContext, m_pCourse, cGenome);
+	hr = m_pAgentCourse->Initialize(m_pD3DDevice, m_pD3DContext, m_cCourse, cGenome);
 	if (FAILED(hr))	return hr;
 
 	hr = PrepareShaderConstants();
@@ -84,7 +84,7 @@ BOOL CTrialRun::Run(RUN_RESULTS &results)
 	float Tstop = 0.0f;
 	BOOL bSuccess = TRUE;
 	UINT nAgents = m_pRunStats->GetTotalRunSize();
-	float maxRunTime = (float)m_pRunStats->GetTotalRunSize() * m_pCourse->m_fCourseLength / 500.f;
+	float maxRunTime = (float)m_pRunStats->GetTotalRunSize() * m_cCourse.m_fCourseLength / 500.f;
 
 	for(T = dt; bSuccess && T < maxRunTime; T+=dt)
 	{
@@ -120,7 +120,7 @@ BOOL CTrialRun::Run(RUN_RESULTS &results)
 		cTimer.Tick();
 		float realTime = cTimer.DeltaTime();
 		m_pRunStats->RecordRunResults(results);
-		results.strCourseName = m_pCourse->m_strName;
+		results.strCourseName = m_cCourse.m_strName;
 		results.genome = m_cGenome;
 		results.fRealTime = realTime;
 		results.fSimulatedTime = T;

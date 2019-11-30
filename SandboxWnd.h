@@ -2,6 +2,7 @@
 #include <afxwin.h>
 #include "DXSandbox.h"
 #include "AgentGenome.h"
+#include "Course.h"
 
 class CCourse;
 
@@ -9,13 +10,13 @@ class CSandboxWnd :
 	public CWnd
 {
 public:
-	CSandboxWnd(CWnd* pOwner, std::shared_ptr<CCourse> pCourse, const CAgentGenome& cGenome);
+	CSandboxWnd(CWnd* pOwner, const CCourse& cCourse, const CAgentGenome& cGenome);
 	BOOL Create();
 
 protected:
 	CWnd* m_pOwner;
 	std::shared_ptr<CDXSandbox> m_pSandbox;
-	std::shared_ptr<CCourse>  m_pCourse;
+	CCourse m_cCourse;
 	CAgentGenome m_cGenome;
 
 private:

@@ -3,6 +3,7 @@
 //
 
 #include "ResultListBox.h"
+#include "Course.h"
 #include "CourseDraw.h"
 
 #pragma once
@@ -28,7 +29,7 @@ public:
 protected:
 	HICON m_hIcon;
 	std::unordered_set<CWnd *> m_setChildren;
-	std::shared_ptr<CCourse> m_pCourse;
+	CCourse m_cCourse;
 
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
@@ -52,4 +53,5 @@ public:
 	afx_msg void OnBnClickedButtonClearresults();
 	CCourseDraw m_staticCourseDraw;
 	CString m_strCourseName;
+	afx_msg void OnBnClickedButtonLoadcourse();
 };

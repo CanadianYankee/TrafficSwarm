@@ -10,13 +10,13 @@ class CCourseDraw : public CStatic
 public:
 	CCourseDraw();
 	~CCourseDraw();
-	void SetCourse(std::shared_ptr<CCourse> &m_pCourse);
+	void SetCourse(CCourse *pCourse);
 
 protected:
 	BOOL RegisterWindowClass(void);
 	DECLARE_MESSAGE_MAP()
 
-	std::shared_ptr<CCourse> m_pCourse;
+	CCourse *m_pCourse;
 
 	static void DrawPolyline(CPaintDC &dc, const CCourse::XMPOLYLINE& polyline, float fScale, POINT offset);
 
