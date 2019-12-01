@@ -37,7 +37,7 @@ public:
 	void PullParents(const std::vector<CTrialRun::RUN_RESULTS>& vecRuns);
 	void PullParents(const std::vector<CTrialRun::RUN_RESULTS>& vecRuns1, const std::vector<CTrialRun::RUN_RESULTS>& vecRuns2);
 	UINT RunThreadedTrial();
-	BOOL Complete() { return m_iCurrentGeneration >= (UINT)m_nGenerations && m_iCurrentChild >= (UINT)m_nChildren; }
+	BOOL Complete() { return (m_iCurrentGeneration >= (UINT)m_nGenerations || m_eStatus == STATUS::EndGeneration) && m_iCurrentChild >= (UINT)m_nChildren; }
 
 protected:
 	enum class STATUS 
@@ -80,4 +80,5 @@ public:
 	afx_msg void OnBnClickedButtonSaveresults();
 	afx_msg void OnBnClickedButtonLoad();
 	afx_msg void OnBnClickedButtonLoadtwo();
+	afx_msg void OnBnClickedButtonEndgen();
 };

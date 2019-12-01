@@ -79,6 +79,7 @@ BEGIN_MESSAGE_MAP(CEvolutionDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_SAVERESULTS, &CEvolutionDlg::OnBnClickedButtonSaveresults)
 	ON_BN_CLICKED(IDC_BUTTON_LOAD, &CEvolutionDlg::OnBnClickedButtonLoad)
 	ON_BN_CLICKED(IDC_BUTTON_LOADTWO, &CEvolutionDlg::OnBnClickedButtonLoadtwo)
+	ON_BN_CLICKED(IDC_BUTTON_ENDGEN, &CEvolutionDlg::OnBnClickedButtonEndgen)
 END_MESSAGE_MAP()
 
 
@@ -135,6 +136,7 @@ void CEvolutionDlg::SetStatus(STATUS eStatus)
 	UpdateData(FALSE);
 }
 
+// Seed the next generation with a vector of parent genomes
 void CEvolutionDlg::SeedGenomes(const std::vector<CAgentGenome>& vecGenomes)
 {
 	ASSERT(vecGenomes.size() <= m_nChildren);
@@ -142,6 +144,9 @@ void CEvolutionDlg::SeedGenomes(const std::vector<CAgentGenome>& vecGenomes)
 	m_vecParents = vecGenomes;
 }
 
+// After a completed generation, sort by ascending score and take the 10% 
+// lowest-scoring children as the parents of the next generation. The remaining
+// 90% will be discarded.
 void CEvolutionDlg::PullParents(const std::vector<CTrialRun::RUN_RESULTS> &vecResults)
 {
 	std::vector<CTrialRun::RUN_RESULTS> vec(vecResults);
@@ -155,6 +160,8 @@ void CEvolutionDlg::PullParents(const std::vector<CTrialRun::RUN_RESULTS> &vecRe
 	SeedGenomes(vecParents);
 }
 
+// Given two trial runs, pull 10% of the lowest-scoring from each to be 
+// parents of a new generation (that is, cross-breed two runs). 
 void CEvolutionDlg::PullParents(const std::vector<CTrialRun::RUN_RESULTS>& vecRuns1, const std::vector<CTrialRun::RUN_RESULTS>& vecRuns2)
 {
 	std::vector<CTrialRun::RUN_RESULTS> vec1(vecRuns1), vec2(vecRuns2);
@@ -171,6 +178,16 @@ void CEvolutionDlg::PullParents(const std::vector<CTrialRun::RUN_RESULTS>& vecRu
 	SeedGenomes(vecParents);
 }
 
+// For each generation, the chosen parents survive intact. Then children 
+// are bred to fill up 90% of the population and the final 10% are completely 
+// random. 
+//
+// Breeding process:
+// 1. Choose two parents at random, indexed as i,j.
+// 2. If i == j, then copy parent(i) and mutate one gene. A second gene gets mutated to a 
+//    random value with probability 0.2, a third with probability (0.2)(0.2) = 0.04, etc.
+// 3. If i != j, then randomly select each gene from either parent. One gene gets mutated 
+//    to a random value with probability 0.2, a second with probability (0.2)(0.2) = 0.04, etc.
 void CEvolutionDlg::SetupGeneration()
 {
 	size_t iRandStart = 0;
@@ -335,7 +352,7 @@ afx_msg LRESULT CEvolutionDlg::OnTrialEnded(WPARAM wParam, LPARAM lParam)
 	else if (m_iCurrentChild < (UINT)m_nChildren)
 	{
 		m_strRunCount.Format(_T("%d of %d"), m_iCurrentChild + 1, m_nChildren);
-		SetStatus(STATUS::Running);
+		SetStatus(m_eStatus == STATUS::EndGeneration ? STATUS::EndGeneration : STATUS::Running);
 		AfxBeginThread(::RunThreadedTrial, (LPVOID)(this));
 	}
 	else if (Complete())
@@ -449,4 +466,10 @@ void CEvolutionDlg::OnBnClickedButtonLoadtwo()
 			OnBnClickedButtonEvolve();
 		}
 	}
+}
+
+
+void CEvolutionDlg::OnBnClickedButtonEndgen()
+{
+	SetStatus(STATUS::EndGeneration);
 }

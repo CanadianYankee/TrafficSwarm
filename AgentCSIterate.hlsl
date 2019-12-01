@@ -32,7 +32,7 @@ bool Calculate2Body(inout float2 accumVel, in uint id1, in uint id2)
 	float2 vecAxis = normalize(pos2 - pos1);
 	float dist = distance(pos1, pos2);
 
-	// Check for collision
+	// Check for collision - if there is one, do hard-sphere interactions
 	bool bBounce = false;
 	if (dist <= g_fAgentRadius * 2.0f)
 	{
@@ -72,6 +72,7 @@ bool CalculateBodyWall(inout float2 accumVel, in uint idB, in uint idW)
 	float dist = distance(posB, posW);
 	float2 vecAxis = normalize(posB - posW);
 
+	// Check for collision - if there is one, do hard-sphere bounce off wall calculation
 	bool bBounce = false;
 	if (dist <= g_fAgentRadius * 2.0f)
 	{
@@ -165,18 +166,14 @@ void AgentCSIterate( uint3 DTid : SV_DispatchThreadID )
 			float2 velIdeal = velSink + velOthers + velWalls;
 			velIdeal = normalize(velIdeal) * g_fIdealSpeed;
 
-			// Limit acceleration
+			// Accelerate towards ideal velocity
 			float2 acc = (velIdeal - vel);
-//			float accMag = length(acc);
-//			if (accMag > g_fMaxAcceleration)
-//			{
-//				acc *= g_fMaxAcceleration / accMag;
-//			}
 
 			// Calculate the new velocity
 			vel += g_fElapsedTime * acc;
 		}
 
+		// Suppress overly large velocities
 		if (length(vel) > g_fIdealSpeed)
 		{
 			vel /= sqrt(length(vel)/g_fIdealSpeed);
@@ -185,10 +182,11 @@ void AgentCSIterate( uint3 DTid : SV_DispatchThreadID )
 		// Calculate new position
 		pos += g_fElapsedTime * vel;
 
+		// Store position/velocity
 		agent.pos = float4(pos, 0.0f, 1.0f);
 		agent.velo = float4(vel, 0.0f, 0.0f);
 
-		// Check for death 
+		// Check for reaching the sink
 		if (distance(pos, ptSink) < g_fAgentRadius)
 		{
 			agent.type = -1;
