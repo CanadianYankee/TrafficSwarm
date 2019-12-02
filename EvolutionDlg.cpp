@@ -208,7 +208,7 @@ void CEvolutionDlg::SetupGeneration()
 		{
 			m_vecChildren[iChild] = m_vecParents[iChild];
 		}
-		for (; iChild < (m_nChildren * 9) / 10; iChild++)
+		for (; iChild < m_nChildren; iChild++)
 		{
 			bool bRepeat = false;
 			do

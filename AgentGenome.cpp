@@ -6,14 +6,14 @@ static CAgentGenome::GENE_SPECIFICATION GeneSpecs[(UINT)CAgentGenome::GENE::NUM_
 	{ _T("RepulseDist"), 0.0f, 10.0f},
 	{ _T("RepulseStrength"), 0.0f, 20.0f},
 
-	{ _T("MinAlignDist"), 0.0f, 50.0f},
-	{ _T("MaxAlignDist"), 0.0f, 50.0f},
+	{ _T("MinAlignDist"), 0.0f, 20.0f},
+	{ _T("MaxAlignDist"), 0.0f, 20.0f},
 	{ _T("AlignAtMin"), 0.0f, 2.0f},
 	{ _T("AlignAtMax"), 0.0f, 2.0f},
 	{ _T("AlignAtRear"), 0.0f, 2.0f},
 
 	{ _T("CautionVelDist"), 0.0f, 10.0f},
-	{ _T("CautionVelStrength"), 0.0f, 1.0f},
+	{ _T("CautionVelStrength"), -0.5f, 1.0f},
 
 	{ _T("WallRepulseDist"), 0.0f, 10.0f},
 	{ _T("WallRepulseStrength"), 0.0f, 20.0f},
