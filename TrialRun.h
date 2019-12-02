@@ -10,7 +10,7 @@ class CAgentCourse;
 class CRunStatistics;
 class CCourse;
 
-constexpr float AACollisionPenalty = 20.0f;
+constexpr float AACollisionPenalty = 50.0f;
 constexpr float AWCollisionPenalty = 20.0f;
 constexpr float IncompletePenalty = 40.0f;
 constexpr float SpawnFailPenalty = 0.0f; ///1.0f;
@@ -38,7 +38,7 @@ public:
 		float fAvgAACollisions;
 		float fAvgAWCollisions;
 		float Score() const {
-			return fSimulatedTime + IncompletePenalty * (nAgents - nComplete) + AACollisionPenalty * fAvgAACollisions + 
+			return fAvgLifetime + IncompletePenalty * (nAgents - nComplete) + AACollisionPenalty * fAvgAACollisions +
 				AWCollisionPenalty * fAvgAWCollisions + SpawnFailPenalty * nSpawnFails + LeftEscapePenalty * nLeftEscapes + 
 				RightEscapePenalty * nRightEscapes;
 		}

@@ -52,6 +52,9 @@ HRESULT CAgentCourse::Initialize(ComPtr<ID3D11Device>& pD3DDevice, ComPtr<ID3D11
 	m_sWorldPhysics.g_fWallAlignAtMax = cGenome.Gene(CAgentGenome::GENE::WallAlignAtMax);
 	m_sWorldPhysics.g_fWallAlignAtRear = cGenome.Gene(CAgentGenome::GENE::WallAlignAtRear);
 
+	m_sWorldPhysics.g_fCautionVelDist = cGenome.Gene(CAgentGenome::GENE::CautionVelDist);
+	m_sWorldPhysics.g_fCautionVelStrength = cGenome.Gene(CAgentGenome::GENE::CautionVelStrength);
+
 	// World physics is just set once and remains unchanged for the life of the saver
 	D3D11_SUBRESOURCE_DATA cbData;
 	cbData.pSysMem = &m_sWorldPhysics;

@@ -234,6 +234,7 @@
     <ClInclude Include="EvolutionDlg.h" />
     <ClInclude Include="nlohmann\json.hpp" />
     <ClInclude Include="ResultListBox.h" />
+    <ClInclude Include="RunResultsOld.h" />
     <ClInclude Include="TrialRun.h" />
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="DXUtils.h" />
@@ -255,6 +256,7 @@
     <ClCompile Include="CourseDraw.cpp" />
     <ClCompile Include="EvolutionDlg.cpp" />
     <ClCompile Include="ResultListBox.cpp" />
+    <ClCompile Include="RunResultsOld.cpp" />
     <ClCompile Include="TrialRun.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="DXUtils.cpp" />

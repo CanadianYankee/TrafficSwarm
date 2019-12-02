@@ -10,19 +10,22 @@ class CAgentGenome
 public:
 	CAgentGenome();
 
-	enum class GENE : UINT 
+	enum class GENE : UINT
 	{
 		RepulseDist,
 		RepulseStrength,
-
-		WallRepulseDist,
-		WallRepulseStrength,
 
 		MinAlignDist,
 		MaxAlignDist,
 		AlignAtMin,
 		AlignAtMax,
 		AlignAtRear,
+
+		CautionVelDist,
+		CautionVelStrength,
+
+		WallRepulseDist,
+		WallRepulseStrength,
 
 		MinWallAlignDist,
 		MaxWallAlignDist,
@@ -40,7 +43,7 @@ public:
 		float fMax;
 	};
 
-	void MakeDefault();
+	void ZeroAll();
 	float Gene(GENE geneId) const;
 	void SetGene(GENE geneId, float fVal);
 	void RandomizeAll();

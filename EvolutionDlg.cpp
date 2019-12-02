@@ -9,8 +9,6 @@
 #include "AgentGenome.h"
 #include "TrialRun.h"
 
-std::ostream& operator << (std::ostream& out, const CResultListBox& lb);
-std::istream& operator >> (std::istream& in, CResultListBox& lb);
 
 // CEvolutionDlg dialog
 

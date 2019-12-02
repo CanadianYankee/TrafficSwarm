@@ -17,8 +17,6 @@
 #define new DEBUG_NEW
 #endif
 
-std::istream& operator >> (std::istream& in, CResultListBox& lb);
-
 
 // CAboutDlg dialog used for App About
 
@@ -264,6 +262,8 @@ void CTrafficSwarmDlg::OnBnClickedButtonLoadresults()
 		file.open(strFile.GetBuffer(), std::ios_base::in);
 		file >> m_listResults;
 		file.close();
+		if (m_listResults.GetCount())
+			m_listResults.SetCurSel(0);
 	}
 }
 
