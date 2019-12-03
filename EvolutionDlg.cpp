@@ -158,8 +158,8 @@ void CEvolutionDlg::PullParents(const std::vector<CTrialRun::RUN_RESULTS> &vecRe
 	SeedGenomes(vecParents);
 }
 
-// Given two trial runs, pull 10% of the lowest-scoring from each to be 
-// parents of a new generation (that is, cross-breed two runs). 
+// Given two trial runs, pull 10% of the lowest-scoring from each one and 
+// cross breed them to be the parents of a new generation.  
 void CEvolutionDlg::PullParents(const std::vector<CTrialRun::RUN_RESULTS>& vecRuns1, const std::vector<CTrialRun::RUN_RESULTS>& vecRuns2)
 {
 	std::vector<CTrialRun::RUN_RESULTS> vec1(vecRuns1), vec2(vecRuns2);
@@ -430,6 +430,7 @@ void CEvolutionDlg::OnBnClickedButtonLoad()
 			PullParents(m_listResults.m_vecResults);
 			m_iCurrentGeneration = 0;
 			m_iCurrentChild = 0;
+			SetStatus(STATUS::NotRunning);
 		}
 	}
 }

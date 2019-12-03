@@ -97,6 +97,8 @@ void CAgentGenome::RandomizeAll()
 	}
 }
 
+// Cross-breed two parent genomes. Begin with copying parent1, but with each successive gene there is a 
+// 20% chance of switching to the other parent. 
 CAgentGenome CAgentGenome::CrossBreed(const CAgentGenome& parent1, const CAgentGenome& parent2, float fMutateProb)
 {
 	CAgentGenome child;

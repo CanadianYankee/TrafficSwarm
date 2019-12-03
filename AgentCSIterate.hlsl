@@ -155,7 +155,7 @@ void AgentCSIterate( uint3 DTid : SV_DispatchThreadID )
 		}
 
 		// Adjust ideal speed for caution corrections
-		if (fCaution < -0.5f) fCaution = -0.5f;
+		if (fCaution < -0.25f) fCaution = -0.25f;
 		float fIdealSpeed = g_fIdealSpeed / (1.0f + fCaution);
 		if (fIdealSpeed > g_fIdealSpeed)
 		{
