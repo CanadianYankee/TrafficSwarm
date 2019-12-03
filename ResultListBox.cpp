@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "ResultListBox.h"
+#include "RunResultsOld.h"
 
 void CResultListBox::AddResult(UINT iChild, const CTrialRun::RUN_RESULTS& results)
 {
@@ -91,7 +92,7 @@ std::istream& operator >> (std::istream& in, CTrialRun::RUN_RESULTS& rr)
 
 std::ostream& operator << (std::ostream& out, const CResultListBox& lb)
 {
-	out << lb.m_vecResults.size() << "\n";
+	out << lb.m_vecResults.size() << " " << lb.m_iVersion << "\n";
 	for (size_t i = 0; i < lb.m_vecResults.size(); i++)
 	{
 		out << lb.m_vecResults[i];
@@ -105,11 +106,33 @@ std::istream& operator >> (std::istream& in, CResultListBox& lb)
 	lb.ClearAll();
 	size_t n;
 	in >> n;
-	for (size_t i = 0; i < n; i++)
+	UINT version; 
+	in >> version;
+
+	switch (version)
 	{
-		CTrialRun::RUN_RESULTS result;
-		in >> result;
-		lb.AddResult((UINT)i + 1, result);
+	case 2:
+		for (size_t i = 0; i < n; i++)
+		{
+			CTrialRun::RUN_RESULTS result;
+			in >> result;
+			lb.AddResult((UINT)i + 1, result);
+		}
+		break;
+
+	case 1:
+		for (size_t i = 0; i < n; i++)
+		{
+			RUN_RESULTS_1 result1;
+			in >> result1;
+			CTrialRun::RUN_RESULTS result;
+			ConvertRunResult(result, result1);
+			lb.AddResult((UINT)i + 1, result);
+		}
+		break;
+
+	default:
+		break;
 	}
 
 	return in;

@@ -6,14 +6,17 @@ static CAgentGenome::GENE_SPECIFICATION GeneSpecs[(UINT)CAgentGenome::GENE::NUM_
 	{ _T("RepulseDist"), 0.0f, 10.0f},
 	{ _T("RepulseStrength"), 0.0f, 20.0f},
 
-	{ _T("WallRepulseDist"), 0.0f, 10.0f},
-	{ _T("WallRepulseStrength"), 0.0f, 20.0f},
-
-	{ _T("MinAlignDist"), 0.0f, 50.0f},
-	{ _T("MaxAlignDist"), 0.0f, 50.0f},
+	{ _T("MinAlignDist"), 0.0f, 20.0f},
+	{ _T("MaxAlignDist"), 0.0f, 20.0f},
 	{ _T("AlignAtMin"), 0.0f, 2.0f},
 	{ _T("AlignAtMax"), 0.0f, 2.0f},
 	{ _T("AlignAtRear"), 0.0f, 2.0f},
+
+	{ _T("CautionVelDist"), 0.0f, 10.0f},
+	{ _T("CautionVelStrength"), -0.5f, 1.0f},
+
+	{ _T("WallRepulseDist"), 0.0f, 10.0f},
+	{ _T("WallRepulseStrength"), 0.0f, 20.0f},
 
 	{ _T("MinWallAlignDist"), 0.0f, 20.0f},
 	{ _T("MaxWallAlignDist"), 0.0f, 20.0f},
@@ -25,6 +28,14 @@ static CAgentGenome::GENE_SPECIFICATION GeneSpecs[(UINT)CAgentGenome::GENE::NUM_
 CAgentGenome::CAgentGenome()
 {
 	m_vecGenes.resize((size_t)GENE::NUM_GENES);
+}
+
+void CAgentGenome::ZeroAll()
+{
+	for (size_t i = 0; i < m_vecGenes.size(); i++)
+	{
+		m_vecGenes[i] = 0.0f;
+	}
 }
 
 float CAgentGenome::Gene(GENE geneId) const
@@ -89,9 +100,13 @@ void CAgentGenome::RandomizeAll()
 CAgentGenome CAgentGenome::CrossBreed(const CAgentGenome& parent1, const CAgentGenome& parent2, float fMutateProb)
 {
 	CAgentGenome child;
+//	size_t iSwap = rand() % ((int)GENE::NUM_GENES - 1);
+	bool bUse1 = frand() < 0.5;
 	for (size_t i = 0; i < (size_t)GENE::NUM_GENES; i++)
 	{
-		child.m_vecGenes[i] = frand() < 0.5f ? parent1.m_vecGenes[i] : parent2.m_vecGenes[i];
+//		child.m_vecGenes[i] = i <= iSwap ? parent1.m_vecGenes[i] : parent2.m_vecGenes[i];
+		child.m_vecGenes[i] = bUse1 ? parent1.m_vecGenes[i] : parent2.m_vecGenes[i];
+		if (frand() < 0.2f) bUse1 = !bUse1;
 	}
 
 	while (frand() < fMutateProb)
@@ -115,27 +130,5 @@ CString CAgentGenome::ToString(const CString &strSeparator)
 	}
 
 	return strOut;
-}
-
-
-void CAgentGenome::MakeDefault()
-{
-	m_vecGenes[(UINT)GENE::RepulseDist] = 2.0f;
-	m_vecGenes[(UINT)GENE::RepulseStrength] = 10.0f;
-
-	m_vecGenes[(UINT)GENE::WallRepulseDist] = 1.5f;
-	m_vecGenes[(UINT)GENE::WallRepulseStrength] = 10.0f;
-
-	m_vecGenes[(UINT)GENE::MinAlignDist] = 1.0f;
-	m_vecGenes[(UINT)GENE::MaxAlignDist] = 6.0f;
-	m_vecGenes[(UINT)GENE::AlignAtMin] = 1.0f;
-	m_vecGenes[(UINT)GENE::AlignAtMax] = 0.0f;
-	m_vecGenes[(UINT)GENE::AlignAtRear] = 0.5f;
-
-	m_vecGenes[(UINT)GENE::MinWallAlignDist] = 3.0f;
-	m_vecGenes[(UINT)GENE::MaxWallAlignDist] = 6.0f;
-	m_vecGenes[(UINT)GENE::WallAlignAtMin] = 3.0f;
-	m_vecGenes[(UINT)GENE::WallAlignAtMax] = 1.5f;
-	m_vecGenes[(UINT)GENE::WallAlignAtRear] = 0.5f;
 }
 

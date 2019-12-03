@@ -9,8 +9,6 @@
 #include "AgentGenome.h"
 #include "TrialRun.h"
 
-std::ostream& operator << (std::ostream& out, const CResultListBox& lb);
-std::istream& operator >> (std::istream& in, CResultListBox& lb);
 
 // CEvolutionDlg dialog
 
@@ -210,7 +208,7 @@ void CEvolutionDlg::SetupGeneration()
 		{
 			m_vecChildren[iChild] = m_vecParents[iChild];
 		}
-		for (; iChild < (m_nChildren * 9) / 10; iChild++)
+		for (; iChild < m_nChildren; iChild++)
 		{
 			bool bRepeat = false;
 			do

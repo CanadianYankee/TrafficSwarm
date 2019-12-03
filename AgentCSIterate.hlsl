@@ -20,7 +20,7 @@ float2 ClosestPoint(in float2 test, in float2 end1, in float2 end2)
 }
 
 // Calculate two-body effect (continuously accumulated).  Return "true" if agents have collided
-bool Calculate2Body(inout float2 accumVel, in uint id1, in uint id2)
+bool Calculate2Body(inout float2 accumVel, inout float accCaution, in uint id1, in uint id2)
 {
 	if (id1 == id2 || oldAgentData[id1].type < 0 || oldAgentData[id2].type < 0)
 		return false;
@@ -60,6 +60,12 @@ bool Calculate2Body(inout float2 accumVel, in uint id1, in uint id2)
 		}
 	}
 
+	// Caution factor for delta velocity with nearby agents
+	if (dist < g_fCautionVelDist)
+	{
+		accCaution += g_fCautionVelStrength * (1.0f - dist / g_fCautionVelDist) * length(vel1 - vel2) / g_fCautionVelDist;
+	}
+
 	return bBounce;
 }
 
@@ -96,7 +102,7 @@ bool CalculateBodyWall(inout float2 accumVel, in uint idB, in uint idW)
 		attenuate *= lerp(1.0f, g_fWallAlignAtRear, 0.5f * (dot(normalize(vel), vecAxis) + 1.0f));
 		accumVel += (vel - 2.0f * dot(vel, vecAxis) * vecAxis) * attenuate;
 	}
-	
+
 	return bBounce;
 }
 
@@ -119,18 +125,18 @@ void AgentCSIterate( uint3 DTid : SV_DispatchThreadID )
 		float2 velSink = normalize(ptSink - pos) * g_fIdealSpeed;
 
 		float2 velOthers = float2(0.0f, 0.0f);
+		float fCaution = 0.0f;
 
 		// Interaction with other agents
 		bool bCollideAA = false;
 		float2 velBounce;
 		for (uint iOther = 0; iOther < g_iMaxAliveAgents; iOther++)
 		{
-			bool bColl = Calculate2Body(velOthers, iAgent, iOther);
+			bool bColl = Calculate2Body(velOthers, fCaution, iAgent, iOther);
 			bCollideAA = bCollideAA || bColl;
 			if (bColl)
 			{
 				velBounce = velOthers;
-				break;
 			}
 		}
 
@@ -146,6 +152,14 @@ void AgentCSIterate( uint3 DTid : SV_DispatchThreadID )
 				velBounce = velWalls;
 				break;
 			}
+		}
+
+		// Adjust ideal speed for caution corrections
+		if (fCaution < -0.5f) fCaution = -0.5f;
+		float fIdealSpeed = g_fIdealSpeed / (1.0f + fCaution);
+		if (fIdealSpeed > g_fIdealSpeed)
+		{
+			fIdealSpeed = sqrt(fIdealSpeed * g_fIdealSpeed);
 		}
 
 		// Assess collision penalty
@@ -164,7 +178,7 @@ void AgentCSIterate( uint3 DTid : SV_DispatchThreadID )
 		else
 		{
 			float2 velIdeal = velSink + velOthers + velWalls;
-			velIdeal = normalize(velIdeal) * g_fIdealSpeed;
+			velIdeal = normalize(velIdeal) * fIdealSpeed;
 
 			// Accelerate towards ideal velocity
 			float2 acc = (velIdeal - vel);
@@ -174,9 +188,9 @@ void AgentCSIterate( uint3 DTid : SV_DispatchThreadID )
 		}
 
 		// Suppress overly large velocities
-		if (length(vel) > g_fIdealSpeed)
+		if (length(vel) > fIdealSpeed)
 		{
-			vel /= sqrt(length(vel)/g_fIdealSpeed);
+			vel /= sqrt(length(vel)/fIdealSpeed);
 		}
 
 		// Calculate new position

@@ -15,9 +15,12 @@ public:
 
 	std::vector<CTrialRun::RUN_RESULTS> m_vecResults;
 	BOOL m_bAutoSort = FALSE;
+	const UINT m_iVersion = 2;
 
 public:
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnLbnSelchange();
 };
 
+std::ostream& operator << (std::ostream& out, const CResultListBox& lb);
+std::istream& operator >> (std::istream& in, CResultListBox& lb);

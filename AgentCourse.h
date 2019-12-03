@@ -37,13 +37,13 @@ public:
 protected:
 	struct WORLD_PHYSICS
 	{
-		WORLD_PHYSICS() : g_fCourseLength(100.0f), g_fParticleRadius(0.5f), g_fIdealSpeed(10.0f), g_fMaxAcceleration(50.0f), 
-			g_iMaxAgents(MAX_AGENTS), g_iNumWalls(0), g_iNumSinks(0), wpiDummy0(0), 
-			g_fRepulseDist(0.0f), g_fRepulseStrength(0.0f),	g_fWallRepulseDist(0.0f), g_fWallRepulseStrength(0.0f),
-			g_fMinAlignDist(0.0f), g_fMaxAlignDist(0.0f), g_fAlignAtMin(0.0f), g_fAlignAtMax(0.0f), 
-			g_fAlignAtRear(0.0f), g_fMinWallAlignDist(0.0f), g_fMaxWallAlignDist(0.0f), g_fWallAlignAtMin(0.0f), 
-			g_fWallAlignAtMax(0.0f), g_fWallAlignAtRear(0.0f)
-			, wpfDummy0(0.0f) , wpfDummy1(0.0f) //, wpfDummy2(0.0f)
+		WORLD_PHYSICS() : g_fCourseLength(100.0f), g_fParticleRadius(0.5f), g_fIdealSpeed(10.0f), g_fMaxAcceleration(50.0f),
+			g_iMaxAgents(MAX_AGENTS), g_iNumWalls(0), g_iNumSinks(0), wpiDummy0(0),
+			g_fRepulseDist(0.0f), g_fRepulseStrength(0.0f), g_fWallRepulseDist(0.0f), g_fWallRepulseStrength(0.0f),
+			g_fMinAlignDist(0.0f), g_fMaxAlignDist(0.0f), g_fAlignAtMin(0.0f), g_fAlignAtMax(0.0f),
+			g_fAlignAtRear(0.0f), g_fMinWallAlignDist(0.0f), g_fMaxWallAlignDist(0.0f), g_fWallAlignAtMin(0.0f),
+			g_fWallAlignAtMax(0.0f), g_fWallAlignAtRear(0.0f), g_fCautionVelDist(0.0f), g_fCautionVelStrength(0.0f)
+			//, wpfDummy0(0.0f) , wpfDummy1(0.0f) //, wpfDummy2(0.0f)
 		{}
 		float g_fCourseLength;
 		float g_fParticleRadius;
@@ -72,8 +72,11 @@ protected:
 
 		float g_fWallAlignAtMax;
 		float g_fWallAlignAtRear;
-		float wpfDummy0;
-		float wpfDummy1;
+		float g_fCautionVelDist;
+		float g_fCautionVelStrength;
+
+//		float wpfDummy0;
+//		float wpfDummy1;
 
 //		float wpfDummy2;
 	};
