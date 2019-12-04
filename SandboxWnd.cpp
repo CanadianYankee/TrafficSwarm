@@ -21,7 +21,7 @@ BOOL CSandboxWnd::Create()
 	}
 
 	BOOL bSuccess = CWnd::CreateEx(WS_EX_OVERLAPPEDWINDOW, g_szWndClass, _T("Traffic Sandbox"), 
-		WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL,
+		WS_OVERLAPPEDWINDOW | WS_MAXIMIZE, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL,
 		0, 0);
 
 	return bSuccess;
@@ -121,7 +121,7 @@ void CSandboxWnd::OnSize(UINT nType, int cx, int cy)
 		break;
 
 	default:
-		if (!m_bSizing)
+		if (!m_bSizing && m_pSandbox)
 		{
 			RECT rcClient;
 			GetClientRect(&rcClient);
